@@ -195,20 +195,49 @@ function toMobileUrlIfLikely(urlString) {
 }
 
 async function applyScrollbar(tabId, show) {
-  // inject a simple CSS that forces scrollbar visibility
-  const css = show
-    ? "html,body{overflow-y:auto !important;overflow-x:hidden !important;}"
-    : "html,body{overflow-y:scroll !important;overflow-x:hidden !important;scrollbar-width:none !important;-ms-overflow-style:none !important}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none !important}";
+  // inject CSS that properly controls scrollbar visibility
+  let css;
+  if (show) {
+    // Show scrollbar with proper styling
+    css = `
+      html {
+        overflow-y: overlay !important;
+      }
+      ::-webkit-scrollbar {
+        background: transparent;
+        width: 13px !important;
+        height: 13px !important;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.4);
+        border: solid 3px transparent;
+        background-clip: content-box;
+        border-radius: 17px;
+      }
+    `;
+  } else {
+    // Hide scrollbar completely
+    css = `
+      ::-webkit-scrollbar {
+        background: transparent;
+        width: 0 !important;
+        height: 0 !important;
+      }
+    `;
+  }
+  
   try {
+    // Remove any existing scrollbar CSS first
     await chrome.scripting.removeCSS({
-      target: { tabId },
-      css: "html,body{overflow-y:auto !important;overflow-x:hidden !important;}",
+      target: { tabId, allFrames: true },
+      css: "::-webkit-scrollbar{background:transparent;width:13px !important;height:13px !important}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.4);border:solid 3px transparent;background-clip:content-box;border-radius:17px}",
     });
   } catch (_) {}
+  
   try {
     await chrome.scripting.removeCSS({
-      target: { tabId },
-      css: "html,body{overflow:hidden !important;}",
+      target: { tabId, allFrames: true },
+      css: "::-webkit-scrollbar{background:transparent;width:0 !important;height:0 !important}",
     });
   } catch (_) {}
 
@@ -245,7 +274,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       tabState[tabId].showScrollbar = !tabState[tabId].showScrollbar;
       await applyScrollbar(tabId, tabState[tabId].showScrollbar);
       await saveState(tabId);
-      sendResponse({ showScrollbar: tabState[tabId].showScrollbar });
+      sendResponse({ 
+        showScrollbar: tabState[tabId].showScrollbar,
+        mobile: tabState[tabId].mobile,
+        simulator: tabState[tabId].simulator,
+        deviceSlug: tabState[tabId].deviceSlug
+      });
       return;
     }
     if (msg && msg.type === "GET_TAB_STATE") {
@@ -283,8 +317,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             target: { tabId },
             css: `
               #__mf_simulator_overlay__{position:fixed;inset:0;background:#111;z-index:2147483647;display:flex;align-items:center;justify-content:center}
-              #__mf_simulator_frame__{position:relative;display:inline-block}
-              #__mf_simulator_close__{position:fixed;top:10px;right:10px;z-index:2147483647;background:#333;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer}
+              #__mf_simulator_frame__{position:relative;display:inline-block;border-radius:20px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.3)}
+              #__mf_simulator_close__{position:fixed;top:10px;right:10px;z-index:2147483647;background:#333;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-family:system-ui,sans-serif}
+              #__mf_simulator_close__:hover{background:#555}
             `,
           });
         } catch (_) {}
@@ -300,7 +335,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             const overlay = document.createElement("div");
             overlay.id = "__mf_simulator_overlay__";
 
-            // Create mockup container with exact iframe dimensions
+            // Create mockup container with proper styling
             const mockupContainer = document.createElement("div");
             mockupContainer.id = "__mf_simulator_frame__";
             mockupContainer.style.position = "relative";
@@ -308,7 +343,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             mockupContainer.style.width = String(w) + "px";
             mockupContainer.style.height = String(h) + "px";
 
-            // Create mockup image sized to match iframe exactly
+            // Create mockup image with proper sizing
             const mockupImg = document.createElement("img");
             mockupImg.src = chrome.runtime.getURL(mockupPath);
             mockupImg.style.width = String(w) + "px";
@@ -318,8 +353,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             mockupImg.style.top = "0";
             mockupImg.style.left = "0";
             mockupImg.style.zIndex = "2";
+            mockupImg.style.pointerEvents = "none";
 
-            // Create iframe positioned exactly under the mockup
+            // Create iframe with proper content area positioning
             const iframe = document.createElement("iframe");
             iframe.style.position = "absolute";
             iframe.style.border = "none";
@@ -329,8 +365,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             iframe.style.top = "0";
             iframe.style.left = "0";
             iframe.style.zIndex = "1";
-            iframe.sandbox =
-              "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
+            iframe.sandbox = "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
             iframe.src = window.location.href;
 
             mockupContainer.appendChild(iframe);
@@ -339,7 +374,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             const close = document.createElement("button");
             close.id = "__mf_simulator_close__";
             close.textContent = "Close";
-            close.onclick = () => overlay.remove();
+            close.onclick = () => {
+              overlay.remove();
+              // Also remove the CSS
+              const style = document.querySelector('style[data-simulator-css]');
+              if (style) style.remove();
+            };
 
             overlay.appendChild(mockupContainer);
             document.body.appendChild(overlay);
@@ -365,7 +405,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           },
         });
       }
-      sendResponse({ simulator: state.simulator });
+      sendResponse({ 
+        simulator: state.simulator,
+        mobile: state.mobile,
+        showScrollbar: state.showScrollbar,
+        deviceSlug: state.deviceSlug
+      });
       return;
     }
   })();
