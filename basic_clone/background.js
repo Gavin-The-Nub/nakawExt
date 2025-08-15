@@ -444,7 +444,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && msg.type === "ACTIVATE_SIMULATOR_FOR_TAB") {
       const { tabId } = msg;
       const state = await loadState(tabId);
-      // Ensure simulator is enabled and show it
+      // Ensure simulator is enabled and show it ONLY for this tab
       state.simulator = true;
       tabState[tabId] = state;
       await saveState(tabId);
@@ -473,15 +473,10 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (!changeInfo.status) return;
 
-  // Auto-enable mobile UA for new tabs
-  if (changeInfo.status === "loading" && !tabState[tabId]) {
-    await loadState(tabId);
-    if (tabState[tabId].mobile) {
-      await enableMobileHeaders(tabId);
-    }
-  }
+  // Only apply settings if this tab has been explicitly activated
+  if (!tabState[tabId]) return;
 
-  // Re-apply settings on complete
+  // Re-apply settings on complete only for activated tabs
   if (changeInfo.status === "complete") {
     const state = await loadState(tabId);
     if (state.mobile) {
@@ -497,17 +492,22 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 });
 
-// On startup/installation, re-apply for all open tabs
-async function reapplyAllTabs() {
+// Remove automatic application to all tabs on startup/installation
+// Only apply to tabs that have been explicitly activated
+async function reapplyActivatedTabs() {
   try {
     const tabs = await chrome.tabs.query({});
     for (const t of tabs) {
-      const state = await loadState(t.id);
-      if (state.mobile) await enableMobileHeaders(t.id);
-      if (state.showScrollbar) await applyScrollbar(t.id, true);
+      // Only reapply if this tab has been explicitly activated
+      if (tabState[t.id]) {
+        const state = await loadState(t.id);
+        if (state.mobile) await enableMobileHeaders(t.id);
+        if (state.showScrollbar) await applyScrollbar(t.id, true);
+        if (state.simulator) await showSimulator(t.id, state);
+      }
     }
   } catch (_) {}
 }
 
-chrome.runtime.onStartup.addListener(reapplyAllTabs);
-chrome.runtime.onInstalled.addListener(reapplyAllTabs);
+chrome.runtime.onStartup.addListener(reapplyActivatedTabs);
+chrome.runtime.onInstalled.addListener(reapplyActivatedTabs);
