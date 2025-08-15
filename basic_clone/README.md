@@ -1,6 +1,33 @@
-# Basic Clone Extension - Fixed Version
+# Basic Clone Extension - Auto-Simulator Version
 
-This is a simplified version of the mobile device simulator extension with fixes for CSS and scrollbar functionality.
+This is a simplified version of the mobile device simulator extension with automatic simulator activation and improved scrollbar handling.
+
+## Key Features
+
+### Instant Automatic Device Simulator
+- **Immediate Activation**: The simulator appears instantly when you click the extension icon
+- **Auto-Close Popup**: The popup automatically closes after activating the simulator so you can see it immediately
+- **Default Device**: iPhone 15 Pro is set as the default device
+- **No Manual Toggle**: No need to manually enable/disable the simulator - it's always on
+- **Auto-Refresh**: Simulator automatically updates when you change devices
+
+### Improved Scrollbar Handling
+- **Hidden by Default**: Scrollbars are automatically hidden on all pages
+- **Functional Scrolling**: Content can still be scrolled even when scrollbars are hidden
+- **No Double Scrollbars**: Fixed the issue with multiple scrollbars appearing
+- **Toggle Option**: You can still show/hide scrollbars manually if needed
+
+### Mobile User Agent
+- **Automatic**: Mobile user agent is automatically enabled for all tabs
+- **Device-Specific**: Uses proper device-specific user agent strings
+- **Platform Detection**: Correct mobile headers and platform detection
+
+## How It Works
+
+1. **Click Extension Icon**: When you click the extension icon, it immediately activates the simulator
+2. **Popup Closes**: The popup automatically closes after activation so you can see the simulator
+3. **Simulator Appears**: The device mockup appears on the current page with the content inside
+4. **Fallback Interface**: If activation fails, the popup shows the manual controls
 
 ## Fixed Issues
 
@@ -13,53 +40,58 @@ This is a simplified version of the mobile device simulator extension with fixes
   - Added pointer-events handling to prevent mockup image from blocking interactions
 
 ### 2. Scrollbar Functionality
-- **Problem**: Scrollbar toggle wasn't working properly - content wasn't scrolling
+- **Problem**: Scrollbar toggle wasn't working properly - content wasn't scrolling, and double scrollbars appeared
 - **Solution**: Fixed the `applyScrollbar` function with:
   - Correct CSS logic for showing/hiding scrollbars
   - Proper webkit scrollbar styling when enabled
   - Complete scrollbar hiding when disabled
   - Better CSS injection targeting all frames
+  - Ensured scrolling functionality is preserved when scrollbars are hidden
 
-## Features
-
-### Device Simulator
-- Shows web pages in realistic device mockups
-- Supports iPhone 15 Pro and MacBook Pro
-- Proper viewport sizing and device-specific styling
-- Easy toggle on/off functionality
-
-### Scrollbar Control
-- Toggle scrollbar visibility on any webpage
-- Proper scrollbar styling when enabled
-- Complete scrollbar hiding when disabled
-- Works across all frames and iframes
-
-### Mobile User Agent
-- Automatically enables mobile user agent for all tabs
-- Device-specific user agent strings
-- Proper mobile headers and platform detection
+### 3. Automatic Activation
+- **Problem**: Simulator wasn't appearing automatically when the extension was clicked
+- **Solution**: Added immediate activation with:
+  - New `ACTIVATE_SIMULATOR_FOR_TAB` message handler
+  - Automatic popup closing after activation
+  - Loading states and fallback interface
+  - Better error handling
 
 ## Usage
 
 1. **Install the extension** in Chrome
-2. **Click the extension icon** to open the popup
-3. **Select a device** from the dropdown
-4. **Toggle Device Simulator** to see the page in a device mockup
-5. **Toggle Scrollbar** to show/hide scrollbars on the page
+2. **Click the extension icon** - the simulator automatically appears and popup closes
+3. **Select a device** from the dropdown to change the mockup (if popup is open)
+4. **Toggle Scrollbar** (optional) to show/hide scrollbars on the page
+5. **Close simulator** using the "Close" button if needed
 
 ## Technical Details
 
 ### Files Modified
-- `background.js`: Fixed scrollbar CSS injection and improved simulator implementation
-- `popup.html`: Enhanced UI with better styling and status indicators
-- `popup.js`: Added dynamic state updates and better user feedback
+- `background.js`: 
+  - Fixed scrollbar CSS injection and improved simulator implementation
+  - Added automatic simulator activation with `ACTIVATE_SIMULATOR_FOR_TAB` handler
+  - Created reusable showSimulator/hideSimulator functions
+  - Set iPhone 15 Pro as default device
+- `popup.html`: 
+  - Added loading states with spinner animation
+  - Enhanced UI with better styling and status indicators
+  - Updated status messages to reflect automatic behavior
+- `popup.js`: 
+  - Added immediate simulator activation when popup opens
+  - Automatic popup closing after activation
+  - Fallback interface if activation fails
+  - Better error handling and user feedback
 
 ### Key Improvements
-- Better error handling in CSS injection
-- Improved state management and persistence
-- Enhanced user interface with visual feedback
-- Proper cleanup when simulator is closed
-- Better device information display
+- **Instant Activation**: Simulator shows immediately when extension is clicked
+- **Auto-Close Popup**: Popup closes automatically to show simulator
+- **Loading States**: Visual feedback during activation
+- **Better Error Handling**: Improved error handling in CSS injection
+- **Improved State Management**: Better state management and persistence
+- **Enhanced User Interface**: Cleaner UI with visual feedback
+- **Proper Cleanup**: Better cleanup when simulator is closed
+- **Device Information**: Real-time device information display
+- **Scrollbar Fix**: Eliminated double scrollbar issue while preserving scrolling functionality
 
 ## Browser Compatibility
 - Chrome/Chromium browsers with Manifest V3 support

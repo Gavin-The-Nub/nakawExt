@@ -47,8 +47,8 @@ async function loadState(tabId) {
   const state = data[key] || {
     mobile: true, // Changed default to true
     showScrollbar: false, // Changed default to false
-    simulator: false,
-    deviceSlug: DEVICES[0].slug,
+    simulator: true, // Changed default to true - auto-show simulator
+    deviceSlug: "iphone-15-pro", // Set iPhone 15 Pro as default
   };
   tabState[tabId] = state;
   return state;
@@ -61,8 +61,8 @@ async function saveState(tabId) {
   value[key] = tabState[tabId] || {
     mobile: true, // Changed default to true
     showScrollbar: false, // Changed default to false
-    simulator: false,
-    deviceSlug: DEVICES[0].slug,
+    simulator: true, // Changed default to true - auto-show simulator
+    deviceSlug: "iphone-15-pro", // Set iPhone 15 Pro as default
   };
   await area.set(value);
 }
@@ -200,8 +200,9 @@ async function applyScrollbar(tabId, show) {
   if (show) {
     // Show scrollbar with proper styling
     css = `
-      html {
-        overflow-y: overlay !important;
+      html, body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
       }
       ::-webkit-scrollbar {
         background: transparent;
@@ -216,12 +217,22 @@ async function applyScrollbar(tabId, show) {
       }
     `;
   } else {
-    // Hide scrollbar completely
+    // Hide scrollbar completely but keep scrolling functional
     css = `
+      html, body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
       ::-webkit-scrollbar {
         background: transparent;
         width: 0 !important;
         height: 0 !important;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: transparent;
       }
     `;
   }
@@ -230,20 +241,118 @@ async function applyScrollbar(tabId, show) {
     // Remove any existing scrollbar CSS first
     await chrome.scripting.removeCSS({
       target: { tabId, allFrames: true },
-      css: "::-webkit-scrollbar{background:transparent;width:13px !important;height:13px !important}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.4);border:solid 3px transparent;background-clip:content-box;border-radius:17px}",
+      css: "html,body{overflow-y:auto !important;overflow-x:hidden !important}::-webkit-scrollbar{background:transparent;width:13px !important;height:13px !important}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.4);border:solid 3px transparent;background-clip:content-box;border-radius:17px}",
     });
   } catch (_) {}
   
   try {
     await chrome.scripting.removeCSS({
       target: { tabId, allFrames: true },
-      css: "::-webkit-scrollbar{background:transparent;width:0 !important;height:0 !important}",
+      css: "html,body{overflow-y:auto !important;overflow-x:hidden !important}::-webkit-scrollbar{background:transparent;width:0 !important;height:0 !important}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:transparent}",
     });
   } catch (_) {}
 
   await chrome.scripting.insertCSS({
     target: { tabId, allFrames: true },
     css,
+  });
+}
+
+async function showSimulator(tabId, state) {
+  try {
+    await chrome.scripting.insertCSS({
+      target: { tabId },
+      css: `
+        #__mf_simulator_overlay__{position:fixed;inset:0;background:#111;z-index:2147483647;display:flex;align-items:center;justify-content:center}
+        #__mf_simulator_frame__{position:relative;display:inline-block;border-radius:20px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.3)}
+        #__mf_simulator_close__{position:fixed;top:10px;right:10px;z-index:2147483647;background:#333;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-family:system-ui,sans-serif}
+        #__mf_simulator_close__:hover{background:#555}
+      `,
+    });
+  } catch (_) {}
+  
+  const device = getDeviceBySlug(state.deviceSlug);
+  const tab = await chrome.tabs.get(tabId);
+
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    func: ({ w, h, deviceName, mockupPath }) => {
+      const prev = document.getElementById("__mf_simulator_overlay__");
+      if (prev) prev.remove();
+
+      const overlay = document.createElement("div");
+      overlay.id = "__mf_simulator_overlay__";
+
+      // Create mockup container with proper styling
+      const mockupContainer = document.createElement("div");
+      mockupContainer.id = "__mf_simulator_frame__";
+      mockupContainer.style.position = "relative";
+      mockupContainer.style.display = "inline-block";
+      mockupContainer.style.width = String(w) + "px";
+      mockupContainer.style.height = String(h) + "px";
+
+      // Create mockup image with proper sizing
+      const mockupImg = document.createElement("img");
+      mockupImg.src = chrome.runtime.getURL(mockupPath);
+      mockupImg.style.width = String(w) + "px";
+      mockupImg.style.height = String(h) + "px";
+      mockupImg.style.display = "block";
+      mockupImg.style.position = "absolute";
+      mockupImg.style.top = "0";
+      mockupImg.style.left = "0";
+      mockupImg.style.zIndex = "2";
+      mockupImg.style.pointerEvents = "none";
+
+      // Create iframe with proper content area positioning
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "absolute";
+      iframe.style.border = "none";
+      iframe.style.background = "#fff";
+      iframe.style.width = String(w) + "px";
+      iframe.style.height = String(h) + "px";
+      iframe.style.top = "0";
+      iframe.style.left = "0";
+      iframe.style.zIndex = "1";
+      iframe.sandbox = "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
+      iframe.src = window.location.href;
+
+      mockupContainer.appendChild(iframe);
+      mockupContainer.appendChild(mockupImg);
+
+      const close = document.createElement("button");
+      close.id = "__mf_simulator_close__";
+      close.textContent = "Close";
+      close.onclick = () => {
+        overlay.remove();
+        // Also remove the CSS
+        const style = document.querySelector('style[data-simulator-css]');
+        if (style) style.remove();
+      };
+
+      overlay.appendChild(mockupContainer);
+      document.body.appendChild(overlay);
+      document.body.appendChild(close);
+    },
+    args: [
+      {
+        w: device.viewport.width,
+        h: device.viewport.height,
+        deviceName: device.name,
+        mockupPath: device.mockup,
+      },
+    ],
+  });
+}
+
+async function hideSimulator(tabId) {
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    func: () => {
+      const el = document.getElementById("__mf_simulator_overlay__");
+      const btn = document.getElementById("__mf_simulator_close__");
+      if (el) el.remove();
+      if (btn) btn.remove();
+    },
   });
 }
 
@@ -302,6 +411,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // re-apply UA with the new device
         await enableMobileHeaders(tabId);
       }
+      // Refresh simulator with new device if it's active
+      if (tabState[tabId].simulator) {
+        await showSimulator(tabId, tabState[tabId]);
+      }
       sendResponse({ ok: true });
       return;
     }
@@ -313,98 +426,31 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       await saveState(tabId);
       if (state.simulator) {
         try {
-          await chrome.scripting.insertCSS({
-            target: { tabId },
-            css: `
-              #__mf_simulator_overlay__{position:fixed;inset:0;background:#111;z-index:2147483647;display:flex;align-items:center;justify-content:center}
-              #__mf_simulator_frame__{position:relative;display:inline-block;border-radius:20px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.3)}
-              #__mf_simulator_close__{position:fixed;top:10px;right:10px;z-index:2147483647;background:#333;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-family:system-ui,sans-serif}
-              #__mf_simulator_close__:hover{background:#555}
-            `,
-          });
+          await showSimulator(tabId, state);
         } catch (_) {}
-        const device = getDeviceBySlug(state.deviceSlug);
-        const tab = await chrome.tabs.get(tabId);
-
-        await chrome.scripting.executeScript({
-          target: { tabId },
-          func: ({ w, h, deviceName, mockupPath }) => {
-            const prev = document.getElementById("__mf_simulator_overlay__");
-            if (prev) prev.remove();
-
-            const overlay = document.createElement("div");
-            overlay.id = "__mf_simulator_overlay__";
-
-            // Create mockup container with proper styling
-            const mockupContainer = document.createElement("div");
-            mockupContainer.id = "__mf_simulator_frame__";
-            mockupContainer.style.position = "relative";
-            mockupContainer.style.display = "inline-block";
-            mockupContainer.style.width = String(w) + "px";
-            mockupContainer.style.height = String(h) + "px";
-
-            // Create mockup image with proper sizing
-            const mockupImg = document.createElement("img");
-            mockupImg.src = chrome.runtime.getURL(mockupPath);
-            mockupImg.style.width = String(w) + "px";
-            mockupImg.style.height = String(h) + "px";
-            mockupImg.style.display = "block";
-            mockupImg.style.position = "absolute";
-            mockupImg.style.top = "0";
-            mockupImg.style.left = "0";
-            mockupImg.style.zIndex = "2";
-            mockupImg.style.pointerEvents = "none";
-
-            // Create iframe with proper content area positioning
-            const iframe = document.createElement("iframe");
-            iframe.style.position = "absolute";
-            iframe.style.border = "none";
-            iframe.style.background = "#fff";
-            iframe.style.width = String(w) + "px";
-            iframe.style.height = String(h) + "px";
-            iframe.style.top = "0";
-            iframe.style.left = "0";
-            iframe.style.zIndex = "1";
-            iframe.sandbox = "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
-            iframe.src = window.location.href;
-
-            mockupContainer.appendChild(iframe);
-            mockupContainer.appendChild(mockupImg);
-
-            const close = document.createElement("button");
-            close.id = "__mf_simulator_close__";
-            close.textContent = "Close";
-            close.onclick = () => {
-              overlay.remove();
-              // Also remove the CSS
-              const style = document.querySelector('style[data-simulator-css]');
-              if (style) style.remove();
-            };
-
-            overlay.appendChild(mockupContainer);
-            document.body.appendChild(overlay);
-            document.body.appendChild(close);
-          },
-          args: [
-            {
-              w: device.viewport.width,
-              h: device.viewport.height,
-              deviceName: device.name,
-              mockupPath: device.mockup,
-            },
-          ],
-        });
       } else {
-        await chrome.scripting.executeScript({
-          target: { tabId },
-          func: () => {
-            const el = document.getElementById("__mf_simulator_overlay__");
-            const btn = document.getElementById("__mf_simulator_close__");
-            if (el) el.remove();
-            if (btn) btn.remove();
-          },
-        });
+        try {
+          await hideSimulator(tabId);
+        } catch (_) {}
       }
+      sendResponse({ 
+        simulator: state.simulator,
+        mobile: state.mobile,
+        showScrollbar: state.showScrollbar,
+        deviceSlug: state.deviceSlug
+      });
+      return;
+    }
+    if (msg && msg.type === "ACTIVATE_SIMULATOR_FOR_TAB") {
+      const { tabId } = msg;
+      const state = await loadState(tabId);
+      // Ensure simulator is enabled and show it
+      state.simulator = true;
+      tabState[tabId] = state;
+      await saveState(tabId);
+      try {
+        await showSimulator(tabId, state);
+      } catch (_) {}
       sendResponse({ 
         simulator: state.simulator,
         mobile: state.mobile,
@@ -443,6 +489,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     }
     if (state.showScrollbar) {
       await applyScrollbar(tabId, true);
+    }
+    // Auto-show simulator if it's enabled (which it is by default)
+    if (state.simulator) {
+      await showSimulator(tabId, state);
     }
   }
 });

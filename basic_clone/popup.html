@@ -69,6 +69,10 @@
         background: #e3f2fd;
         border-left-color: #2196f3;
       }
+      .status.loading {
+        background: #fff3e0;
+        border-left-color: #ff9800;
+      }
       .device-info {
         background: #fff;
         padding: 10px;
@@ -93,33 +97,54 @@
       .toggle-button.active:hover {
         background: #45a049;
       }
+      .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ff9800;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 8px;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      .hidden {
+        display: none;
+      }
     </style>
   </head>
   <body>
-    <div class="status">✅ Mobile UA automatically enabled for all tabs</div>
-
-    <div class="row">
-      <label for="device">Device:</label>
-      <select id="device">
-        <option value="iphone-15-pro">iPhone 15 Pro</option>
-        <option value="macbook-pro">MacBook Pro</option>
-      </select>
+    <div id="loading-section">
+      <div class="status loading">
+        <span class="loading-spinner"></span>
+        Activating device simulator...
+      </div>
     </div>
 
-    <div class="device-info">
-      <strong>Current Device:</strong> <span id="current-device">iPhone 15 Pro</span><br>
-      <strong>Viewport:</strong> <span id="current-viewport">369×750</span>
+    <div id="main-section" class="hidden">
+      <div class="status">✅ Device simulator automatically enabled</div>
+
+      <div class="row">
+        <label for="device">Device:</label>
+        <select id="device">
+          <option value="iphone-15-pro">iPhone 15 Pro</option>
+          <option value="macbook-pro">MacBook Pro</option>
+        </select>
+      </div>
+
+      <div class="device-info">
+        <strong>Current Device:</strong> <span id="current-device">iPhone 15 Pro</span><br>
+        <strong>Viewport:</strong> <span id="current-viewport">369×750</span><br>
+        <strong>Status:</strong> <span id="simulator-status">Simulator Active</span>
+      </div>
+
+      <hr />
+
+      <button id="toggle-scrollbar" class="toggle-button">Show/Hide Scrollbar</button>
+      <small>Control scrollbar visibility on the current page (scrollbars are hidden by default)</small>
     </div>
-
-    <hr />
-
-    <button id="toggle-simulator" class="toggle-button">Toggle Device Simulator</button>
-    <small>Device simulator shows the page in a realistic device mockup with proper styling</small>
-
-    <hr />
-
-    <button id="toggle-scrollbar" class="toggle-button">Show/Hide Scrollbar</button>
-    <small>Control scrollbar visibility on the current page</small>
 
     <script src="popup.js"></script>
   </body>
