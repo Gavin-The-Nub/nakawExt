@@ -6,7 +6,7 @@ const DEVICES = [
   {
     slug: "iphone-15-pro",
     name: "iPhone 15 Pro",
-    viewport: { width: 369, height: 750 },
+    viewport: { width: 440, height: 956 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "iphone-15-pro-mockup.png",
@@ -322,6 +322,7 @@ async function showSimulator(tabId, state) {
       mockupContainer.style.display = "inline-block";
       mockupContainer.style.width = String(w) + "px";
       mockupContainer.style.height = String(h) + "px";
+      mockupContainer.style.scale = "0.7";
 
       // Create mockup image with proper sizing
       const mockupImg = document.createElement("img");
@@ -339,7 +340,7 @@ async function showSimulator(tabId, state) {
       const iframe = document.createElement("iframe");
       iframe.style.position = "absolute";
       iframe.style.border = "none";
-      iframe.style.background = "#fff";
+      iframe.style.background = "transparent";
       iframe.style.width = String(w) + "px";
       iframe.style.height = String(h) + "px";
       iframe.style.top = "0";

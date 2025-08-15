@@ -55,7 +55,7 @@
 
     function updateDeviceInfo(deviceSlug) {
       const devices = {
-        "iphone-15-pro": { name: "iPhone 15 Pro", viewport: "369×750" },
+        "iphone-15-pro": { name: "iPhone 15 Pro", viewport: "440×956" },
         "macbook-pro": { name: "MacBook Pro", viewport: "750×431" }
       };
       
