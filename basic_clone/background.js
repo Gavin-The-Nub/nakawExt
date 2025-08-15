@@ -430,14 +430,16 @@ async function showSimulator(tabId, state) {
       };
       
       closeBtn.onclick = () => {
+        // Immediate UI cleanup
         overlay.remove();
         navBar.remove();
-        // Restore main page scrolling
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
-        // Also remove the CSS
-        const style = document.querySelector('style[data-simulator-css]');
-        if (style) style.remove();
+
+        // Ask background to fully deactivate for this tab
+        try {
+          chrome.runtime.sendMessage({ type: "DEACTIVATE_FOR_TAB" });
+        } catch (_) {}
       };
 
       // Change device button
@@ -536,6 +538,34 @@ async function hideSimulator(tabId) {
 // Listen for device change requests from content scripts
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
+    if (msg && msg.type === "DEACTIVATE_FOR_TAB") {
+      try {
+        const tabId = sender?.tab?.id;
+        if (typeof tabId === "number") {
+          // Load and mark simulator off; clear state so we don't auto-apply
+          const state = await loadState(tabId);
+          state.simulator = false;
+          state.showScrollbar = false;
+          tabState[tabId] = state;
+          await saveState(tabId);
+
+          // Remove overlays/UI and CSS
+          await hideSimulator(tabId);
+          await applyScrollbar(tabId, false);
+
+          // Remove UA/header overrides
+          await disableMobileHeaders(tabId);
+
+          // Finally, remove state so reapply on updated/startup won't trigger
+          delete tabState[tabId];
+          await removeState(tabId);
+        }
+      } catch (e) {
+        console.error("DEACTIVATE_FOR_TAB error", e);
+      }
+      sendResponse({ ok: true });
+      return;
+    }
     if (msg && msg.type === "DEVICE_CHANGE_REQUEST") {
       const tabId = sender.tab.id;
       const deviceSlug = msg.deviceSlug;
