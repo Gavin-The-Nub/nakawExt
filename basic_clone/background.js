@@ -4,22 +4,22 @@
 
 const DEVICES = [
   {
-    slug: "iphone-15-pro",
-    name: "iPhone 15 Pro",
-    viewport: { width: 440, height: 956 },
+    slug: "ip16",
+    name: "iphone 16",
+    viewport: { width: 393, height: 852 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
-    mockup: "iphone-15-pro-mockup.png",
-    screenPct: { top: 2.2, right: 5.6, bottom:2.2, left: 5.4, radius: 8.0 },
+    mockup: "devices/ip16.png",
+    screenPct: { top: 2.2, right: 0, bottom: 2.2, left: 0, radius: 8.0 },
   },
   {
-    slug: "macbook-pro",
-    name: "MacBook Pro",
+    slug: "mb-air",
+    name: "MacBook Air",
     viewport: { width: 1280, height: 800 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
-    mockup: "macbook-pro-mockup.png",
-    screenPct: { top: 8.0, right: 7.4, bottom: 8.0, left: 7.4, radius: 1.0 },
+    mockup: "devices/macbook-air.png",
+    screenPct: { top: 8.0, right: 0, bottom: 8.0, left: 0, radius: 1.0 },
   },
 ];
 
@@ -50,7 +50,7 @@ async function loadState(tabId) {
     mobile: true, // Changed default to true
     showScrollbar: false, // Changed default to false
     simulator: true, // Changed default to true - auto-show simulator
-    deviceSlug: "iphone-15-pro", // Set iPhone 15 Pro as default
+    deviceSlug: "ip16", // Set iphone 16 as default
   };
   tabState[tabId] = state;
   return state;
@@ -64,7 +64,7 @@ async function saveState(tabId) {
     mobile: true, // Changed default to true
     showScrollbar: false, // Changed default to false
     simulator: true, // Changed default to true - auto-show simulator
-    deviceSlug: "iphone-15-pro", // Set iPhone 15 Pro as default
+    deviceSlug: "ip16", // Set iphone 16 as default
   };
   await area.set(value);
 }
@@ -248,7 +248,7 @@ async function applyScrollbar(tabId, show) {
       }
     `;
   }
-  
+
   try {
     // Remove any existing scrollbar CSS first
     await chrome.scripting.removeCSS({
@@ -256,7 +256,7 @@ async function applyScrollbar(tabId, show) {
       css: "html,body{overflow-y:auto !important;overflow-x:hidden !important}::-webkit-scrollbar{background:transparent;width:13px !important;height:13px !important}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.4);border:solid 3px transparent;background-clip:content-box;border-radius:17px}",
     });
   } catch (_) {}
-  
+
   try {
     await chrome.scripting.removeCSS({
       target: { tabId, allFrames: true },
@@ -302,7 +302,7 @@ async function showSimulator(tabId, state) {
       `,
     });
   } catch (_) {}
-  
+
   const device = getDeviceBySlug(state.deviceSlug);
   const tab = await chrome.tabs.get(tabId);
 
@@ -338,13 +338,19 @@ async function showSimulator(tabId, state) {
       mockupImg.style.pointerEvents = "none";
 
       // Screen container that clips the iframe to the device screen area using percentage insets
-      const pct = deviceScreenPct || { top: 10, right: 6, bottom: 10, left: 6, radius: 3 };
+      const pct = deviceScreenPct || {
+        top: 10,
+        right: 6,
+        bottom: 10,
+        left: 6,
+        radius: 3,
+      };
       const preset = {
         x: Math.round((pct.left / 100) * w),
         y: Math.round((pct.top / 100) * h),
         w: Math.max(0, Math.round(w - ((pct.left + pct.right) / 100) * w)),
         h: Math.max(0, Math.round(h - ((pct.top + pct.bottom) / 100) * h)),
-        radius: Math.round((pct.radius / 100) * Math.min(w, h))
+        radius: Math.round((pct.radius / 100) * Math.min(w, h)),
       };
 
       const iframeContainer = document.createElement("div");
@@ -357,7 +363,8 @@ async function showSimulator(tabId, state) {
       iframeContainer.style.borderRadius = String(preset.radius) + "px";
 
       // Build an SVG clipPath so we can support more complex shapes later (e.g., notches)
-      const maskId = "__mf_viewport_mask__" + Math.random().toString(36).slice(2);
+      const maskId =
+        "__mf_viewport_mask__" + Math.random().toString(36).slice(2);
       const svgNS = "http://www.w3.org/2000/svg";
       const svg = document.createElementNS(svgNS, "svg");
       svg.setAttribute("width", "0");
@@ -397,14 +404,16 @@ async function showSimulator(tabId, state) {
       iframe.style.top = "0";
       iframe.style.left = "0";
       iframe.style.zIndex = "2"; // below mockup, above container background
-      iframe.sandbox = "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
+      iframe.sandbox =
+        "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
       iframe.src = window.location.href;
-      
+
       // Add CSS to iframe to hide scrollbars after it loads
-      iframe.onload = function() {
+      iframe.onload = function () {
         try {
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-          const style = iframeDoc.createElement('style');
+          const iframeDoc =
+            iframe.contentDocument || iframe.contentWindow.document;
+          const style = iframeDoc.createElement("style");
           style.textContent = `
             html, body {
               overflow: auto !important;
@@ -470,17 +479,17 @@ async function showSimulator(tabId, state) {
       closeBtn.style.justifyContent = "center";
       closeBtn.style.transition = "all 0.2s ease";
       closeBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
-      
+
       closeBtn.onmouseenter = () => {
         closeBtn.style.background = "rgba(85, 85, 85, 0.9)";
         closeBtn.style.transform = "scale(1.1)";
       };
-      
+
       closeBtn.onmouseleave = () => {
         closeBtn.style.background = "rgba(51, 51, 51, 0.9)";
         closeBtn.style.transform = "scale(1)";
       };
-      
+
       closeBtn.onclick = () => {
         // Immediate UI cleanup
         overlay.remove();
@@ -513,23 +522,23 @@ async function showSimulator(tabId, state) {
       deviceBtn.style.justifyContent = "center";
       deviceBtn.style.transition = "all 0.2s ease";
       deviceBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
-      
+
       deviceBtn.onmouseenter = () => {
         deviceBtn.style.background = "rgba(85, 85, 85, 0.9)";
         deviceBtn.style.transform = "scale(1.1)";
       };
-      
+
       deviceBtn.onmouseleave = () => {
         deviceBtn.style.background = "rgba(51, 51, 51, 0.9)";
         deviceBtn.style.transform = "scale(1)";
       };
-      
+
       deviceBtn.onclick = () => {
         // Toggle between devices
-        const currentDevice = deviceName === "iPhone 15 Pro" ? "macbook-pro" : "iphone-15-pro";
-        
+        const currentDevice = deviceName === "iphone 16" ? "mb-air" : "ip16";
+
         // Update the device icon based on selection
-        if (currentDevice === "macbook-pro") {
+        if (currentDevice === "mb-air") {
           deviceBtn.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 18H12.01M8 21H16C17.1046 21 18 20.1046 18 19V5C18 3.89543 17.1046 3 16 3H8C6.89543 3 6 3.89543 6 5V19C6 20.1046 6.89543 21 8 21ZM12 18C12 18.5523 11.5523 19 11 19C10.4477 19 10 18.5523 10 18C10 17.4477 10.4477 17 11 17C11.5523 17 12 17.4477 12 18Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -542,19 +551,17 @@ async function showSimulator(tabId, state) {
             </svg>
           `;
         }
-        
+
         // Send message directly to background script
         chrome.runtime.sendMessage({
           type: "DEVICE_CHANGE_REQUEST",
-          deviceSlug: currentDevice
+          deviceSlug: currentDevice,
         });
       };
 
       // Add buttons to navigation bar
       navBar.appendChild(closeBtn);
       navBar.appendChild(deviceBtn);
-
-
 
       overlay.appendChild(mockupContainer);
       document.body.appendChild(overlay);
@@ -580,7 +587,7 @@ async function hideSimulator(tabId) {
       const navBar = document.getElementById("__mf_simulator_nav__");
       if (el) el.remove();
       if (navBar) navBar.remove();
-      
+
       // Restore main page scrolling
       document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
@@ -661,11 +668,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       tabState[tabId].showScrollbar = !tabState[tabId].showScrollbar;
       await applyScrollbar(tabId, tabState[tabId].showScrollbar);
       await saveState(tabId);
-      sendResponse({ 
+      sendResponse({
         showScrollbar: tabState[tabId].showScrollbar,
         mobile: tabState[tabId].mobile,
         simulator: tabState[tabId].simulator,
-        deviceSlug: tabState[tabId].deviceSlug
+        deviceSlug: tabState[tabId].deviceSlug,
       });
       return;
     }
@@ -711,11 +718,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           await hideSimulator(tabId);
         } catch (_) {}
       }
-      sendResponse({ 
+      sendResponse({
         simulator: state.simulator,
         mobile: state.mobile,
         showScrollbar: state.showScrollbar,
-        deviceSlug: state.deviceSlug
+        deviceSlug: state.deviceSlug,
       });
       return;
     }
@@ -732,11 +739,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         // Apply hidden scrollbars
         await applyScrollbar(tabId, false);
       } catch (_) {}
-      sendResponse({ 
+      sendResponse({
         simulator: state.simulator,
         mobile: state.mobile,
         showScrollbar: state.showScrollbar,
-        deviceSlug: state.deviceSlug
+        deviceSlug: state.deviceSlug,
       });
       return;
     }
