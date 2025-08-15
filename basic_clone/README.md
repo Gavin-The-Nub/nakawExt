@@ -13,9 +13,10 @@ This is a simplified version of the mobile device simulator extension with autom
 - **Tab-Specific**: Only works on the specific tab where the extension was activated
 
 ### Improved Scrollbar Handling
-- **Hidden by Default**: Scrollbars are automatically hidden on all pages
+- **Completely Hidden by Default**: Scrollbars are completely hidden on both the main page and iframe
 - **Functional Scrolling**: Content can still be scrolled even when scrollbars are hidden
 - **No Double Scrollbars**: Fixed the issue with multiple scrollbars appearing
+- **Main Page Locked**: Main page scrolling is disabled when simulator is active
 - **Toggle Option**: You can still show/hide scrollbars manually if needed
 
 ### Mobile User Agent
@@ -44,10 +45,10 @@ This is a simplified version of the mobile device simulator extension with autom
 ### 2. Scrollbar Functionality
 - **Problem**: Scrollbar toggle wasn't working properly - content wasn't scrolling, and double scrollbars appeared
 - **Solution**: Fixed the `applyScrollbar` function with:
-  - Correct CSS logic for showing/hiding scrollbars
-  - Proper webkit scrollbar styling when enabled
-  - Complete scrollbar hiding when disabled
-  - Better CSS injection targeting all frames
+  - Complete scrollbar hiding using `display: none` and `width: 0`
+  - Main page scrolling disabled when simulator is active
+  - Iframe scrollbars hidden while preserving scrolling functionality
+  - Better CSS injection targeting all frames and iframe content
   - Ensured scrolling functionality is preserved when scrollbars are hidden
 
 ### 3. Automatic Activation

@@ -217,7 +217,7 @@ async function applyScrollbar(tabId, show) {
       }
     `;
   } else {
-    // Hide scrollbar completely but keep scrolling functional
+    // Completely hide scrollbar but keep scrolling functional
     css = `
       html, body {
         overflow-y: auto !important;
@@ -227,12 +227,22 @@ async function applyScrollbar(tabId, show) {
         background: transparent;
         width: 0 !important;
         height: 0 !important;
+        display: none !important;
       }
       ::-webkit-scrollbar-track {
         background: transparent;
+        display: none !important;
       }
       ::-webkit-scrollbar-thumb {
         background: transparent;
+        display: none !important;
+      }
+      ::-webkit-scrollbar-corner {
+        background: transparent;
+        display: none !important;
+      }
+      ::-webkit-scrollbar-button {
+        display: none !important;
       }
     `;
   }
@@ -267,6 +277,28 @@ async function showSimulator(tabId, state) {
         #__mf_simulator_frame__{position:relative;display:inline-block;border-radius:20px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.3)}
         #__mf_simulator_close__{position:fixed;top:10px;right:10px;z-index:2147483647;background:#333;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-family:system-ui,sans-serif}
         #__mf_simulator_close__:hover{background:#555}
+        
+        /* Completely hide main page scrollbar when simulator is active */
+        html, body {
+          overflow: hidden !important;
+        }
+        ::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+        ::-webkit-scrollbar-track {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-thumb {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-corner {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-button {
+          display: none !important;
+        }
       `,
     });
   } catch (_) {}
@@ -303,7 +335,7 @@ async function showSimulator(tabId, state) {
       mockupImg.style.zIndex = "2";
       mockupImg.style.pointerEvents = "none";
 
-      // Create iframe with proper content area positioning
+      // Create iframe with proper content area positioning and hidden scrollbars
       const iframe = document.createElement("iframe");
       iframe.style.position = "absolute";
       iframe.style.border = "none";
@@ -315,6 +347,41 @@ async function showSimulator(tabId, state) {
       iframe.style.zIndex = "1";
       iframe.sandbox = "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
       iframe.src = window.location.href;
+      
+      // Add CSS to iframe to hide scrollbars after it loads
+      iframe.onload = function() {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          const style = iframeDoc.createElement('style');
+          style.textContent = `
+            html, body {
+              overflow-y: auto !important;
+              overflow-x: hidden !important;
+            }
+            ::-webkit-scrollbar {
+              display: none !important;
+              width: 0 !important;
+              height: 0 !important;
+            }
+            ::-webkit-scrollbar-track {
+              display: none !important;
+            }
+            ::-webkit-scrollbar-thumb {
+              display: none !important;
+            }
+            ::-webkit-scrollbar-corner {
+              display: none !important;
+            }
+            ::-webkit-scrollbar-button {
+              display: none !important;
+            }
+          `;
+          iframeDoc.head.appendChild(style);
+        } catch (e) {
+          // Cross-origin iframe, can't inject CSS
+          console.log("Cannot inject CSS into cross-origin iframe");
+        }
+      };
 
       mockupContainer.appendChild(iframe);
       mockupContainer.appendChild(mockupImg);
@@ -324,6 +391,9 @@ async function showSimulator(tabId, state) {
       close.textContent = "Close";
       close.onclick = () => {
         overlay.remove();
+        // Restore main page scrolling
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
         // Also remove the CSS
         const style = document.querySelector('style[data-simulator-css]');
         if (style) style.remove();
@@ -352,6 +422,10 @@ async function hideSimulator(tabId) {
       const btn = document.getElementById("__mf_simulator_close__");
       if (el) el.remove();
       if (btn) btn.remove();
+      
+      // Restore main page scrolling
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
     },
   });
 }
@@ -446,10 +520,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const state = await loadState(tabId);
       // Ensure simulator is enabled and show it ONLY for this tab
       state.simulator = true;
+      state.showScrollbar = false; // Always hide scrollbars
       tabState[tabId] = state;
       await saveState(tabId);
       try {
         await showSimulator(tabId, state);
+        // Apply hidden scrollbars
+        await applyScrollbar(tabId, false);
       } catch (_) {}
       sendResponse({ 
         simulator: state.simulator,
