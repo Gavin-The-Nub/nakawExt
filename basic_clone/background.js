@@ -275,8 +275,6 @@ async function showSimulator(tabId, state) {
       css: `
         #__mf_simulator_overlay__{position:fixed;inset:0;background:#111;z-index:2147483647;display:flex;align-items:center;justify-content:center}
         #__mf_simulator_frame__{position:relative;display:inline-block;border-radius:20px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.3)}
-        #__mf_simulator_close__{position:fixed;top:10px;right:10px;z-index:2147483647;background:#333;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-family:system-ui,sans-serif}
-        #__mf_simulator_close__:hover{background:#555}
         
         /* Completely hide main page scrollbar when simulator is active */
         html, body {
@@ -323,6 +321,7 @@ async function showSimulator(tabId, state) {
       mockupContainer.style.width = String(w) + "px";
       mockupContainer.style.height = String(h) + "px";
       mockupContainer.style.scale = "0.7";
+      mockupContainer.style.overflow = "hidden";
 
       // Create mockup image with proper sizing
       const mockupImg = document.createElement("img");
@@ -387,11 +386,52 @@ async function showSimulator(tabId, state) {
       mockupContainer.appendChild(iframe);
       mockupContainer.appendChild(mockupImg);
 
-      const close = document.createElement("button");
-      close.id = "__mf_simulator_close__";
-      close.textContent = "Close";
-      close.onclick = () => {
+      // Create portrait navigation bar on the right side
+      const navBar = document.createElement("div");
+      navBar.id = "__mf_simulator_nav__";
+      navBar.style.position = "fixed";
+      navBar.style.right = "20px";
+      navBar.style.top = "50%";
+      navBar.style.transform = "translateY(-50%)";
+      navBar.style.display = "flex";
+      navBar.style.flexDirection = "column";
+      navBar.style.gap = "15px";
+      navBar.style.zIndex = "2147483648";
+      navBar.style.alignItems = "center";
+
+      // Close button
+      const closeBtn = document.createElement("button");
+      closeBtn.id = "__mf_simulator_close_btn__";
+      closeBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+      closeBtn.style.width = "50px";
+      closeBtn.style.height = "50px";
+      closeBtn.style.borderRadius = "50%";
+      closeBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      closeBtn.style.border = "none";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.style.display = "flex";
+      closeBtn.style.alignItems = "center";
+      closeBtn.style.justifyContent = "center";
+      closeBtn.style.transition = "all 0.2s ease";
+      closeBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+      
+      closeBtn.onmouseenter = () => {
+        closeBtn.style.background = "rgba(85, 85, 85, 0.9)";
+        closeBtn.style.transform = "scale(1.1)";
+      };
+      
+      closeBtn.onmouseleave = () => {
+        closeBtn.style.background = "rgba(51, 51, 51, 0.9)";
+        closeBtn.style.transform = "scale(1)";
+      };
+      
+      closeBtn.onclick = () => {
         overlay.remove();
+        navBar.remove();
         // Restore main page scrolling
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
@@ -400,9 +440,71 @@ async function showSimulator(tabId, state) {
         if (style) style.remove();
       };
 
+      // Change device button
+      const deviceBtn = document.createElement("button");
+      deviceBtn.id = "__mf_simulator_device_btn__";
+      deviceBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 18H12.01M8 21H16C17.1046 21 18 20.1046 18 19V5C18 3.89543 17.1046 3 16 3H8C6.89543 3 6 3.89543 6 5V19C6 20.1046 6.89543 21 8 21ZM12 18C12 18.5523 11.5523 19 11 19C10.4477 19 10 18.5523 10 18C10 17.4477 10.4477 17 11 17C11.5523 17 12 17.4477 12 18Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+      deviceBtn.style.width = "50px";
+      deviceBtn.style.height = "50px";
+      deviceBtn.style.borderRadius = "50%";
+      deviceBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      deviceBtn.style.border = "none";
+      deviceBtn.style.cursor = "pointer";
+      deviceBtn.style.display = "flex";
+      deviceBtn.style.alignItems = "center";
+      deviceBtn.style.justifyContent = "center";
+      deviceBtn.style.transition = "all 0.2s ease";
+      deviceBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+      
+      deviceBtn.onmouseenter = () => {
+        deviceBtn.style.background = "rgba(85, 85, 85, 0.9)";
+        deviceBtn.style.transform = "scale(1.1)";
+      };
+      
+      deviceBtn.onmouseleave = () => {
+        deviceBtn.style.background = "rgba(51, 51, 51, 0.9)";
+        deviceBtn.style.transform = "scale(1)";
+      };
+      
+      deviceBtn.onclick = () => {
+        // Toggle between devices
+        const currentDevice = deviceName === "iPhone 15 Pro" ? "macbook-pro" : "iphone-15-pro";
+        
+        // Update the device icon based on selection
+        if (currentDevice === "macbook-pro") {
+          deviceBtn.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 18H12.01M8 21H16C17.1046 21 18 20.1046 18 19V5C18 3.89543 17.1046 3 16 3H8C6.89543 3 6 3.89543 6 5V19C6 20.1046 6.89543 21 8 21ZM12 18C12 18.5523 11.5523 19 11 19C10.4477 19 10 18.5523 10 18C10 17.4477 10.4477 17 11 17C11.5523 17 12 17.4477 12 18Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          `;
+        } else {
+          deviceBtn.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 18H12.01M8 21H16C17.1046 21 18 20.1046 18 19V5C18 3.89543 17.1046 3 16 3H8C6.89543 3 6 3.89543 6 5V19C6 20.1046 6.89543 21 8 21ZM12 18C12 18.5523 11.5523 19 11 19C10.4477 19 10 18.5523 10 18C10 17.4477 10.4477 17 11 17C11.5523 17 12 17.4477 12 18Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          `;
+        }
+        
+        // Send message directly to background script
+        chrome.runtime.sendMessage({
+          type: "DEVICE_CHANGE_REQUEST",
+          deviceSlug: currentDevice
+        });
+      };
+
+      // Add buttons to navigation bar
+      navBar.appendChild(closeBtn);
+      navBar.appendChild(deviceBtn);
+
+
+
       overlay.appendChild(mockupContainer);
       document.body.appendChild(overlay);
-      document.body.appendChild(close);
+      document.body.appendChild(navBar);
     },
     args: [
       {
@@ -420,9 +522,9 @@ async function hideSimulator(tabId) {
     target: { tabId },
     func: () => {
       const el = document.getElementById("__mf_simulator_overlay__");
-      const btn = document.getElementById("__mf_simulator_close__");
+      const navBar = document.getElementById("__mf_simulator_nav__");
       if (el) el.remove();
-      if (btn) btn.remove();
+      if (navBar) navBar.remove();
       
       // Restore main page scrolling
       document.documentElement.style.overflow = "";
@@ -431,8 +533,26 @@ async function hideSimulator(tabId) {
   });
 }
 
+// Listen for device change requests from content scripts
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
+    if (msg && msg.type === "DEVICE_CHANGE_REQUEST") {
+      const tabId = sender.tab.id;
+      const deviceSlug = msg.deviceSlug;
+      await loadState(tabId);
+      tabState[tabId].deviceSlug = deviceSlug;
+      await saveState(tabId);
+      if (tabState[tabId].mobile) {
+        // re-apply UA with the new device
+        await enableMobileHeaders(tabId);
+      }
+      // Refresh simulator with new device if it's active
+      if (tabState[tabId].simulator) {
+        await showSimulator(tabId, tabState[tabId]);
+      }
+      sendResponse({ ok: true });
+      return;
+    }
     if (msg && msg.type === "TOGGLE_MOBILE_FOR_TAB") {
       const tabId = msg.tabId;
       await loadState(tabId);
