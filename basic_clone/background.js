@@ -10,14 +10,16 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "iphone-15-pro-mockup.png",
+    screenPct: { top: 2.2, right: 5.6, bottom:2.2, left: 5.4, radius: 8.0 },
   },
   {
     slug: "macbook-pro",
     name: "MacBook Pro",
-    viewport: { width: 750, height: 431 },
+    viewport: { width: 1280, height: 800 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "macbook-pro-mockup.png",
+    screenPct: { top: 8.0, right: 7.4, bottom: 8.0, left: 7.4, radius: 1.0 },
   },
 ];
 
@@ -306,7 +308,7 @@ async function showSimulator(tabId, state) {
 
   await chrome.scripting.executeScript({
     target: { tabId },
-    func: ({ w, h, deviceName, mockupPath }) => {
+    func: ({ w, h, deviceName, mockupPath, deviceScreenPct }) => {
       const prev = document.getElementById("__mf_simulator_overlay__");
       if (prev) prev.remove();
 
@@ -323,7 +325,7 @@ async function showSimulator(tabId, state) {
       mockupContainer.style.scale = "0.7";
       mockupContainer.style.overflow = "hidden";
 
-      // Create mockup image with proper sizing
+      // Create mockup image with proper sizing (will sit below content)
       const mockupImg = document.createElement("img");
       mockupImg.src = chrome.runtime.getURL(mockupPath);
       mockupImg.style.width = String(w) + "px";
@@ -332,19 +334,39 @@ async function showSimulator(tabId, state) {
       mockupImg.style.position = "absolute";
       mockupImg.style.top = "0";
       mockupImg.style.left = "0";
-      mockupImg.style.zIndex = "2";
+      mockupImg.style.zIndex = "5"; // mockup above iframe for bezel overlay
       mockupImg.style.pointerEvents = "none";
 
-      // Create iframe with proper content area positioning and hidden scrollbars
+      // Screen container that clips the iframe to the device screen area using percentage insets
+      const pct = deviceScreenPct || { top: 10, right: 6, bottom: 10, left: 6, radius: 3 };
+      const preset = {
+        x: Math.round((pct.left / 100) * w),
+        y: Math.round((pct.top / 100) * h),
+        w: Math.max(0, Math.round(w - ((pct.left + pct.right) / 100) * w)),
+        h: Math.max(0, Math.round(h - ((pct.top + pct.bottom) / 100) * h)),
+        radius: Math.round((pct.radius / 100) * Math.min(w, h))
+      };
+
+      const iframeContainer = document.createElement("div");
+      iframeContainer.style.position = "absolute";
+      iframeContainer.style.top = String(preset.y) + "px";
+      iframeContainer.style.left = String(preset.x) + "px";
+      iframeContainer.style.width = String(preset.w) + "px";
+      iframeContainer.style.height = String(preset.h) + "px";
+      iframeContainer.style.overflow = "hidden"; // critical for clipping
+      iframeContainer.style.borderRadius = String(preset.radius) + "px";
+      iframeContainer.style.zIndex = "1"; // behind mockup, acts as clipping area
+
+      // Create iframe positioned to fill the screen container
       const iframe = document.createElement("iframe");
       iframe.style.position = "absolute";
       iframe.style.border = "none";
       iframe.style.background = "transparent";
-      iframe.style.width = String(w) + "px";
-      iframe.style.height = String(h) + "px";
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
       iframe.style.top = "0";
       iframe.style.left = "0";
-      iframe.style.zIndex = "1";
+      iframe.style.zIndex = "2"; // below mockup, above container background
       iframe.sandbox = "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
       iframe.src = window.location.href;
       
@@ -355,8 +377,7 @@ async function showSimulator(tabId, state) {
           const style = iframeDoc.createElement('style');
           style.textContent = `
             html, body {
-              overflow-y: auto !important;
-              overflow-x: hidden !important;
+              overflow: auto !important;
             }
             ::-webkit-scrollbar {
               display: none !important;
@@ -383,8 +404,9 @@ async function showSimulator(tabId, state) {
         }
       };
 
-      mockupContainer.appendChild(iframe);
+      iframeContainer.appendChild(iframe);
       mockupContainer.appendChild(mockupImg);
+      mockupContainer.appendChild(iframeContainer);
 
       // Create portrait navigation bar on the right side
       const navBar = document.createElement("div");
@@ -514,6 +536,7 @@ async function showSimulator(tabId, state) {
         h: device.viewport.height,
         deviceName: device.name,
         mockupPath: device.mockup,
+        deviceScreenPct: device.screenPct,
       },
     ],
   });
