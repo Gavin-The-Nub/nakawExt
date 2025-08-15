@@ -355,6 +355,36 @@ async function showSimulator(tabId, state) {
       iframeContainer.style.height = String(preset.h) + "px";
       iframeContainer.style.overflow = "hidden"; // critical for clipping
       iframeContainer.style.borderRadius = String(preset.radius) + "px";
+
+      // Build an SVG clipPath so we can support more complex shapes later (e.g., notches)
+      const maskId = "__mf_viewport_mask__" + Math.random().toString(36).slice(2);
+      const svgNS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("width", "0");
+      svg.setAttribute("height", "0");
+      svg.style.position = "absolute";
+      svg.style.width = "0";
+      svg.style.height = "0";
+      const defs = document.createElementNS(svgNS, "defs");
+      const clip = document.createElementNS(svgNS, "clipPath");
+      clip.setAttribute("id", maskId);
+      // Use userSpaceOnUse so the rect dimensions match the element's pixel box
+      clip.setAttribute("clipPathUnits", "userSpaceOnUse");
+      const rect = document.createElementNS(svgNS, "rect");
+      rect.setAttribute("x", "0");
+      rect.setAttribute("y", "0");
+      rect.setAttribute("width", String(preset.w));
+      rect.setAttribute("height", String(preset.h));
+      rect.setAttribute("rx", String(preset.radius));
+      rect.setAttribute("ry", String(preset.radius));
+      clip.appendChild(rect);
+      defs.appendChild(clip);
+      svg.appendChild(defs);
+      overlay.appendChild(svg);
+
+      // Apply the clip-path via URL reference
+      iframeContainer.style.clipPath = `url(#${maskId})`;
+      iframeContainer.style.webkitClipPath = `url(#${maskId})`;
       iframeContainer.style.zIndex = "1"; // behind mockup, acts as clipping area
 
       // Create iframe positioned to fill the screen container
