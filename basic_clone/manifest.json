@@ -3,7 +3,13 @@
   "name": "Mobile View + Scrollbar Toggle (Basic Clone)",
   "version": "0.1.0",
   "description": "Force mobile view per-tab using DNR and toggle native scrollbar via injected CSS.",
-  "permissions": ["declarativeNetRequest", "scripting", "tabs", "storage"],
+  "permissions": [
+    "declarativeNetRequest",
+    "scripting",
+    "tabs",
+    "storage",
+    "activeTab"
+  ],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"

@@ -559,9 +559,191 @@ async function showSimulator(tabId, state) {
         });
       };
 
+      // --- Screenshot button ---
+      const screenshotBtn = document.createElement("button");
+      screenshotBtn.id = "__mf_simulator_screenshot_btn__";
+      screenshotBtn.title = "Screenshot";
+      screenshotBtn.innerHTML = `
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="7" width="18" height="13" rx="2" stroke="white" stroke-width="1.5"/>
+    <circle cx="12" cy="13.5" r="1.6" fill="white"/>
+  </svg>
+`;
+      screenshotBtn.style.width = "50px";
+      screenshotBtn.style.height = "50px";
+      screenshotBtn.style.borderRadius = "50%";
+      screenshotBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      screenshotBtn.style.border = "none";
+      screenshotBtn.style.cursor = "pointer";
+      screenshotBtn.style.display = "flex";
+      screenshotBtn.style.alignItems = "center";
+      screenshotBtn.style.justifyContent = "center";
+      screenshotBtn.style.transition = "all 0.16s ease";
+      screenshotBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+
+      screenshotBtn.onmouseenter = () => {
+        screenshotBtn.style.background = "rgba(85,85,85,0.95)";
+        screenshotBtn.style.transform = "scale(1.08)";
+      };
+      screenshotBtn.onmouseleave = () => {
+        screenshotBtn.style.background = "rgba(51,51,51,0.9)";
+        screenshotBtn.style.transform = "scale(1)";
+      };
+
+      // handler: request background to capture, crop, then show menu: download / copy
+      screenshotBtn.onclick = () => {
+        const frameEl = document.getElementById("__mf_simulator_frame__");
+        if (!frameEl) return alert("Simulator frame not found.");
+
+        const rect = frameEl.getBoundingClientRect(); // relative to viewport
+        const dpr = window.devicePixelRatio || 1;
+
+        // Ask background to capture the visible tab as PNG dataUrl
+        chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, async (resp) => {
+          if (!resp || !resp.ok) {
+            console.error("Capture failed", resp && resp.error);
+            return alert(
+              "Screenshot failed: " +
+                (resp && resp.error ? resp.error : "unknown")
+            );
+          }
+
+          const dataUrl = resp.dataUrl;
+          const img = new Image();
+          img.onload = async () => {
+            try {
+              // Create canvas sized to the target region in device pixels
+              const cw = Math.round(rect.width * dpr);
+              const ch = Math.round(rect.height * dpr);
+              const sx = Math.round(rect.left * dpr);
+              const sy = Math.round(rect.top * dpr);
+
+              const canvas = document.createElement("canvas");
+              canvas.width = cw;
+              canvas.height = ch;
+              const ctx = canvas.getContext("2d");
+
+              // Draw the captured full-image then crop
+              ctx.drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
+
+              // Convert to blob
+              canvas.toBlob(async (blob) => {
+                if (!blob) {
+                  return alert("Failed to create screenshot blob.");
+                }
+
+                // Build a small floating menu next to the navBar
+                const menu = document.createElement("div");
+                menu.style.position = "fixed";
+                menu.style.right = "86px"; // slightly left of buttons
+                menu.style.top = "50%";
+                menu.style.transform = "translateY(-50%)";
+                menu.style.zIndex = "2147483650";
+                menu.style.display = "flex";
+                menu.style.flexDirection = "column";
+                menu.style.gap = "8px";
+                menu.style.padding = "10px";
+                menu.style.borderRadius = "10px";
+                menu.style.boxShadow = "0 8px 24px rgba(0,0,0,0.4)";
+                menu.style.background = "rgba(30,30,30,0.95)";
+                menu.style.color = "white";
+                menu.style.alignItems = "center";
+
+                const downloadBtn = document.createElement("button");
+                downloadBtn.textContent = "Download";
+                downloadBtn.style.padding = "8px 12px";
+                downloadBtn.style.border = "none";
+                downloadBtn.style.borderRadius = "8px";
+                downloadBtn.style.cursor = "pointer";
+
+                const copyBtn = document.createElement("button");
+                copyBtn.textContent = "Copy";
+                copyBtn.style.padding = "8px 12px";
+                copyBtn.style.border = "none";
+                copyBtn.style.borderRadius = "8px";
+                copyBtn.style.cursor = "pointer";
+
+                const closeBtnSmall = document.createElement("button");
+                closeBtnSmall.textContent = "Close";
+                closeBtnSmall.style.padding = "6px 10px";
+                closeBtnSmall.style.border = "none";
+                closeBtnSmall.style.borderRadius = "8px";
+                closeBtnSmall.style.cursor = "pointer";
+
+                // Download behavior
+                downloadBtn.onclick = () => {
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "mockup-screenshot.png";
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  setTimeout(() => URL.revokeObjectURL(url), 5000);
+                  menu.remove();
+                };
+
+                // Copy behavior (Clipboard API)
+                copyBtn.onclick = async () => {
+                  try {
+                    // ClipboardItem requires a Blob
+                    await navigator.clipboard.write([
+                      new ClipboardItem({ "image/png": blob }),
+                    ]);
+                    // small visual confirmation
+                    copyBtn.textContent = "Copied!";
+                    setTimeout(() => {
+                      try {
+                        copyBtn.textContent = "Copy";
+                      } catch (e) {}
+                      menu.remove();
+                    }, 900);
+                  } catch (err) {
+                    console.error("Copy failed", err);
+                    alert(
+                      "Copy to clipboard failed: " +
+                        (err && err.message ? err.message : err)
+                    );
+                  }
+                };
+
+                closeBtnSmall.onclick = () => menu.remove();
+
+                menu.appendChild(downloadBtn);
+                menu.appendChild(copyBtn);
+                menu.appendChild(closeBtnSmall);
+                document.body.appendChild(menu);
+
+                // Auto-remove menu if user clicks elsewhere
+                const onDocClick = (ev) => {
+                  if (
+                    !menu.contains(ev.target) &&
+                    ev.target !== screenshotBtn
+                  ) {
+                    menu.remove();
+                    document.removeEventListener("mousedown", onDocClick);
+                  }
+                };
+                document.addEventListener("mousedown", onDocClick);
+              }, "image/png");
+            } catch (e) {
+              console.error("Processing failed", e);
+              alert("Screenshot processing failed: " + e.message);
+            }
+          };
+          img.onerror = (e) => {
+            console.error("Image load error", e);
+            alert("Failed to load captured image.");
+          };
+          img.src = dataUrl;
+        });
+      };
+
       // Add buttons to navigation bar
       navBar.appendChild(closeBtn);
       navBar.appendChild(deviceBtn);
+      // append to nav bar
+      navBar.appendChild(screenshotBtn);
 
       overlay.appendChild(mockupContainer);
       document.body.appendChild(overlay);
@@ -625,7 +807,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
       sendResponse({ ok: true });
       return;
+    } // Background/service worker: capture visible tab and return dataUrl
+    if (msg && msg.type === "CAPTURE_TAB") {
+      (async () => {
+        try {
+          // captureVisibleTab uses the currently focused window; null is fine
+          chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
+            if (chrome.runtime.lastError) {
+              console.error("captureVisibleTab err", chrome.runtime.lastError);
+              sendResponse({
+                ok: false,
+                error: chrome.runtime.lastError.message,
+              });
+              return;
+            }
+            sendResponse({ ok: true, dataUrl });
+          });
+        } catch (e) {
+          console.error("CAPTURE_TAB error", e);
+          sendResponse({ ok: false, error: e.message });
+        }
+      })();
+      return true; // keep message channel open for async sendResponse
     }
+
     if (msg && msg.type === "DEVICE_CHANGE_REQUEST") {
       const tabId = sender.tab.id;
       const deviceSlug = msg.deviceSlug;
