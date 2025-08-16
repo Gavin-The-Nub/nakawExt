@@ -1,4 +1,5 @@
 (async function () {
+  
   async function getActiveTab() {
     const [tab] = await chrome.tabs.query({
       active: true,
@@ -54,14 +55,9 @@
     }
 
     function updateDeviceInfo(deviceSlug) {
-      const devices = {
-        "iphone-15-pro": { name: "iPhone 15 Pro", viewport: "440×956" },
-        "macbook-pro": { name: "MacBook Pro", viewport: "750×431" }
-      };
-      
-      const device = devices[deviceSlug] || devices["iphone-15-pro"];
+      const device = DEVICES.find(d => d.slug === deviceSlug) || DEVICES[0];
       currentDeviceSpan.textContent = device.name;
-      currentViewportSpan.textContent = device.viewport;
+      currentViewportSpan.textContent = `${device.viewport.width}×${device.viewport.height}`;
       simulatorStatusSpan.textContent = "Simulator Active";
     }
 
@@ -98,6 +94,8 @@
       );
     });
   }
+
+
 })();
 
 

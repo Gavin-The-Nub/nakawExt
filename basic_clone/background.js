@@ -522,8 +522,6 @@ function getDeviceBySlug(slug) {
   return DEVICES.find((d) => d.slug === slug) || DEVICES[0];
 }
 
-// Simple storage for per-tab state
-// { [tabId]: { mobile: boolean, showScrollbar: boolean } }
 const tabState = {};
 
 function storageArea() {
@@ -767,6 +765,12 @@ async function applyScrollbar(tabId, show) {
 
 async function showSimulator(tabId, state) {
   try {
+    // Inject the device panel content script
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['device-panel.js']
+    });
+    
     await chrome.scripting.insertCSS({
       target: { tabId },
       css: `
@@ -799,6 +803,10 @@ async function showSimulator(tabId, state) {
   } catch (_) {}
 
   const device = getDeviceBySlug(state.deviceSlug);
+    if (device) {
+      console.log(device)
+    }
+
   const tab = await chrome.tabs.get(tabId);
 
   await chrome.scripting.executeScript({
@@ -1029,28 +1037,9 @@ async function showSimulator(tabId, state) {
       };
 
       deviceBtn.onclick = () => {
-        // Toggle between devices
-        const currentDevice = deviceName === "iphone 16" ? "mb-air" : "ip16";
-
-        // Update the device icon based on selection
-        if (currentDevice === "mb-air") {
-          deviceBtn.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 18H12.01M8 21H16C17.1046 21 18 20.1046 18 19V5C18 3.89543 17.1046 3 16 3H8C6.89543 3 6 3.89543 6 5V19C6 20.1046 6.89543 21 8 21ZM12 18C12 18.5523 11.5523 19 11 19C10.4477 19 10 18.5523 10 18C10 17.4477 10.4477 17 11 17C11.5523 17 12 17.4477 12 18Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          `;
-        } else {
-          deviceBtn.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 18H12.01M8 21H16C17.1046 21 18 20.1046 18 19V5C18 3.89543 17.1046 3 16 3H8C6.89543 3 6 3.89543 6 5V19C6 20.1046 6.89543 21 8 21ZM12 18C12 18.5523 11.5523 19 11 19C10.4477 19 10 18.5523 10 18C10 17.4477 10.4477 17 11 17C11.5523 17 12 17.4477 12 18Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          `;
-        }
-
-        // Send message directly to background script
+        // Show device selection panel
         chrome.runtime.sendMessage({
-          type: "DEVICE_CHANGE_REQUEST",
-          deviceSlug: currentDevice,
+          type: "SHOW_DEVICE_PANEL",
         });
       };
 
@@ -1272,6 +1261,14 @@ async function hideSimulator(tabId) {
   });
 }
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "SET_DEVICE_FOR_TAB") {
+    const tabId = sender.tab.id; // 🚨 if `sender.tab` is undefined (like from sidebar), this will fail
+    tabState[tabId] = { deviceSlug: message.deviceSlug };
+    showSimulator(tabId, tabState[tabId]);
+  }
+});
+
 // Listen for device change requests from content scripts
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
@@ -1343,6 +1340,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       sendResponse({ ok: true });
       return;
     }
+    if (msg && msg.type === "SHOW_DEVICE_PANEL") {
+      const tabId = sender.tab.id;
+      // Send message to content script to show device panel
+      try {
+        await chrome.tabs.sendMessage(tabId, { type: "SHOW_DEVICE_PANEL" });
+        sendResponse({ ok: true });
+      } catch (e) {
+        console.error("Failed to show device panel:", e);
+        sendResponse({ ok: false, error: e.message });
+      }
+      return;
+    }
     if (msg && msg.type === "TOGGLE_MOBILE_FOR_TAB") {
       const tabId = msg.tabId;
       await loadState(tabId);
@@ -1401,7 +1410,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         await showSimulator(tabId, tabState[tabId]);
       }
       sendResponse({ ok: true });
-      return;
+      return true;
     }
     if (msg && msg.type === "TOGGLE_SIMULATOR_FOR_TAB") {
       const { tabId } = msg;
