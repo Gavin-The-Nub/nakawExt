@@ -1,113 +1,83 @@
-# Basic Clone Extension - Auto-Simulator Version
+# Mobile View + Scrollbar Toggle (Basic Clone)
 
-This is a simplified version of the mobile device simulator extension with automatic simulator activation and improved scrollbar handling.
+A Chrome extension that provides mobile device simulation and screen recording capabilities.
 
-## Key Features
+## Features
 
-### Instant Automatic Device Simulator
-- **Immediate Activation**: The simulator appears instantly when you click the extension icon
-- **Auto-Close Popup**: The popup automatically closes after activating the simulator so you can see it immediately
-- **Default Device**: iPhone 15 Pro is set as the default device
-- **No Manual Toggle**: No need to manually enable/disable the simulator - it's always on
-- **Auto-Refresh**: Simulator automatically updates when you change devices
-- **Tab-Specific**: Only works on the specific tab where the extension was activated
+### Device Simulation
 
-### Improved Scrollbar Handling
-- **Completely Hidden by Default**: Scrollbars are completely hidden on both the main page and iframe
-- **Functional Scrolling**: Content can still be scrolled even when scrollbars are hidden
-- **No Double Scrollbars**: Fixed the issue with multiple scrollbars appearing
-- **Main Page Locked**: Main page scrolling is disabled when simulator is active
-- **Toggle Option**: You can still show/hide scrollbars manually if needed
+- Force mobile view per-tab using Declarative Net Request (DNR)
+- Toggle native scrollbar via injected CSS
+- Multiple device presets (iPhone, Android, iPad, MacBook, etc.)
+- Device mockup overlay with realistic bezels
 
-### Mobile User Agent
-- **Automatic**: Mobile user agent is automatically enabled for the activated tab
-- **Device-Specific**: Uses proper device-specific user agent strings
-- **Platform Detection**: Correct mobile headers and platform detection
+### Screen Recording
 
-## How It Works
-
-1. **Click Extension Icon**: When you click the extension icon, it immediately activates the simulator
-2. **Popup Closes**: The popup automatically closes after activation so you can see the simulator
-3. **Simulator Appears**: The device mockup appears on the current page with the content inside
-4. **Tab-Specific**: The extension only affects the tab where it was activated
-5. **Fallback Interface**: If activation fails, the popup shows the manual controls
-
-## Fixed Issues
-
-### 1. CSS Accuracy for Phone Models
-- **Problem**: The CSS wasn't being applied correctly to make content look like it's inside the device mockup
-- **Solution**: Improved the simulator implementation with:
-  - Better mockup container styling with rounded corners and shadows
-  - Proper iframe positioning under the mockup image
-  - Enhanced overlay styling for better visual presentation
-  - Added pointer-events handling to prevent mockup image from blocking interactions
-
-### 2. Scrollbar Functionality
-- **Problem**: Scrollbar toggle wasn't working properly - content wasn't scrolling, and double scrollbars appeared
-- **Solution**: Fixed the `applyScrollbar` function with:
-  - Complete scrollbar hiding using `display: none` and `width: 0`
-  - Main page scrolling disabled when simulator is active
-  - Iframe scrollbars hidden while preserving scrolling functionality
-  - Better CSS injection targeting all frames and iframe content
-  - Ensured scrolling functionality is preserved when scrollbars are hidden
-
-### 3. Automatic Activation
-- **Problem**: Simulator wasn't appearing automatically when the extension was clicked
-- **Solution**: Added immediate activation with:
-  - New `ACTIVATE_SIMULATOR_FOR_TAB` message handler
-  - Automatic popup closing after activation
-  - Loading states and fallback interface
-  - Better error handling
-
-### 4. Tab-Specific Behavior
-- **Problem**: Extension was affecting all tabs instead of just the activated tab
-- **Solution**: Made the extension tab-specific by:
-  - Removing automatic application to all tabs
-  - Only applying settings to explicitly activated tabs
-  - Preventing global state from affecting other tabs
-  - Ensuring each tab maintains its own independent state
+- Record screen content with device mockup overlay
+- Multiple quality settings (low, medium, high)
+- Keyboard shortcut support (Ctrl+Shift+R or Cmd+Shift+R)
+- Automatic video download in WebM format
 
 ## Usage
 
-1. **Install the extension** in Chrome
-2. **Click the extension icon** - the simulator automatically appears and popup closes
-3. **Tab-Specific**: The extension only affects the current tab where you clicked it
-4. **Select a device** from the dropdown to change the mockup (if popup is open)
-5. **Toggle Scrollbar** (optional) to show/hide scrollbars on the page
-6. **Close simulator** using the "Close" button if needed
-7. **Activate on other tabs**: Click the extension icon on other tabs to activate the simulator there
+### Device Simulation
+
+1. Click the extension icon to activate
+2. Use the device button in the simulator to change devices
+3. Toggle scrollbar visibility as needed
+
+### Screen Recording
+
+1. Open the device simulator
+2. Click the recording button (circle icon) to start recording
+3. Click the stop button (square icon) to stop recording
+4. Video will automatically download when complete
+
+### Keyboard Shortcuts
+
+- `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac): Start/Stop screen recording
+
+## Permissions
+
+- `declarativeNetRequest`: Modify request/response headers for mobile simulation
+- `scripting`: Inject CSS and JavaScript for UI controls
+- `tabs`: Access tab information and capture
+- `storage`: Save user preferences
+- `activeTab`: Access current tab
+- `tabCapture`: Capture tab content for recording
+- `offscreen`: Create offscreen document for recording
+- `commands`: Enable keyboard shortcuts
+- `downloads`: Download recorded videos
 
 ## Technical Details
 
-### Files Modified
-- `background.js`: 
-  - Fixed scrollbar CSS injection and improved simulator implementation
-  - Added automatic simulator activation with `ACTIVATE_SIMULATOR_FOR_TAB` handler
-  - Created reusable showSimulator/hideSimulator functions
-  - Set iPhone 15 Pro as default device
-  - Made extension tab-specific by removing global application
-- `popup.html`: 
-  - Added loading states with spinner animation
-  - Enhanced UI with better styling and status indicators
-  - Updated status messages to reflect automatic behavior
-- `popup.js`: 
-  - Added immediate simulator activation when popup opens
-  - Automatic popup closing after activation
-  - Fallback interface if activation fails
-  - Better error handling and user feedback
+### Screen Recording
 
-### Key Improvements
-- **Instant Activation**: Simulator shows immediately when extension is clicked
-- **Auto-Close Popup**: Popup closes automatically to show simulator
-- **Loading States**: Visual feedback during activation
-- **Tab-Specific**: Only affects the tab where extension was activated
-- **Better Error Handling**: Improved error handling in CSS injection
-- **Improved State Management**: Better state management and persistence
-- **Enhanced User Interface**: Cleaner UI with visual feedback
-- **Proper Cleanup**: Better cleanup when simulator is closed
-- **Device Information**: Real-time device information display
-- **Scrollbar Fix**: Eliminated double scrollbar issue while preserving scrolling functionality
+- Uses Chrome's `tabCapture` API for high-quality screen capture
+- Offscreen document handles MediaRecorder for video encoding
+- Supports multiple codecs (H.264, VP9, WebM)
+- Configurable quality settings and frame rates
 
-## Browser Compatibility
-- Chrome/Chromium browsers with Manifest V3 support
-- Requires `declarativeNetRequest` and `scripting` permissions
+### Device Simulation
+
+- DNR rules modify User-Agent and other headers
+- CSS injection for scrollbar control
+- Device mockup overlay with SVG clipping
+- Responsive design for different screen sizes
+
+## Installation
+
+1. Clone or download this repository
+2. Open Chrome and go to `chrome://extensions/`
+3. Enable "Developer mode"
+4. Click "Load unpacked" and select the `basic_clone` folder
+5. The extension will be installed and ready to use
+
+## Development
+
+The extension is built with vanilla JavaScript and follows Chrome Extension Manifest V3 standards. Key files:
+
+- `background.js`: Service worker for background tasks
+- `device-panel.js`: Content script for device selection UI
+- `offscreen/tab_capture/`: Screen recording implementation
+- `manifest.json`: Extension configuration

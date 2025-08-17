@@ -747,7 +747,119 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     createDevicePanel();
     sendResponse({ ok: true });
   }
+
+  if (message.type === "RECORDING_COMPLETED") {
+    showRecordingDownloadDialog(message.videoUrl);
+  }
 });
+
+// Function to show recording download dialog
+function showRecordingDownloadDialog(videoUrl) {
+  // Create a floating download dialog
+  const dialog = document.createElement("div");
+  dialog.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(30, 30, 30, 0.95);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    color: white;
+    z-index: 2147483650;
+    min-width: 300px;
+    text-align: center;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  `;
+
+  const title = document.createElement("h3");
+  title.textContent = "Recording Complete!";
+  title.style.cssText = `
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: #fff;
+  `;
+
+  const message = document.createElement("p");
+  message.textContent = "Your screen recording is ready for download.";
+  message.style.cssText = `
+    margin: 0 0 20px 0;
+    color: #ccc;
+    font-size: 14px;
+  `;
+
+  const downloadBtn = document.createElement("button");
+  downloadBtn.textContent = "Download Video";
+  downloadBtn.style.cssText = `
+    background: #007AFF;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 10px 10px 0;
+    transition: background 0.2s ease;
+  `;
+
+  downloadBtn.onmouseenter = () => {
+    downloadBtn.style.background = "#0056CC";
+  };
+
+  downloadBtn.onmouseleave = () => {
+    downloadBtn.style.background = "#007AFF";
+  };
+
+  downloadBtn.onclick = () => {
+    // Send message to background script to handle download
+    chrome.runtime.sendMessage({
+      type: "INITIATE_VIDEO_DOWNLOAD",
+      videoUrl: videoUrl,
+    });
+    dialog.remove();
+  };
+
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Close";
+  closeBtn.style.cssText = `
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 10px 10px 0;
+    transition: background 0.2s ease;
+  `;
+
+  closeBtn.onmouseenter = () => {
+    closeBtn.style.background = "rgba(255, 255, 255, 0.3)";
+  };
+
+  closeBtn.onmouseleave = () => {
+    closeBtn.style.background = "rgba(255, 255, 255, 0.2)";
+  };
+
+  closeBtn.onclick = () => {
+    dialog.remove();
+  };
+
+  dialog.appendChild(title);
+  dialog.appendChild(message);
+  dialog.appendChild(downloadBtn);
+  dialog.appendChild(closeBtn);
+
+  document.body.appendChild(dialog);
+
+  // Auto-remove after 10 seconds
+  setTimeout(() => {
+    if (dialog.parentNode) {
+      dialog.remove();
+    }
+  }, 10000);
+}
 
 // Export functions for global access
 window.createDevicePanel = createDevicePanel;

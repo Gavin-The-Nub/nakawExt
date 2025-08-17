@@ -1,6 +1,7 @@
 // Basic clone background service worker
 // - Per-tab DNR rules to force mobile UA
 // - Inject/remove scrollbar CSS
+// - Screen recording functionality
 
 const DEVICES = [
   {
@@ -768,9 +769,9 @@ async function showSimulator(tabId, state) {
     // Inject the device panel content script
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ['device-panel.js']
+      files: ["device-panel.js"],
     });
-    
+
     await chrome.scripting.insertCSS({
       target: { tabId },
       css: `
@@ -803,9 +804,9 @@ async function showSimulator(tabId, state) {
   } catch (_) {}
 
   const device = getDeviceBySlug(state.deviceSlug);
-    if (device) {
-      console.log(device)
-    }
+  if (device) {
+    console.log(device);
+  }
 
   const tab = await chrome.tabs.get(tabId);
 
@@ -1223,11 +1224,120 @@ async function showSimulator(tabId, state) {
         });
       };
 
+      // --- Screen Recording button ---
+      const recordingBtn = document.createElement("button");
+      recordingBtn.id = "__mf_simulator_recording_btn__";
+      recordingBtn.title = "Screen Recording";
+      recordingBtn.innerHTML = `
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="3" fill="white"/>
+        </svg>
+      `;
+      recordingBtn.style.width = "50px";
+      recordingBtn.style.height = "50px";
+      recordingBtn.style.borderRadius = "50%";
+      recordingBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      recordingBtn.style.border = "none";
+      recordingBtn.style.cursor = "pointer";
+      recordingBtn.style.display = "flex";
+      recordingBtn.style.alignItems = "center";
+      recordingBtn.style.justifyContent = "center";
+      recordingBtn.style.transition = "all 0.16s ease";
+      recordingBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+
+      recordingBtn.onmouseenter = () => {
+        recordingBtn.style.background = "rgba(85,85,85,0.95)";
+        recordingBtn.style.transform = "scale(1.08)";
+      };
+      recordingBtn.onmouseleave = () => {
+        recordingBtn.style.background = "rgba(51,51,51,0.9)";
+        recordingBtn.style.transform = "scale(1)";
+      };
+
+      // Check recording status and update button appearance
+      let isRecording = false;
+
+      const updateRecordingButton = () => {
+        if (isRecording) {
+          recordingBtn.innerHTML = `
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="6" width="12" height="12" fill="white"/>
+            </svg>
+          `;
+          recordingBtn.style.background = "rgba(220, 53, 69, 0.9)"; // Red when recording
+          recordingBtn.title = "Stop Recording";
+        } else {
+          recordingBtn.innerHTML = `
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
+              <circle cx="12" cy="12" r="3" fill="white"/>
+            </svg>
+          `;
+          recordingBtn.style.background = "rgba(51, 51, 51, 0.9)";
+          recordingBtn.title = "Start Recording";
+        }
+      };
+
+      // Check initial recording status
+      chrome.runtime.sendMessage(
+        { type: "GET_RECORDING_STATUS" },
+        (response) => {
+          if (response && response.isRecording) {
+            isRecording = true;
+            updateRecordingButton();
+          }
+        }
+      );
+
+      // Recording button click handler
+      recordingBtn.onclick = async () => {
+        if (isRecording) {
+          // Stop recording
+          try {
+            const response = await chrome.runtime.sendMessage({
+              type: "STOP_SCREEN_RECORDING",
+            });
+            if (response && response.success) {
+              isRecording = false;
+              updateRecordingButton();
+            } else {
+              alert(
+                "Failed to stop recording: " +
+                  (response?.error || "Unknown error")
+              );
+            }
+          } catch (error) {
+            console.error("Stop recording error:", error);
+            alert("Failed to stop recording: " + error.message);
+          }
+        } else {
+          // Start recording
+          try {
+            const response = await chrome.runtime.sendMessage({
+              type: "START_SCREEN_RECORDING",
+            });
+            if (response && response.success) {
+              isRecording = true;
+              updateRecordingButton();
+            } else {
+              alert(
+                "Failed to start recording: " +
+                  (response?.error || "Unknown error")
+              );
+            }
+          } catch (error) {
+            console.error("Start recording error:", error);
+            alert("Failed to start recording: " + error.message);
+          }
+        }
+      };
+
       // Add buttons to navigation bar
       navBar.appendChild(closeBtn);
       navBar.appendChild(deviceBtn);
-      // append to nav bar
       navBar.appendChild(screenshotBtn);
+      navBar.appendChild(recordingBtn);
 
       overlay.appendChild(mockupContainer);
       document.body.appendChild(overlay);
@@ -1350,6 +1460,59 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         console.error("Failed to show device panel:", e);
         sendResponse({ ok: false, error: e.message });
       }
+      return;
+    }
+
+    // Frame capture message handlers
+    if (msg && msg.type === "mf-request-frame-capture") {
+      const { tabId, frameRate } = msg;
+      startFrameCapture(tabId, frameRate);
+      sendResponse({ success: true });
+      return;
+    }
+
+    // Screen recording message handlers
+    if (msg && msg.type === "START_SCREEN_RECORDING") {
+      const tabId = sender.tab.id;
+      try {
+        const result = await startScreenRecording(tabId);
+        sendResponse(result);
+      } catch (e) {
+        console.error("Start recording error:", e);
+        sendResponse({ success: false, error: e.message });
+      }
+      return;
+    }
+
+    if (msg && msg.type === "STOP_SCREEN_RECORDING") {
+      const tabId = sender.tab.id;
+      try {
+        const result = await stopScreenRecording(tabId);
+        sendResponse(result);
+      } catch (e) {
+        console.error("Stop recording error:", e);
+        sendResponse({ success: false, error: e.message });
+      }
+      return;
+    }
+
+    if (msg && msg.type === "GET_RECORDING_STATUS") {
+      const tabId = sender.tab.id;
+      const isRecording = recordingTabs.has(tabId);
+      sendResponse({ isRecording });
+      return;
+    }
+
+    if (msg && msg.type === "INITIATE_VIDEO_DOWNLOAD") {
+      const videoUrl = msg.videoUrl;
+      if (videoUrl) {
+        chrome.downloads.download({
+          url: videoUrl,
+          filename: `screen-recording-${Date.now()}.webm`,
+          saveAs: true,
+        });
+      }
+      sendResponse({ success: true });
       return;
     }
     if (msg && msg.type === "TOGGLE_MOBILE_FOR_TAB") {
@@ -1508,3 +1671,297 @@ async function reapplyActivatedTabs() {
 
 chrome.runtime.onStartup.addListener(reapplyActivatedTabs);
 chrome.runtime.onInstalled.addListener(reapplyActivatedTabs);
+
+// Screen recording functionality
+let recordingTabs = new Set();
+let frameCaptureIntervals = new Map(); // Track frame capture intervals per tab
+
+async function startScreenRecording(tabId) {
+  try {
+    // Check if already recording
+    if (recordingTabs.has(tabId)) {
+      return { success: false, error: "Already recording" };
+    }
+
+    // Close any existing offscreen document to ensure clean state
+    try {
+      await chrome.offscreen.closeDocument();
+    } catch (e) {
+      console.log("No existing offscreen document to close");
+    }
+
+    // First, check if the simulator frame exists and get its bounds
+    const frameInfo = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const frame = document.getElementById("__mf_simulator_frame__");
+        if (!frame) {
+          return null;
+        }
+
+        const rect = frame.getBoundingClientRect();
+        return {
+          x: rect.left,
+          y: rect.top,
+          width: rect.width,
+          height: rect.height,
+        };
+      },
+    });
+
+    if (!frameInfo || !frameInfo[0] || !frameInfo[0].result) {
+      return { success: false, error: "Simulator frame not found" };
+    }
+
+    const frameBounds = frameInfo[0].result;
+
+    // Get device dimensions from the current state
+    const state = await loadState(tabId);
+    const device = getDeviceBySlug(state.deviceSlug);
+    const deviceWidth = device ? device.width : 375;
+    const deviceHeight = device ? device.height : 812;
+
+    // Create fresh offscreen document
+    await chrome.offscreen.createDocument({
+      url: "offscreen/tab_capture/offscreenTabCapture.html",
+      reasons: ["USER_MEDIA"],
+      justification: "Recording from chrome.scripting.captureVisibleTab API",
+    });
+
+    // Test communication with offscreen document
+    try {
+      await chrome.runtime.sendMessage({
+        type: "test",
+        target: "offscreen",
+      });
+      console.log("Test message sent successfully to offscreen document");
+    } catch (error) {
+      console.error(
+        "Failed to send test message to offscreen document:",
+        error
+      );
+    }
+
+    // Get tab dimensions for recording
+    const tab = await chrome.tabs.get(tabId);
+    const measurement = {
+      tabId: tabId, // Add tabId to measurement object
+      window_width: tab.width || 1920,
+      window_height: tab.height || 1080,
+      width: frameBounds.width,
+      height: frameBounds.height,
+      top: frameBounds.y,
+      left: frameBounds.x,
+      device_width: deviceWidth,
+      device_height: deviceHeight,
+    };
+
+    // Start recording using element capture instead of tab capture
+    await chrome.runtime.sendMessage({
+      type: "mf-start-recording",
+      target: "offscreen",
+      measurement: measurement,
+      video_quality: "medium", // Default to medium quality
+      useElementCapture: true, // Flag to indicate we want element capture
+    });
+
+    recordingTabs.add(tabId);
+    return { success: true };
+  } catch (error) {
+    console.error("Start recording error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function stopScreenRecording(tabId) {
+  try {
+    if (!recordingTabs.has(tabId)) {
+      return { success: false, error: "Not recording" };
+    }
+
+    // Stop frame capture
+    stopFrameCapture(tabId);
+
+    // Stop recording
+    await chrome.runtime.sendMessage({
+      type: "mf-stop-recording",
+      target: "offscreen",
+      tabId: tabId,
+    });
+
+    // Wait a bit for the recording to complete and video to be generated
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Close the offscreen document to clean up resources
+    try {
+      await chrome.offscreen.closeDocument();
+    } catch (e) {
+      console.log("Offscreen document already closed or doesn't exist");
+    }
+
+    recordingTabs.delete(tabId);
+    return { success: true };
+  } catch (error) {
+    console.error("Stop recording error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Check if a tab is currently recording
+function isTabRecording(tabId) {
+  return recordingTabs.has(tabId);
+}
+
+// Frame capture functions for element-based recording
+async function startFrameCapture(tabId, frameRate) {
+  console.log(`Starting frame capture for tab ${tabId} at ${frameRate} fps`);
+
+  // Stop any existing frame capture for this tab
+  if (frameCaptureIntervals.has(tabId)) {
+    clearInterval(frameCaptureIntervals.get(tabId));
+  }
+
+  const frameInterval = 1000 / frameRate;
+
+  const intervalId = setInterval(async () => {
+    try {
+      // Capture the visible tab
+      const dataUrl = await chrome.tabs.captureVisibleTab(tabId, {
+        format: "png",
+        quality: 100,
+      });
+
+      // Get the current frame bounds
+      const frameInfo = await chrome.scripting.executeScript({
+        target: { tabId },
+        func: () => {
+          const frame = document.getElementById("__mf_simulator_frame__");
+          if (!frame) {
+            return null;
+          }
+
+          const rect = frame.getBoundingClientRect();
+          return {
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
+          };
+        },
+      });
+
+      if (frameInfo && frameInfo[0] && frameInfo[0].result) {
+        const frameBounds = frameInfo[0].result;
+        console.log(`Captured frame for tab ${tabId}, bounds:`, frameBounds);
+
+        // Send the frame data to the offscreen document
+        try {
+          await chrome.runtime.sendMessage({
+            type: "mf-frame-data",
+            target: "offscreen",
+            frameData: dataUrl,
+            bounds: frameBounds,
+          });
+          console.log(
+            `Frame data sent successfully for tab ${tabId}, data size:`,
+            dataUrl.length
+          );
+        } catch (error) {
+          console.error(`Failed to send frame data for tab ${tabId}:`, error);
+        }
+      } else {
+        console.warn(`No frame bounds found for tab ${tabId}`);
+      }
+    } catch (error) {
+      console.error(`Error capturing frame for tab ${tabId}:`, error);
+    }
+  }, frameInterval);
+
+  frameCaptureIntervals.set(tabId, intervalId);
+  console.log(`Frame capture interval set for tab ${tabId}`);
+}
+
+function stopFrameCapture(tabId) {
+  if (frameCaptureIntervals.has(tabId)) {
+    clearInterval(frameCaptureIntervals.get(tabId));
+    frameCaptureIntervals.delete(tabId);
+  }
+}
+
+// Cleanup function to stop recording and close offscreen document
+async function cleanupRecording(tabId) {
+  if (recordingTabs.has(tabId)) {
+    try {
+      // Stop frame capture
+      stopFrameCapture(tabId);
+
+      // Stop recording
+      await chrome.runtime.sendMessage({
+        type: "mf-stop-recording",
+        target: "offscreen",
+        tabId: tabId,
+      });
+
+      // Close offscreen document
+      try {
+        await chrome.offscreen.closeDocument();
+      } catch (e) {
+        console.log("Offscreen document already closed or doesn't exist");
+      }
+
+      recordingTabs.delete(tabId);
+    } catch (e) {
+      console.error("Cleanup recording error:", e);
+      recordingTabs.delete(tabId);
+    }
+  }
+}
+
+// Listen for tab removal to cleanup recording
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  await cleanupRecording(tabId);
+});
+
+// Listen for extension reload to cleanup all recordings
+chrome.runtime.onSuspend.addListener(async () => {
+  for (const tabId of recordingTabs) {
+    await cleanupRecording(tabId);
+  }
+});
+
+// Handle video generation completion
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "tab_capture_video_generated") {
+    const { tabId, url } = message;
+
+    // Send message to content script to show download dialog
+    chrome.tabs
+      .sendMessage(tabId, {
+        type: "RECORDING_COMPLETED",
+        videoUrl: url,
+      })
+      .catch(() => {
+        // If content script is not available, create download directly
+        chrome.downloads.download({
+          url: url,
+          filename: `screen-recording-${Date.now()}.webm`,
+          saveAs: true,
+        });
+      });
+  }
+});
+
+// Handle keyboard shortcuts for recording
+chrome.commands.onCommand.addListener(async (command, tab) => {
+  if (command === "start-stop-video-capture") {
+    const tabId = tab.id;
+
+    if (recordingTabs.has(tabId)) {
+      // Stop recording
+      await stopScreenRecording(tabId);
+    } else {
+      // Start recording
+      await startScreenRecording(tabId);
+    }
+  }
+});
