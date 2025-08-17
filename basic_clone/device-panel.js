@@ -485,7 +485,7 @@ const DEVICES = [
     name: "Samsung Smart TV",
     viewport: { width: 1920, height: 1080 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-    platform: "Android",
+    platform: "Special",
     mockup: "devices/ssmarttv.png",
     screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
   },
@@ -512,14 +512,14 @@ const DEVICES = [
 // Create and show the device selection panel
 function createDevicePanel() {
   // Remove existing panel if it exists
-  const existingPanel = document.getElementById('__mf_device_panel__');
+  const existingPanel = document.getElementById("__mf_device_panel__");
   if (existingPanel) {
     existingPanel.remove();
   }
 
   // Create the main panel container
-  const panel = document.createElement('div');
-  panel.id = '__mf_device_panel__';
+  const panel = document.createElement("div");
+  panel.id = "__mf_device_panel__";
   panel.style.cssText = `
     position: fixed;
     right: 20px;
@@ -538,7 +538,7 @@ function createDevicePanel() {
   `;
 
   // Create header
-  const header = document.createElement('div');
+  const header = document.createElement("div");
   header.style.cssText = `
     display: flex;
     justify-content: space-between;
@@ -548,16 +548,16 @@ function createDevicePanel() {
     border-bottom: 1px solid #555;
   `;
 
-  const title = document.createElement('h3');
-  title.textContent = 'Select Device';
+  const title = document.createElement("h3");
+  title.textContent = "Select Device";
   title.style.cssText = `
     margin: 0;
     font-size: 16px;
     color: #fff;
   `;
 
-  const closeBtn = document.createElement('button');
-  closeBtn.innerHTML = '×';
+  const closeBtn = document.createElement("button");
+  closeBtn.innerHTML = "×";
   closeBtn.style.cssText = `
     background: rgba(255, 255, 255, 0.2);
     border: none;
@@ -579,24 +579,52 @@ function createDevicePanel() {
   panel.appendChild(header);
 
   // Create device categories
+  // Create device categories
   const categories = [
-    { name: '📱 iPhones', filter: d => d.platform === 'iOS' && d.name.toLowerCase().includes('iphone') },
-    { name: '💻 MacBooks', filter: d => d.platform === 'macOS' && d.name.toLowerCase().includes('macbook') },
-    { name: '📱 Android Phones', filter: d => d.platform === 'Android' && d.name.toLowerCase().includes('galaxy') },
-    { name: '📱 Tablets', filter: d => d.name.toLowerCase().includes('ipad') || d.name.toLowerCase().includes('tab') },
-    { name: '🖥️ Other Devices', filter: d => !d.name.toLowerCase().includes('iphone') && !d.name.toLowerCase().includes('macbook') && !d.name.toLowerCase().includes('galaxy') && !d.name.toLowerCase().includes('ipad') && !d.name.toLowerCase().includes('tab') }
+    {
+      name: "📱 iPhones",
+      filter: (d) =>
+        d.platform === "iOS" && d.name.toLowerCase().includes("iphone"),
+    },
+    {
+      name: "💻 MacBooks",
+      filter: (d) =>
+        d.platform === "macOS" && d.name.toLowerCase().includes("macbook"),
+    },
+    {
+      name: "📱 Android Phones",
+      filter: (d) => d.platform === "Android", // covers Samsung, Pixel, Huawei, Oppo, etc.
+    },
+    {
+      name: "📱 Tablets",
+      filter: (d) =>
+        d.name.toLowerCase().includes("ipad") ||
+        d.name.toLowerCase().includes("tab"),
+    },
+    {
+      name: "🖥️ Other Devices",
+      filter: (d) =>
+        !(
+          (d.platform === "iOS" && d.name.toLowerCase().includes("iphone")) ||
+          (d.platform === "macOS" &&
+            d.name.toLowerCase().includes("macbook")) ||
+          d.platform === "Android" ||
+          d.name.toLowerCase().includes("ipad") ||
+          d.name.toLowerCase().includes("tab")
+        ),
+    },
   ];
 
-  categories.forEach(category => {
+  categories.forEach((category) => {
     const devices = DEVICES.filter(category.filter);
     if (devices.length === 0) return;
 
-    const categoryDiv = document.createElement('div');
+    const categoryDiv = document.createElement("div");
     categoryDiv.style.cssText = `
       margin-bottom: 20px;
     `;
 
-    const categoryTitle = document.createElement('h4');
+    const categoryTitle = document.createElement("h4");
     categoryTitle.textContent = category.name;
     categoryTitle.style.cssText = `
       margin: 0 0 10px 0;
@@ -606,15 +634,15 @@ function createDevicePanel() {
       padding-bottom: 5px;
     `;
 
-    const deviceGrid = document.createElement('div');
+    const deviceGrid = document.createElement("div");
     deviceGrid.style.cssText = `
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 8px;
     `;
 
-    devices.forEach(device => {
-      const deviceItem = document.createElement('div');
+    devices.forEach((device) => {
+      const deviceItem = document.createElement("div");
       deviceItem.style.cssText = `
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -627,11 +655,17 @@ function createDevicePanel() {
       `;
 
       // Create device icon
-      const icon = document.createElement('div');
+      const icon = document.createElement("div");
       icon.style.cssText = `
         width: 40px;
         height: 40px;
-        background: ${device.platform === 'iOS' ? '#007AFF' : device.platform === 'Android' ? '#3DDC84' : '#0066CC'};
+        background: ${
+          device.platform === "iOS"
+            ? "#007AFF"
+            : device.platform === "Android"
+            ? "#3DDC84"
+            : "#0066CC"
+        };
         border-radius: 8px;
         margin: 0 auto 5px auto;
         display: flex;
@@ -641,9 +675,14 @@ function createDevicePanel() {
         font-size: 12px;
         font-weight: bold;
       `;
-      icon.textContent = device.platform === 'iOS' ? '🍎' : device.platform === 'Android' ? '🤖' : '💻';
+      icon.textContent =
+        device.platform === "iOS"
+          ? "🍎"
+          : device.platform === "Android"
+          ? "🤖"
+          : "💻";
 
-      const name = document.createElement('div');
+      const name = document.createElement("div");
       name.textContent = device.name;
       name.style.cssText = `
         font-size: 10px;
@@ -656,15 +695,15 @@ function createDevicePanel() {
 
       // Add hover effects
       deviceItem.onmouseenter = () => {
-        deviceItem.style.background = 'rgba(255, 255, 255, 0.2)';
-        deviceItem.style.borderColor = 'rgba(255, 255, 255, 0.4)';
-        deviceItem.style.transform = 'scale(1.05)';
+        deviceItem.style.background = "rgba(255, 255, 255, 0.2)";
+        deviceItem.style.borderColor = "rgba(255, 255, 255, 0.4)";
+        deviceItem.style.transform = "scale(1.05)";
       };
 
       deviceItem.onmouseleave = () => {
-        deviceItem.style.background = 'rgba(255, 255, 255, 0.1)';
-        deviceItem.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-        deviceItem.style.transform = 'scale(1)';
+        deviceItem.style.background = "rgba(255, 255, 255, 0.1)";
+        deviceItem.style.borderColor = "rgba(255, 255, 255, 0.2)";
+        deviceItem.style.transform = "scale(1)";
       };
 
       // Add click event to select device
@@ -681,10 +720,13 @@ function createDevicePanel() {
   });
 
   // Add click outside to close
-  document.addEventListener('click', function closeOnOutsideClick(e) {
-    if (!panel.contains(e.target) && !e.target.closest('#__mf_simulator_device_btn__')) {
+  document.addEventListener("click", function closeOnOutsideClick(e) {
+    if (
+      !panel.contains(e.target) &&
+      !e.target.closest("#__mf_simulator_device_btn__")
+    ) {
       panel.remove();
-      document.removeEventListener('click', closeOnOutsideClick);
+      document.removeEventListener("click", closeOnOutsideClick);
     }
   });
 
