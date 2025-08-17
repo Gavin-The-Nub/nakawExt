@@ -11,7 +11,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip16.png",
-    screenPct: { top: 2.2, right: 0.5, bottom: 2.2, left: 0.5, radius: 13.0 },
+    screenPct: {
+      top: 2.2,
+      right: 5,
+      bottom: 2.2,
+      left: 5,
+      radius: 13.0,
+      scale: 0.7,
+    },
   },
   {
     slug: "mb-air",
@@ -20,7 +27,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "devices/macbook-air.png",
-    screenPct: { top: 8.0, right: 0, bottom: 8.0, left: 0, radius: 1.0 },
+    screenPct: {
+      top: 8.0,
+      right: 10,
+      bottom: 8.0,
+      left: 10,
+      radius: 1.0,
+      scale: 0.8,
+    },
   },
   {
     slug: "apple-imac",
@@ -29,7 +43,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "devices/apple-imac.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 5, right: 0, bottom: 5, left: 0, radius: 3, scale: 0.5 },
   },
   {
     slug: "applewatch",
@@ -38,7 +52,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/applewatch.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3, scale: 1.2 },
   },
   {
     slug: "dell14",
@@ -47,7 +61,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "devices/dell14.png",
-    screenPct: { top: 8, right: 9, bottom: 25, left: 9, radius: 3 },
+    screenPct: {
+      top: 8,
+      right: 9,
+      bottom: 25,
+      left: 9,
+      radius: 3,
+      scale: 0.65,
+    },
   },
   {
     slug: "gpixel5",
@@ -56,7 +77,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/gpixel5.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 4.5,
+      bottom: 1,
+      left: 4.5,
+      radius: 3,
+      scale: 0.85,
+    },
   },
   {
     slug: "gpixel6",
@@ -65,7 +93,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/gpixel6.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 0,
+      bottom: 1,
+      left: 0,
+      radius: 3,
+      scale: 0.85,
+    },
   },
   {
     slug: "gpixel8",
@@ -74,7 +109,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/gpixel8.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 2,
+      bottom: 1,
+      left: 2,
+      radius: 3,
+      scale: 0.7,
+    },
   },
   {
     slug: "hp30",
@@ -83,7 +125,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/hp30.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 2,
+      bottom: 1,
+      left: 2,
+      radius: 3,
+      scale: 0.7,
+    },
   },
   {
     slug: "ip11",
@@ -92,7 +141,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.75 },
   },
   {
     slug: "ip11pro",
@@ -344,7 +393,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "devices/macbookpro.png",
-    screenPct: { top: 8, right: 0, bottom: 8, left: 0, radius: 1 },
+    screenPct: {
+      top: 8,
+      right: 18.5,
+      bottom: 8,
+      left: 8,
+      radius: 1,
+      scale: 0.6,
+    },
   },
   {
     slug: "microsoftsurfaceduo",
@@ -362,7 +418,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/nord2.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 2,
+      bottom: 3,
+      left: 2,
+      radius: 3,
+      scale: 0.7,
+    },
   },
   {
     slug: "ofindx3",
@@ -371,7 +434,13 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/ofindx3.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 2,
+      bottom: 3,
+      left: 2,
+      radius: 3,
+    },
   },
   {
     slug: "sgalaxya12",
@@ -380,26 +449,46 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxya12.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 2,
+      bottom: 3,
+      left: 2,
+      radius: 3,
+      scale: 0.7,
+    },
   },
   {
-    //TODO find the device
     slug: "sgalaxyfold",
     name: "sgalaxyfold",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 844, height: 1104 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxyfold.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 1.8,
+      right: 2,
+      bottom: 1.8,
+      left: 2,
+      radius: 3,
+      scale: 0.6,
+    },
   },
   {
     slug: "sgalaxynote20ultra",
     name: "sgalaxynote20ultra",
     viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-    platform: "Android",
+    platform: "special",
     mockup: "devices/sgalaxynote20ultra.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 0,
+      right: 0.5,
+      bottom: 2,
+      left: 0,
+      radius: 3,
+      scale: 0.8,
+    },
   },
   {
     slug: "sgalaxys12ultra",
@@ -408,7 +497,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys12ultra.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 1.4,
+      right: 2,
+      bottom: 2,
+      left: 2,
+      radius: 3,
+      scale: 0.7,
+    },
   },
   {
     slug: "sgalaxys20",
@@ -417,7 +513,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys20.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 1, right: 4, bottom: 1, left: 4, radius: 3 },
   },
   {
     slug: "sgalaxys22",
@@ -426,7 +522,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys22.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 1, right: 4, bottom: 1, left: 4, radius: 3 },
   },
   {
     slug: "sgalaxys22plus",
@@ -435,7 +531,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys22plus.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 1, right: 4, bottom: 1, left: 3.8, radius: 3 },
   },
   {
     slug: "sgalaxys22ultra",
@@ -444,7 +540,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys22ultra.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 0, right: 1, bottom: 0, left: 1, radius: 3 },
   },
   {
     slug: "sgalaxys24",
@@ -453,7 +549,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys24.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 1, right: 4, bottom: 1, left: 3.3, radius: 3 },
   },
   {
     slug: "sgalaxys24ultra",
@@ -462,7 +558,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys24ultra.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 1, right: 4.5, bottom: 1, left: 4, radius: 3 },
   },
   {
     slug: "sgalaxytabs7",
@@ -480,7 +576,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxyzflip.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3 },
   },
   {
     slug: "ssmarttv",
@@ -507,7 +603,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/x12.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 1.5, right: 2, bottom: 2, left: 2, radius: 3 },
   },
   {
     slug: "xm11i",
@@ -516,7 +612,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/xm11i.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 2, bottom: 2, left: 2, radius: 3 },
   },
 ];
 
@@ -826,7 +922,7 @@ async function showSimulator(tabId, state) {
       mockupContainer.style.display = "inline-block";
       mockupContainer.style.width = String(w) + "px";
       mockupContainer.style.height = String(h) + "px";
-      mockupContainer.style.scale = "0.7";
+      mockupContainer.style.scale = String(deviceScreenPct?.scale || 0.7);
       mockupContainer.style.overflow = "hidden";
 
       // Create mockup image with proper sizing (will sit below content)
@@ -848,6 +944,7 @@ async function showSimulator(tabId, state) {
         bottom: 10,
         left: 6,
         radius: 3,
+        scale: 0.7,
       };
       const preset = {
         x: Math.round((pct.left / 100) * w),
