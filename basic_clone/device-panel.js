@@ -46,7 +46,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "devices/dell14.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 5, right: 9, bottom: 5, left: 9, radius: 0 },
   },
   {
     slug: "gpixel5",
