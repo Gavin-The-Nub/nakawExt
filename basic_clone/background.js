@@ -706,7 +706,6 @@ async function applyScrollbar(tabId, show) {
         height: 13px !important;
       }
       ::-webkit-scrollbar-thumb {
-        background: rgba(0,0,0,0.4);
         border: solid 3px transparent;
         background-clip: content-box;
         border-radius: 17px;
@@ -747,7 +746,7 @@ async function applyScrollbar(tabId, show) {
     // Remove any existing scrollbar CSS first
     await chrome.scripting.removeCSS({
       target: { tabId, allFrames: true },
-      css: "html,body{overflow-y:auto !important;overflow-x:hidden !important}::-webkit-scrollbar{background:transparent;width:13px !important;height:13px !important}::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.4);border:solid 3px transparent;background-clip:content-box;border-radius:17px}",
+      css: "html,body{overflow-y:auto !important;overflow-x:hidden !important}::-webkit-scrollbar{background:transparent;width:13px !important;height:13px !important}::-webkit-scrollbar-thumb{border:solid 3px transparent;background-clip:content-box;border-radius:17px}",
     });
   } catch (_) {}
 
@@ -775,8 +774,8 @@ async function showSimulator(tabId, state) {
     await chrome.scripting.insertCSS({
       target: { tabId },
       css: `
-        #__mf_simulator_overlay__{position:fixed;inset:0;background:#111;z-index:2147483647;display:flex;align-items:center;justify-content:center}
-        #__mf_simulator_frame__{position:relative;display:inline-block;border-radius:20px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.3)}
+        #__mf_simulator_overlay__{position:fixed;inset:0;background:#FFFF;z-index:2147483647;display:flex;align-items:center;justify-content:center}
+        #__mf_simulator_frame__{position:relative;display:inline-block;overflow:hidden;background: transparent;}
         
         /* Completely hide main page scrollbar when simulator is active */
         html, body {
