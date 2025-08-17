@@ -10,7 +10,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip16.png",
-    screenPct: { top: 2.2, right: 0, bottom: 2.2, left: 0, radius: 8.0 },
+    screenPct: { top: 2.2, right: 0.5, bottom: 2.2, left: 0.5, radius: 13.0 },
   },
   {
     slug: "mb-air",
@@ -23,8 +23,8 @@ const DEVICES = [
   },
   {
     slug: "apple-imac",
-    name: "apple imac",
-    viewport: { width: 1280, height: 800 },
+    name: `Apple iMac 24"`,
+    viewport: { width: 2048, height: 1152 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "devices/apple-imac.png",
@@ -32,8 +32,8 @@ const DEVICES = [
   },
   {
     slug: "applewatch",
-    name: "applewatch",
-    viewport: { width: 200, height: 300 },
+    name: "Apple Watch Series 6",
+    viewport: { width: 162, height: 197 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/applewatch.png",
@@ -41,8 +41,8 @@ const DEVICES = [
   },
   {
     slug: "dell14",
-    name: "dell14",
-    viewport: { width: 1280, height: 800 },
+    name: "Dell Latitude",
+    viewport: { width: 1440, height: 809 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "devices/dell14.png",
@@ -51,7 +51,7 @@ const DEVICES = [
   {
     slug: "gpixel5",
     name: "gpixel5",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 393, height: 851 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/gpixel5.png",
@@ -60,7 +60,7 @@ const DEVICES = [
   {
     slug: "gpixel6",
     name: "gpixel6",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/gpixel6.png",
@@ -69,7 +69,7 @@ const DEVICES = [
   {
     slug: "gpixel8",
     name: "gpixel8",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 412, height: 916 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/gpixel8.png",
@@ -78,7 +78,7 @@ const DEVICES = [
   {
     slug: "hp30",
     name: "hp30",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/hp30.png",
@@ -87,7 +87,7 @@ const DEVICES = [
   {
     slug: "ip11",
     name: "ip11",
-    viewport: { width: 393, height: 852 },
+    viewport: { width: 414, height: 896 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11.png",
@@ -96,7 +96,7 @@ const DEVICES = [
   {
     slug: "ip11pro",
     name: "ip11pro",
-    viewport: { width: 393, height: 852 },
+    viewport: { width: 375, height: 812 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11pro.png",
@@ -105,7 +105,7 @@ const DEVICES = [
   {
     slug: "ip11promax",
     name: "ip11promax",
-    viewport: { width: 430, height: 932 },
+    viewport: { width: 414, height: 896 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11promax.png",
@@ -123,7 +123,7 @@ const DEVICES = [
   {
     slug: "ip12max",
     name: "ip12max",
-    viewport: { width: 428, height: 926 },
+    viewport: { width: 390, height: 844 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip12max.png",
@@ -159,7 +159,7 @@ const DEVICES = [
   {
     slug: "ip13mini",
     name: "ip13mini",
-    viewport: { width: 360, height: 780 },
+    viewport: { width: 375, height: 812 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip13mini.png",
@@ -186,7 +186,7 @@ const DEVICES = [
   {
     slug: "ip14",
     name: "ip14",
-    viewport: { width: 393, height: 852 },
+    viewport: { width: 390, height: 844 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14.png",
@@ -195,7 +195,7 @@ const DEVICES = [
   {
     slug: "ip14max",
     name: "ip14max",
-    viewport: { width: 430, height: 932 },
+    viewport: { width: 428, height: 926 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14max.png",
@@ -204,7 +204,7 @@ const DEVICES = [
   {
     slug: "ip14pro",
     name: "ip14pro",
-    viewport: { width: 393, height: 852 },
+    viewport: { width: 390, height: 844 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14pro.png",
@@ -213,7 +213,7 @@ const DEVICES = [
   {
     slug: "ip14promax",
     name: "ip14promax",
-    viewport: { width: 430, height: 932 },
+    viewport: { width: 428, height: 928 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14promax.png",
@@ -267,7 +267,7 @@ const DEVICES = [
   {
     slug: "ip16promax",
     name: "ip16promax",
-    viewport: { width: 430, height: 932 },
+    viewport: { width: 440, height: 956 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip16promax.png",
@@ -294,7 +294,7 @@ const DEVICES = [
   {
     slug: "ipad-mini",
     name: "ipad mini",
-    viewport: { width: 744, height: 1133 },
+    viewport: { width: 768, height: 1024 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ipad-mini.png",
@@ -303,7 +303,7 @@ const DEVICES = [
   {
     slug: "ipad-pro",
     name: "ipad pro",
-    viewport: { width: 1024, height: 1366 },
+    viewport: { width: 834, height: 1194 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ipad-pro.png",
@@ -312,7 +312,7 @@ const DEVICES = [
   {
     slug: "ipse",
     name: "ipse",
-    viewport: { width: 375, height: 667 },
+    viewport: { width: 320, height: 586 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ipse.png",
@@ -339,7 +339,7 @@ const DEVICES = [
   {
     slug: "macbookpro",
     name: "macbookpro",
-    viewport: { width: 1280, height: 800 },
+    viewport: { width: 1728, height: 1085 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "devices/macbookpro.png",
@@ -348,7 +348,7 @@ const DEVICES = [
   {
     slug: "microsoftsurfaceduo",
     name: "microsoftsurfaceduo",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 1114, height: 705 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/microsoftsurfaceduo.png",
@@ -357,7 +357,7 @@ const DEVICES = [
   {
     slug: "nord2",
     name: "nord2",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 412, height: 915 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/nord2.png",
@@ -366,7 +366,7 @@ const DEVICES = [
   {
     slug: "ofindx3",
     name: "ofindx3",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 804 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/ofindx3.png",
@@ -375,13 +375,14 @@ const DEVICES = [
   {
     slug: "sgalaxya12",
     name: "sgalaxya12",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxya12.png",
     screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
   },
   {
+    //TODO find the device
     slug: "sgalaxyfold",
     name: "sgalaxyfold",
     viewport: { width: 400, height: 800 },
@@ -393,7 +394,7 @@ const DEVICES = [
   {
     slug: "sgalaxynote20ultra",
     name: "sgalaxynote20ultra",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxynote20ultra.png",
@@ -402,7 +403,7 @@ const DEVICES = [
   {
     slug: "sgalaxys12ultra",
     name: "sgalaxys12ultra",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 412, height: 883 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys12ultra.png",
@@ -411,7 +412,7 @@ const DEVICES = [
   {
     slug: "sgalaxys20",
     name: "sgalaxys20",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys20.png",
@@ -420,7 +421,7 @@ const DEVICES = [
   {
     slug: "sgalaxys22",
     name: "sgalaxys22",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys22.png",
@@ -429,7 +430,7 @@ const DEVICES = [
   {
     slug: "sgalaxys22plus",
     name: "sgalaxys22plus",
-    viewport: { width: 412, height: 915 },
+    viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys22plus.png",
@@ -438,7 +439,7 @@ const DEVICES = [
   {
     slug: "sgalaxys22ultra",
     name: "sgalaxys22ultra",
-    viewport: { width: 412, height: 915 },
+    viewport: { width: 360, height: 772 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys22ultra.png",
@@ -447,7 +448,7 @@ const DEVICES = [
   {
     slug: "sgalaxys24",
     name: "sgalaxys24",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys24.png",
@@ -456,7 +457,7 @@ const DEVICES = [
   {
     slug: "sgalaxys24ultra",
     name: "sgalaxys24ultra",
-    viewport: { width: 412, height: 915 },
+    viewport: { width: 384, height: 832 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxys24ultra.png",
@@ -474,7 +475,7 @@ const DEVICES = [
   {
     slug: "sgalaxyzflip",
     name: "sgalaxyzflip",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 880 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxyzflip.png",
@@ -492,7 +493,7 @@ const DEVICES = [
   {
     slug: "undefined-medium_upscaled",
     name: "undefined medium upscaled",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/undefined-medium_upscaled.png",
@@ -501,7 +502,7 @@ const DEVICES = [
   {
     slug: "x12",
     name: "x12",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/x12.png",
@@ -510,7 +511,7 @@ const DEVICES = [
   {
     slug: "xm11i",
     name: "xm11i",
-    viewport: { width: 400, height: 800 },
+    viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/xm11i.png",
