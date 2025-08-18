@@ -13,11 +13,11 @@ const DEVICES = [
     mockup: "devices/ip16.png",
     screenPct: {
       top: 2.2,
-      right: 5,
+      right: 6,
       bottom: 2.2,
-      left: 5,
+      left: 6,
       radius: 13.0,
-      scale: 0.7,
+      scale: 0.9,
     },
   },
   {
@@ -141,7 +141,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.75 },
+    screenPct: { top: 4, right: 7, bottom: 3, left: 7, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip11pro",
@@ -150,7 +150,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11pro.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 3, right: 7, bottom: 3, left: 7, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip11promax",
@@ -159,7 +159,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11promax.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 6, bottom: 2, left: 6, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip12",
@@ -168,7 +168,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip12.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip12max",
@@ -177,7 +177,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip12max.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip12mini",
@@ -186,7 +186,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip12mini.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.85 },
   },
   {
     slug: "ip12promax",
@@ -195,7 +195,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip12promax.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip13",
@@ -204,7 +204,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip13.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip13mini",
@@ -213,7 +213,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip13mini.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.85 },
   },
   {
     slug: "ip13pro",
@@ -222,7 +222,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip13pro.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 4, bottom: 2, left: 4, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip13promax",
@@ -231,7 +231,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip13promax.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip14",
@@ -240,7 +240,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 4, bottom: 2, left: 4, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip14max",
@@ -249,7 +249,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14max.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 4.8,
+      bottom: 2,
+      left: 5,
+      radius: 3,
+      scale: 0.9,
+    },
   },
   {
     slug: "ip14pro",
@@ -258,7 +265,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14pro.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
   },
   {
     slug: "ip14promax",
@@ -267,7 +274,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14promax.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 4.9,
+      bottom: 2,
+      left: 5,
+      radius: 3,
+      scale: 0.9,
+    },
   },
   {
     slug: "ip15",
@@ -276,7 +290,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip15.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 1.8,
+      right: 4.5,
+      bottom: 1.8,
+      left: 4.5,
+      radius: 3,
+      scale: 0.9,
+    },
   },
   {
     slug: "ip15plus",
@@ -285,7 +306,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip15plus.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 1.8,
+      right: 4.5,
+      bottom: 1.8,
+      left: 4.5,
+      radius: 3,
+      scale: 0.9,
+    },
   },
   {
     slug: "ip15pro",
@@ -294,7 +322,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip15pro.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 1.8,
+      right: 4.5,
+      bottom: 1.8,
+      left: 4.5,
+      radius: 4.3,
+      scale: 0.9,
+    },
   },
   {
     slug: "ip15promax",
@@ -303,7 +338,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip15promax.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 1.5,
+      right: 4,
+      bottom: 1.5,
+      left: 4,
+      radius: 5,
+      scale: 0.9,
+    },
   },
   {
     slug: "ip16plus",
@@ -312,7 +354,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip16plus.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 4,
+      bottom: 2,
+      left: 4,
+      radius: 5,
+      scale: 0.9,
+    },
   },
   {
     slug: "ip16promax",
@@ -321,7 +370,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip16promax.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 1.8,
+      right: 4,
+      bottom: 1.8,
+      left: 4,
+      radius: 6.5,
+      scale: 0.9,
+    },
   },
   {
     slug: "ip5",
@@ -330,7 +386,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip5.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 14, right: 5, bottom: 14, left: 5, radius: 3, scale: 1 },
   },
   {
     slug: "ipad-air",
@@ -366,7 +422,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ipse.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 12, right: 5, bottom: 12, left: 5, radius: 3, scale: 1 },
   },
   {
     slug: "ipx",
@@ -375,7 +431,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ipx.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 2,
+      right: 4.5,
+      bottom: 2,
+      left: 4.5,
+      radius: 4.3,
+      scale: 0.9,
+    },
   },
   {
     slug: "ipxr",
@@ -384,7 +447,14 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ipxr.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: {
+      top: 3.5,
+      right: 5.5,
+      bottom: 2,
+      left: 5.5,
+      radius: 4.3,
+      scale: 0.9,
+    },
   },
   {
     slug: "macbookpro",
