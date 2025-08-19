@@ -599,7 +599,8 @@ function createDevicePanel() {
       name: "📱 Tablets",
       filter: (d) =>
         d.name.toLowerCase().includes("ipad") ||
-        d.name.toLowerCase().includes("tab"),
+        d.name.toLowerCase().includes("tab") ||
+        d.name.toLowerCase().includes("surface"),
     },
     {
       name: "🖥️ Other Devices",
@@ -637,7 +638,7 @@ function createDevicePanel() {
     const deviceGrid = document.createElement("div");
     deviceGrid.style.cssText = `
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
     `;
 
