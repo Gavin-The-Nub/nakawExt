@@ -13,9 +13,9 @@ const DEVICES = [
     mockup: "devices/ip16.png",
     screenPct: {
       top: 2.2,
-      right: 6,
+      right: 5,
       bottom: 2.2,
-      left: 6,
+      left: 5,
       radius: 13.0,
       scale: 0.9,
     },
@@ -464,8 +464,8 @@ const DEVICES = [
     platform: "macOS",
     mockup: "devices/macbookpro.png",
     screenPct: {
-      top: 8,
-      right: 18.5,
+      top: 3.5,
+      right: 8,
       bottom: 8,
       left: 8,
       radius: 1,
