@@ -997,6 +997,7 @@ async function showSimulator(tabId, state) {
 
       // Create mockup image with proper sizing (will sit below content)
       const mockupImg = document.createElement("img");
+      mockupImg.id = "__mf_simulator_mockup__";
       mockupImg.src = chrome.runtime.getURL(mockupPath);
       mockupImg.style.width = String(w) + "px";
       mockupImg.style.height = String(h) + "px";
@@ -1025,6 +1026,7 @@ async function showSimulator(tabId, state) {
       };
 
       const iframeContainer = document.createElement("div");
+      iframeContainer.id = "__mf_simulator_screen__";
       iframeContainer.style.position = "absolute";
       iframeContainer.style.top = String(preset.y) + "px";
       iframeContainer.style.left = String(preset.x) + "px";
@@ -1242,12 +1244,16 @@ async function showSimulator(tabId, state) {
         screenshotBtn.style.transform = "scale(1)";
       };
 
-      // handler: request background to capture, crop, then show menu: download / copy
+      // handler: request background to capture, then composite onto a transparent canvas
       screenshotBtn.onclick = () => {
         const frameEl = document.getElementById("__mf_simulator_frame__");
-        if (!frameEl) return alert("Simulator frame not found.");
+        const screenEl = document.getElementById("__mf_simulator_screen__");
+        const mockupImgEl = document.getElementById("__mf_simulator_mockup__");
+        if (!frameEl || !screenEl || !mockupImgEl)
+          return alert("Simulator elements not found.");
 
-        const rect = frameEl.getBoundingClientRect(); // relative to viewport
+        const frameRect = frameEl.getBoundingClientRect(); // relative to viewport
+        const screenRect = screenEl.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
 
         // Ask background to capture the visible tab as PNG dataUrl
@@ -1261,22 +1267,51 @@ async function showSimulator(tabId, state) {
           }
 
           const dataUrl = resp.dataUrl;
-          const img = new Image();
-          img.onload = async () => {
+          const fullTabImg = new Image();
+          fullTabImg.onload = async () => {
             try {
-              // Create canvas sized to the target region in device pixels
-              const cw = Math.round(rect.width * dpr);
-              const ch = Math.round(rect.height * dpr);
-              const sx = Math.round(rect.left * dpr);
-              const sy = Math.round(rect.top * dpr);
-
+              // Create canvas sized to the mockup frame in device pixels with alpha
+              const cw = Math.round(frameRect.width * dpr);
+              const ch = Math.round(frameRect.height * dpr);
               const canvas = document.createElement("canvas");
               canvas.width = cw;
               canvas.height = ch;
               const ctx = canvas.getContext("2d");
 
-              // Draw the captured full-image then crop
-              ctx.drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
+              // Draw only the screen area (cropped from the full tab image)
+              const sxScreen = Math.round(screenRect.left * dpr);
+              const syScreen = Math.round(screenRect.top * dpr);
+              const sw = Math.round(screenRect.width * dpr);
+              const sh = Math.round(screenRect.height * dpr);
+              const dx = Math.round((screenRect.left - frameRect.left) * dpr);
+              const dy = Math.round((screenRect.top - frameRect.top) * dpr);
+              ctx.drawImage(fullTabImg, sxScreen, syScreen, sw, sh, dx, dy, sw, sh);
+
+              // Load the device image as a safe same-origin blob to avoid canvas tainting
+              let deviceBlobUrl;
+              try {
+                const res = await fetch(mockupImgEl.src);
+                const blob = await res.blob();
+                deviceBlobUrl = URL.createObjectURL(blob);
+              } catch (e) {
+                console.error("Failed to fetch device image", e);
+                return alert("Failed to fetch device image for compositing.");
+              }
+
+              await new Promise((resolve, reject) => {
+                const deviceImg = new Image();
+                deviceImg.onload = () => {
+                  try {
+                    // Draw device bezel on top (keeps transparent outside)
+                    ctx.drawImage(deviceImg, 0, 0, cw, ch);
+                  } finally {
+                    try { URL.revokeObjectURL(deviceBlobUrl); } catch (_) {}
+                    resolve();
+                  }
+                };
+                deviceImg.onerror = (err) => reject(err);
+                deviceImg.src = deviceBlobUrl;
+              });
 
               // Convert to blob
               canvas.toBlob(async (blob) => {
@@ -1338,16 +1373,12 @@ async function showSimulator(tabId, state) {
                 // Copy behavior (Clipboard API)
                 copyBtn.onclick = async () => {
                   try {
-                    // ClipboardItem requires a Blob
                     await navigator.clipboard.write([
                       new ClipboardItem({ "image/png": blob }),
                     ]);
-                    // small visual confirmation
                     copyBtn.textContent = "Copied!";
                     setTimeout(() => {
-                      try {
-                        copyBtn.textContent = "Copy";
-                      } catch (e) {}
+                      try { copyBtn.textContent = "Copy"; } catch (e) {}
                       menu.remove();
                     }, 900);
                   } catch (err) {
@@ -1368,10 +1399,7 @@ async function showSimulator(tabId, state) {
 
                 // Auto-remove menu if user clicks elsewhere
                 const onDocClick = (ev) => {
-                  if (
-                    !menu.contains(ev.target) &&
-                    ev.target !== screenshotBtn
-                  ) {
+                  if (!menu.contains(ev.target) && ev.target !== screenshotBtn) {
                     menu.remove();
                     document.removeEventListener("mousedown", onDocClick);
                   }
@@ -1383,11 +1411,11 @@ async function showSimulator(tabId, state) {
               alert("Screenshot processing failed: " + e.message);
             }
           };
-          img.onerror = (e) => {
+          fullTabImg.onerror = (e) => {
             console.error("Image load error", e);
             alert("Failed to load captured image.");
           };
-          img.src = dataUrl;
+          fullTabImg.src = dataUrl;
         });
       };
 
