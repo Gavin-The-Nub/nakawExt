@@ -712,6 +712,7 @@ async function loadState(tabId) {
     showScrollbar: false, // Changed default to false
     simulator: true, // Changed default to true - auto-show simulator
     deviceSlug: "ip16", // Set iphone 16 as default
+    orientation: "portrait", // default orientation
   };
   tabState[tabId] = state;
   return state;
@@ -726,6 +727,7 @@ async function saveState(tabId) {
     showScrollbar: false, // Changed default to false
     simulator: true, // Changed default to true - auto-show simulator
     deviceSlug: "ip16", // Set iphone 16 as default
+    orientation: "portrait",
   };
   await area.set(value);
 }
@@ -749,6 +751,20 @@ function ruleIdsForTab(tabId) {
   const reqRuleId = (base << 2) + 101;
   const resRuleId = (base << 2) + 102;
   return { reqRuleId: toInt(reqRuleId), resRuleId: toInt(resRuleId) };
+}
+
+// Rotate screen percentage insets 90° clockwise to match landscape orientation
+function rotateScreenPctCW(pct) {
+  if (!pct) return pct;
+  const { top = 0, right = 0, bottom = 0, left = 0, radius = 0, scale } = pct;
+  return {
+    top: left,
+    right: top,
+    bottom: right,
+    left: bottom,
+    radius,
+    scale,
+  };
 }
 
 async function enableMobileHeaders(tabId) {
@@ -978,7 +994,7 @@ async function showSimulator(tabId, state) {
 
   await chrome.scripting.executeScript({
     target: { tabId },
-    func: ({ w, h, deviceName, mockupPath, deviceScreenPct }) => {
+    func: ({ w, h, deviceName, mockupPath, deviceScreenPct, orientation }) => {
       const prev = document.getElementById("__mf_simulator_overlay__");
       if (prev) prev.remove();
 
@@ -994,6 +1010,9 @@ async function showSimulator(tabId, state) {
       mockupContainer.style.height = String(h) + "px";
       mockupContainer.style.scale = String(deviceScreenPct?.scale || 0.7);
       mockupContainer.style.overflow = "hidden";
+      mockupContainer.style.transition = "transform 220ms ease";
+      mockupContainer.style.transformOrigin = "50% 50%";
+      mockupContainer.style.willChange = "transform";
 
       // Create mockup image with proper sizing (will sit below content)
       const mockupImg = document.createElement("img");
@@ -1003,8 +1022,18 @@ async function showSimulator(tabId, state) {
       mockupImg.style.height = String(h) + "px";
       mockupImg.style.display = "block";
       mockupImg.style.position = "absolute";
-      mockupImg.style.top = "0";
-      mockupImg.style.left = "0";
+      // Apply rotation for landscape
+      if (orientation === "landscape") {
+        mockupImg.style.width = String(h) + "px";
+        mockupImg.style.height = String(w) + "px";
+        mockupImg.style.top = "50%";
+        mockupImg.style.left = "50%";
+        mockupImg.style.transform = "translate(-50%, -50%) rotate(90deg)";
+        mockupImg.style.transformOrigin = "center center";
+      } else {
+        mockupImg.style.top = "0";
+        mockupImg.style.left = "0";
+      }
       mockupImg.style.zIndex = "5"; // mockup above iframe for bezel overlay
       mockupImg.style.pointerEvents = "none";
 
@@ -1076,6 +1105,7 @@ async function showSimulator(tabId, state) {
       iframe.style.height = "100%";
       iframe.style.top = "0";
       iframe.style.left = "0";
+      iframe.style.borderRadius = String(preset.radius) + "px";
       iframe.style.zIndex = "2"; // below mockup, above container background
       iframe.sandbox =
         "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
@@ -1303,7 +1333,16 @@ async function showSimulator(tabId, state) {
                 deviceImg.onload = () => {
                   try {
                     // Draw device bezel on top (keeps transparent outside)
-                    ctx.drawImage(deviceImg, 0, 0, cw, ch);
+                    if (orientation === "landscape") {
+                      ctx.save();
+                      ctx.translate(cw / 2, ch / 2);
+                      ctx.rotate(Math.PI / 2);
+                      // After rotation, width/height swapped
+                      ctx.drawImage(deviceImg, -ch / 2, -cw / 2, ch, cw);
+                      ctx.restore();
+                    } else {
+                      ctx.drawImage(deviceImg, 0, 0, cw, ch);
+                    }
                   } finally {
                     try { URL.revokeObjectURL(deviceBlobUrl); } catch (_) {}
                     resolve();
@@ -1531,6 +1570,51 @@ async function showSimulator(tabId, state) {
       // Add buttons to navigation bar
       navBar.appendChild(closeBtn);
       navBar.appendChild(deviceBtn);
+      
+      // --- Rotate button ---
+      const rotateBtn = document.createElement("button");
+      rotateBtn.id = "__mf_simulator_rotate_btn__";
+      rotateBtn.title = "Rotate";
+      rotateBtn.innerHTML = `
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16.24 7.76C14.3 5.82 11.53 5.5 9.24 6.76M7 12a5 5 0 1 0 5-5v-2l-3 3 3 3V9" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+      rotateBtn.style.width = "50px";
+      rotateBtn.style.height = "50px";
+      rotateBtn.style.borderRadius = "50%";
+      rotateBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      rotateBtn.style.border = "none";
+      rotateBtn.style.cursor = "pointer";
+      rotateBtn.style.display = "flex";
+      rotateBtn.style.alignItems = "center";
+      rotateBtn.style.justifyContent = "center";
+      rotateBtn.style.transition = "all 0.16s ease";
+      rotateBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+
+      rotateBtn.onmouseenter = () => {
+        rotateBtn.style.background = "rgba(85,85,85,0.95)";
+        rotateBtn.style.transform = "scale(1.08)";
+      };
+      rotateBtn.onmouseleave = () => {
+        rotateBtn.style.background = "rgba(51,51,51,0.9)";
+        rotateBtn.style.transform = "scale(1)";
+      };
+
+      rotateBtn.onclick = async () => {
+        try {
+          // brief visual rotate animation before applying new orientation
+          const direction = orientation === "landscape" ? -90 : 90;
+          mockupContainer.style.transform = `rotate(${direction}deg)`;
+          setTimeout(async () => {
+            try {
+              await chrome.runtime.sendMessage({ type: "TOGGLE_ORIENTATION_FOR_TAB" });
+            } catch (_) {}
+          }, 230);
+        } catch (e) {}
+      };
+
+      navBar.appendChild(rotateBtn);
       navBar.appendChild(screenshotBtn);
       navBar.appendChild(recordingBtn);
 
@@ -1540,11 +1624,12 @@ async function showSimulator(tabId, state) {
     },
     args: [
       {
-        w: device.viewport.width,
-        h: device.viewport.height,
+        w: state.orientation === "landscape" ? device.viewport.height : device.viewport.width,
+        h: state.orientation === "landscape" ? device.viewport.width : device.viewport.height,
         deviceName: device.name,
         mockupPath: device.mockup,
-        deviceScreenPct: device.screenPct,
+        deviceScreenPct: state.orientation === "landscape" ? rotateScreenPctCW(device.screenPct) : device.screenPct,
+        orientation: state.orientation || "portrait",
       },
     ],
   });
@@ -1568,9 +1653,24 @@ async function hideSimulator(tabId) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "SET_DEVICE_FOR_TAB") {
-    const tabId = sender.tab.id; // 🚨 if `sender.tab` is undefined (like from sidebar), this will fail
-    tabState[tabId] = { deviceSlug: message.deviceSlug };
-    showSimulator(tabId, tabState[tabId]);
+    (async () => {
+      try {
+        const tabId = sender?.tab?.id;
+        if (typeof tabId !== "number") return;
+        const current = await loadState(tabId);
+        current.deviceSlug = message.deviceSlug;
+        tabState[tabId] = current;
+        await saveState(tabId);
+        if (current.mobile) {
+          await enableMobileHeaders(tabId);
+        }
+        if (current.simulator) {
+          await showSimulator(tabId, current);
+        }
+      } catch (e) {
+        console.error("SET_DEVICE_FOR_TAB (sender) error", e);
+      }
+    })();
   }
 });
 
@@ -1643,6 +1743,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         await showSimulator(tabId, tabState[tabId]);
       }
       sendResponse({ ok: true });
+      return;
+    }
+    if (msg && msg.type === "TOGGLE_ORIENTATION_FOR_TAB") {
+      const tabId = sender?.tab?.id;
+      if (typeof tabId === "number") {
+        const state = await loadState(tabId);
+        state.orientation = state.orientation === "landscape" ? "portrait" : "landscape";
+        tabState[tabId] = state;
+        await saveState(tabId);
+        try {
+          await showSimulator(tabId, state);
+        } catch (_) {}
+        sendResponse({ ok: true, orientation: state.orientation });
+        return;
+      }
+      sendResponse({ ok: false, error: "No tabId" });
       return;
     }
     if (msg && msg.type === "SHOW_DEVICE_PANEL") {
@@ -1751,6 +1867,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         showScrollbar: state.showScrollbar,
         deviceSlug: state.deviceSlug,
         simulator: state.simulator,
+        orientation: state.orientation || "portrait",
       });
       return;
     }
@@ -1790,6 +1907,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         mobile: state.mobile,
         showScrollbar: state.showScrollbar,
         deviceSlug: state.deviceSlug,
+        orientation: state.orientation || "portrait",
       });
       return;
     }
@@ -1811,6 +1929,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         mobile: state.mobile,
         showScrollbar: state.showScrollbar,
         deviceSlug: state.deviceSlug,
+        orientation: state.orientation || "portrait",
       });
       return;
     }
@@ -1913,8 +2032,11 @@ async function startScreenRecording(tabId) {
     // Get device dimensions from the current state
     const state = await loadState(tabId);
     const device = getDeviceBySlug(state.deviceSlug);
-    const deviceWidth = device ? device.width : 375;
-    const deviceHeight = device ? device.height : 812;
+    const baseW = device?.viewport?.width || 375;
+    const baseH = device?.viewport?.height || 812;
+    const isLandscape = (state.orientation === "landscape");
+    const deviceWidth = isLandscape ? baseH : baseW;
+    const deviceHeight = isLandscape ? baseW : baseH;
 
     // Create fresh offscreen document
     await chrome.offscreen.createDocument({
