@@ -395,7 +395,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ipad-air.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 4, right: 5, bottom:4 , left: 5, radius: 3 },
   },
   {
     slug: "ipad-mini",
@@ -404,7 +404,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ipad-mini.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 10, right: 5, bottom: 10, left: 5, radius: 3 },
   },
   {
     slug: "ipad-pro",
@@ -413,7 +413,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ipad-pro.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 3.5, right: 4.8, bottom: 3.5, left: 4.8, radius: 3 },
   },
   {
     slug: "ipse",
@@ -479,7 +479,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/microsoftsurfaceduo.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 9, right: 5, bottom: 9, left: 5, radius: 3 },
   },
   {
     slug: "nord2",
@@ -637,7 +637,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/sgalaxytabs7.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 3, right: 5, bottom: 3, left: 5, radius: 3 },
   },
   {
     slug: "sgalaxyzflip",
