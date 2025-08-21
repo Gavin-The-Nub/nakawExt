@@ -525,7 +525,7 @@ function createDevicePanel() {
     right: 20px;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(30, 30, 30, 0.95);
+    background: rgb(30, 30, 30);
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
