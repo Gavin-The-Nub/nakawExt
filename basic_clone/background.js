@@ -43,7 +43,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "devices/apple-imac.png",
-    screenPct: { top: 5, right: 0, bottom: 5, left: 0, radius: 3, scale: 0.5 },
+    screenPct: { top: 3, right: 8.5, bottom: 35, left: 1, radius: 0, scale: 0.5 },
   },
   {
     slug: "applewatch",
@@ -62,11 +62,11 @@ const DEVICES = [
     platform: "macOS",
     mockup: "devices/dell14.png",
     screenPct: {
-      top: 8,
+      top: 6.5,
       right: 9,
       bottom: 25,
       left: 9,
-      radius: 3,
+      radius: 0,
       scale: 0.65,
     },
   },
@@ -655,7 +655,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "devices/ssmarttv.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 0.5, right: 0.5, bottom: 9, left: 0.5, radius: 0 },
   },
   {
     slug: "undefined-medium_upscaled",
