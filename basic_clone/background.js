@@ -17,7 +17,7 @@ const DEVICES = [
       bottom: 2.2,
       left: 5,
       radius: 13.0,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -141,7 +141,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11.png",
-    screenPct: { top: 4, right: 7, bottom: 3, left: 7, radius: 3, scale: 0.9 },
+    screenPct: { top: 4, right: 7, bottom: 3, left: 7, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip11pro",
@@ -150,7 +150,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11pro.png",
-    screenPct: { top: 3, right: 7, bottom: 3, left: 7, radius: 3, scale: 0.9 },
+    screenPct: { top: 3, right: 7, bottom: 3, left: 7, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip11promax",
@@ -159,7 +159,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip11promax.png",
-    screenPct: { top: 2, right: 6, bottom: 2, left: 6, radius: 3, scale: 0.9 },
+    screenPct: { top: 2, right: 6, bottom: 2, left: 6, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip12",
@@ -168,7 +168,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip12.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip12max",
@@ -177,7 +177,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip12max.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip12mini",
@@ -195,7 +195,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip12promax.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip13",
@@ -204,7 +204,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip13.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip13mini",
@@ -222,7 +222,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip13pro.png",
-    screenPct: { top: 2, right: 4, bottom: 2, left: 4, radius: 3, scale: 0.9 },
+    screenPct: { top: 2, right: 4, bottom: 2, left: 4, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip13promax",
@@ -231,7 +231,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip13promax.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip14",
@@ -240,7 +240,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14.png",
-    screenPct: { top: 2, right: 4, bottom: 2, left: 4, radius: 3, scale: 0.9 },
+    screenPct: { top: 2, right: 4, bottom: 2, left: 4, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip14max",
@@ -255,7 +255,7 @@ const DEVICES = [
       bottom: 2,
       left: 5,
       radius: 3,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -265,7 +265,7 @@ const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "devices/ip14pro.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.9 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
   },
   {
     slug: "ip14promax",
@@ -280,7 +280,7 @@ const DEVICES = [
       bottom: 2,
       left: 5,
       radius: 3,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -296,7 +296,7 @@ const DEVICES = [
       bottom: 1.8,
       left: 4.5,
       radius: 3,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -312,7 +312,7 @@ const DEVICES = [
       bottom: 1.8,
       left: 4.5,
       radius: 3,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -328,7 +328,7 @@ const DEVICES = [
       bottom: 1.8,
       left: 4.5,
       radius: 4.3,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -344,7 +344,7 @@ const DEVICES = [
       bottom: 1.5,
       left: 4,
       radius: 5,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -360,7 +360,7 @@ const DEVICES = [
       bottom: 2,
       left: 4,
       radius: 5,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -376,7 +376,7 @@ const DEVICES = [
       bottom: 1.8,
       left: 4,
       radius: 6.5,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -437,7 +437,7 @@ const DEVICES = [
       bottom: 2,
       left: 4.5,
       radius: 4.3,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -453,7 +453,7 @@ const DEVICES = [
       bottom: 2,
       left: 5.5,
       radius: 4.3,
-      scale: 0.9,
+      scale: 0.8,
     },
   },
   {
@@ -1174,7 +1174,7 @@ async function showSimulator(tabId, state) {
       closeBtn.style.width = "50px";
       closeBtn.style.height = "50px";
       closeBtn.style.borderRadius = "50%";
-      closeBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      closeBtn.style.background = "rgba(51, 51, 51, 0.8)";
       closeBtn.style.border = "none";
       closeBtn.style.cursor = "pointer";
       closeBtn.style.display = "flex";
@@ -1184,12 +1184,12 @@ async function showSimulator(tabId, state) {
       closeBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
 
       closeBtn.onmouseenter = () => {
-        closeBtn.style.background = "rgba(85, 85, 85, 0.9)";
+        closeBtn.style.background = "rgba(85, 85, 85, 0.8)";
         closeBtn.style.transform = "scale(1.1)";
       };
 
       closeBtn.onmouseleave = () => {
-        closeBtn.style.background = "rgba(51, 51, 51, 0.9)";
+        closeBtn.style.background = "rgba(51, 51, 51, 0.8)";
         closeBtn.style.transform = "scale(1)";
       };
 
@@ -1217,7 +1217,7 @@ async function showSimulator(tabId, state) {
       deviceBtn.style.width = "50px";
       deviceBtn.style.height = "50px";
       deviceBtn.style.borderRadius = "50%";
-      deviceBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      deviceBtn.style.background = "rgba(51, 51, 51, 0.8)";
       deviceBtn.style.border = "none";
       deviceBtn.style.cursor = "pointer";
       deviceBtn.style.display = "flex";
@@ -1227,12 +1227,12 @@ async function showSimulator(tabId, state) {
       deviceBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
 
       deviceBtn.onmouseenter = () => {
-        deviceBtn.style.background = "rgba(85, 85, 85, 0.9)";
+        deviceBtn.style.background = "rgba(85, 85, 85, 0.8)";
         deviceBtn.style.transform = "scale(1.1)";
       };
 
       deviceBtn.onmouseleave = () => {
-        deviceBtn.style.background = "rgba(51, 51, 51, 0.9)";
+        deviceBtn.style.background = "rgba(51, 51, 51, 0.8)";
         deviceBtn.style.transform = "scale(1)";
       };
 
@@ -1256,7 +1256,7 @@ async function showSimulator(tabId, state) {
       screenshotBtn.style.width = "50px";
       screenshotBtn.style.height = "50px";
       screenshotBtn.style.borderRadius = "50%";
-      screenshotBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      screenshotBtn.style.background = "rgba(51, 51, 51, 0.8)";
       screenshotBtn.style.border = "none";
       screenshotBtn.style.cursor = "pointer";
       screenshotBtn.style.display = "flex";
@@ -1266,11 +1266,11 @@ async function showSimulator(tabId, state) {
       screenshotBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
 
       screenshotBtn.onmouseenter = () => {
-        screenshotBtn.style.background = "rgba(85,85,85,0.95)";
+        screenshotBtn.style.background = "rgba(85,85,85,0.85)";
         screenshotBtn.style.transform = "scale(1.08)";
       };
       screenshotBtn.onmouseleave = () => {
-        screenshotBtn.style.background = "rgba(51,51,51,0.9)";
+        screenshotBtn.style.background = "rgba(51,51,51,0.8)";
         screenshotBtn.style.transform = "scale(1)";
       };
 
@@ -1371,7 +1371,7 @@ async function showSimulator(tabId, state) {
                 menu.style.padding = "10px";
                 menu.style.borderRadius = "10px";
                 menu.style.boxShadow = "0 8px 24px rgba(0,0,0,0.4)";
-                menu.style.background = "rgba(30,30,30,0.95)";
+                menu.style.background = "rgba(30,30,30,0.85)";
                 menu.style.color = "white";
                 menu.style.alignItems = "center";
 
@@ -1471,7 +1471,7 @@ async function showSimulator(tabId, state) {
       recordingBtn.style.width = "50px";
       recordingBtn.style.height = "50px";
       recordingBtn.style.borderRadius = "50%";
-      recordingBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      recordingBtn.style.background = "rgba(51, 51, 51, 0.8)";
       recordingBtn.style.border = "none";
       recordingBtn.style.cursor = "pointer";
       recordingBtn.style.display = "flex";
@@ -1481,11 +1481,11 @@ async function showSimulator(tabId, state) {
       recordingBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
 
       recordingBtn.onmouseenter = () => {
-        recordingBtn.style.background = "rgba(85,85,85,0.95)";
+        recordingBtn.style.background = "rgba(85,85,85,0.85)";
         recordingBtn.style.transform = "scale(1.08)";
       };
       recordingBtn.onmouseleave = () => {
-        recordingBtn.style.background = "rgba(51,51,51,0.9)";
+        recordingBtn.style.background = "rgba(51,51,51,0.8)";
         recordingBtn.style.transform = "scale(1)";
       };
 
@@ -1499,7 +1499,7 @@ async function showSimulator(tabId, state) {
               <rect x="6" y="6" width="12" height="12" fill="white"/>
             </svg>
           `;
-          recordingBtn.style.background = "rgba(220, 53, 69, 0.9)"; // Red when recording
+          recordingBtn.style.background = "rgba(220, 53, 69, 0.8)"; // Red when recording
           recordingBtn.title = "Stop Recording";
         } else {
           recordingBtn.innerHTML = `
@@ -1508,7 +1508,7 @@ async function showSimulator(tabId, state) {
               <circle cx="12" cy="12" r="3" fill="white"/>
             </svg>
           `;
-          recordingBtn.style.background = "rgba(51, 51, 51, 0.9)";
+          recordingBtn.style.background = "rgba(51, 51, 51, 0.8)";
           recordingBtn.title = "Start Recording";
         }
       };
@@ -1583,7 +1583,7 @@ async function showSimulator(tabId, state) {
       rotateBtn.style.width = "50px";
       rotateBtn.style.height = "50px";
       rotateBtn.style.borderRadius = "50%";
-      rotateBtn.style.background = "rgba(51, 51, 51, 0.9)";
+      rotateBtn.style.background = "rgba(51, 51, 51, 0.8)";
       rotateBtn.style.border = "none";
       rotateBtn.style.cursor = "pointer";
       rotateBtn.style.display = "flex";
@@ -1593,11 +1593,11 @@ async function showSimulator(tabId, state) {
       rotateBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
 
       rotateBtn.onmouseenter = () => {
-        rotateBtn.style.background = "rgba(85,85,85,0.95)";
+        rotateBtn.style.background = "rgba(85,85,85,0.85)";
         rotateBtn.style.transform = "scale(1.08)";
       };
       rotateBtn.onmouseleave = () => {
-        rotateBtn.style.background = "rgba(51,51,51,0.9)";
+        rotateBtn.style.background = "rgba(51,51,51,0.8)";
         rotateBtn.style.transform = "scale(1)";
       };
 
