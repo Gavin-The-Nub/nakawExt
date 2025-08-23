@@ -1727,763 +1727,619 @@ async function showSimulator(tabId, state) {
         });
       };
 
-      // --- Screen Recording button ---
-      const recordingBtn = document.createElement("button");
-      recordingBtn.id = "__mf_simulator_recording_btn__";
-      recordingBtn.title = "Screen Recording";
-      recordingBtn.innerHTML = `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
-          <circle cx="12" cy="12" r="3" fill="white"/>
-        </svg>
-      `;
-      recordingBtn.style.width = "50px";
-      recordingBtn.style.height = "50px";
-      recordingBtn.style.borderRadius = "50%";
-      recordingBtn.style.background = "rgba(51, 51, 51, 0.8)";
-      recordingBtn.style.border = "none";
-      recordingBtn.style.cursor = "pointer";
-      recordingBtn.style.display = "flex";
-      recordingBtn.style.alignItems = "center";
-      recordingBtn.style.justifyContent = "center";
-      recordingBtn.style.transition = "all 0.16s ease";
-      recordingBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+        // --- Screen Recording button ---
+        const recordingBtn = document.createElement("button");
+        recordingBtn.id = "__mf_simulator_recording_btn__";
+        recordingBtn.title = "Screen Recording";
+        recordingBtn.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
+            <circle cx="12" cy="12" r="3" fill="white"/>
+          </svg>
+        `;
+        recordingBtn.style.width = "50px";
+        recordingBtn.style.height = "50px";
+        recordingBtn.style.borderRadius = "50%";
+        recordingBtn.style.background = "rgba(51, 51, 51, 0.8)";
+        recordingBtn.style.border = "none";
+        recordingBtn.style.cursor = "pointer";
+        recordingBtn.style.display = "flex";
+        recordingBtn.style.alignItems = "center";
+        recordingBtn.style.justifyContent = "center";
+        recordingBtn.style.transition = "all 0.16s ease";
+        recordingBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
 
-      recordingBtn.onmouseenter = () => {
-        recordingBtn.style.background = "rgba(85,85,85,0.85)";
-        recordingBtn.style.transform = "scale(1.08)";
-      };
-      recordingBtn.onmouseleave = () => {
-        recordingBtn.style.background = "rgba(51,51,51,0.8)";
-        recordingBtn.style.transform = "scale(1)";
-      };
+        recordingBtn.onmouseenter = () => {
+          recordingBtn.style.background = "rgba(85,85,85,0.85)";
+          recordingBtn.style.transform = "scale(1.08)";
+        };
+        recordingBtn.onmouseleave = () => {
+          recordingBtn.style.background = "rgba(51,51,51,0.8)";
+          recordingBtn.style.transform = "scale(1)";
+        };
 
-      // Check recording status and update button appearance
-      let isRecording = false;
+        // Check recording status and update button appearance
+        let isRecording = false;
 
-      const updateRecordingButton = () => {
-        if (isRecording) {
-          recordingBtn.innerHTML = `
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="6" y="6" width="12" height="12" fill="white"/>
-            </svg>
-          `;
-          recordingBtn.style.background = "rgba(220, 53, 69, 0.8)"; // Red when recording
-          recordingBtn.title = "Stop Recording";
-        } else {
-          recordingBtn.innerHTML = `
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
-              <circle cx="12" cy="12" r="3" fill="white"/>
-            </svg>
-          `;
-          recordingBtn.style.background = "rgba(51, 51, 51, 0.8)";
-          recordingBtn.title = "Start Recording";
-        }
-      };
-
-      // Check initial recording status
-      chrome.runtime.sendMessage(
-        { type: "GET_RECORDING_STATUS" },
-        (response) => {
-          if (response && response.isRecording) {
-            isRecording = true;
-            updateRecordingButton();
+        const updateRecordingButton = () => {
+          if (isRecording) {
+            recordingBtn.innerHTML = `
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="6" y="6" width="12" height="12" fill="white"/>
+              </svg>
+            `;
+            recordingBtn.style.background = "rgba(220, 53, 69, 0.8)"; // Red when recording
+            recordingBtn.title = "Stop Recording";
+          } else {
+            recordingBtn.innerHTML = `
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="3" fill="white"/>
+              </svg>
+            `;
+            recordingBtn.style.background = "rgba(51, 51, 51, 0.8)";
+            recordingBtn.title = "Start Recording";
           }
-        }
-      );
+        };
 
-      // Recording button click handler
-      recordingBtn.onclick = async () => {
-        if (isRecording) {
-          // Stop recording
-          try {
-            const response = await chrome.runtime.sendMessage({
-              type: "STOP_SCREEN_RECORDING",
-            });
-            if (response && response.success) {
-              isRecording = false;
-              updateRecordingButton();
-            } else {
-              alert(
-                "Failed to stop recording: " +
-                  (response?.error || "Unknown error")
-              );
-            }
-          } catch (error) {
-            console.error("Stop recording error:", error);
-            alert("Failed to stop recording: " + error.message);
-          }
-        } else {
-          // Start recording
-          try {
-            const response = await chrome.runtime.sendMessage({
-              type: "START_SCREEN_RECORDING",
-            });
-            if (response && response.success) {
+        // Check initial recording status
+        chrome.runtime.sendMessage(
+          { type: "GET_RECORDING_STATUS" },
+          (response) => {
+            if (response && response.isRecording) {
               isRecording = true;
               updateRecordingButton();
-            } else {
-              alert(
-                "Failed to start recording: " +
-                  (response?.error || "Unknown error")
-              );
             }
-          } catch (error) {
-            console.error("Start recording error:", error);
-            alert("Failed to start recording: " + error.message);
           }
-        }
-      };
+        );
 
-      // Add buttons to navigation bar
-      navBar.appendChild(closeBtn);
-      navBar.appendChild(deviceBtn);
-      
-      // --- Rotate button ---
-      const rotateBtn = document.createElement("button");
-      rotateBtn.id = "__mf_simulator_rotate_btn__";
-      rotateBtn.title = "Rotate";
-      rotateBtn.innerHTML = `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16.24 7.76C14.3 5.82 11.53 5.5 9.24 6.76M7 12a5 5 0 1 0 5-5v-2l-3 3 3 3V9" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `;
-      rotateBtn.style.width = "50px";
-      rotateBtn.style.height = "50px";
-      rotateBtn.style.borderRadius = "50%";
-      rotateBtn.style.background = "rgba(51, 51, 51, 0.8)";
-      rotateBtn.style.border = "none";
-      rotateBtn.style.cursor = "pointer";
-      rotateBtn.style.display = "flex";
-      rotateBtn.style.alignItems = "center";
-      rotateBtn.style.justifyContent = "center";
-      rotateBtn.style.transition = "all 0.16s ease";
-      rotateBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
-
-      rotateBtn.onmouseenter = () => {
-        rotateBtn.style.background = "rgba(85,85,85,0.85)";
-        rotateBtn.style.transform = "scale(1.08)";
-      };
-      rotateBtn.onmouseleave = () => {
-        rotateBtn.style.background = "rgba(51,51,51,0.8)";
-        rotateBtn.style.transform = "scale(1)";
-      };
-
-      rotateBtn.onclick = async () => {
-        try {
-          // brief visual rotate animation before applying new orientation
-          const direction = orientation === "landscape" ? -90 : 90;
-          mockupContainer.style.transform = `rotate(${direction}deg)`;
-          setTimeout(async () => {
+        // Recording button click handler
+        recordingBtn.onclick = async () => {
+          if (isRecording) {
+            // Stop recording
             try {
-              await chrome.runtime.sendMessage({ type: "TOGGLE_ORIENTATION_FOR_TAB" });
-            } catch (_) {}
-          }, 230);
-        } catch (e) {}
-      };
-
-      // --- Browser Navigation Toggle button ---
-      const browserNavToggleBtn = document.createElement("button");
-      browserNavToggleBtn.id = "__mf_simulator_browser_nav_toggle_btn__";
-      browserNavToggleBtn.title = "Toggle Browser Navigation";
-      browserNavToggleBtn.innerHTML = `
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 7H21V9H3V7ZM3 11H21V13H3V11ZM3 15H21V17H3V15Z" stroke="white" stroke-width="1.5"/>
-        </svg>
-      `;
-      browserNavToggleBtn.style.width = "50px";
-      browserNavToggleBtn.style.height = "50px";
-      browserNavToggleBtn.style.borderRadius = "50%";
-      browserNavToggleBtn.style.background = "rgba(51, 51, 51, 0.8)";
-      browserNavToggleBtn.style.border = "none";
-      browserNavToggleBtn.style.cursor = "pointer";
-      browserNavToggleBtn.style.display = "flex";
-      browserNavToggleBtn.style.alignItems = "center";
-      browserNavToggleBtn.style.justifyContent = "center";
-      browserNavToggleBtn.style.transition = "all 0.16s ease";
-      browserNavToggleBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
-
-      browserNavToggleBtn.onmouseenter = () => {
-        browserNavToggleBtn.style.background = "rgba(85,85,85,0.85)";
-        browserNavToggleBtn.style.transform = "scale(1.08)";
-      };
-      browserNavToggleBtn.onmouseleave = () => {
-        browserNavToggleBtn.style.background = "rgba(51,51,51,0.8)";
-        browserNavToggleBtn.style.transform = "scale(1)";
-      };
-
-      // Track browser nav visibility state
-      let browserNavVisible = orientation !== "landscape"; // Show by default in portrait
-
-      browserNavToggleBtn.onclick = () => {
-        const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
-        const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
-        
-        if (browserNavBar && iframe) {
-          browserNavVisible = !browserNavVisible;
-          
-          if (browserNavVisible) {
-            browserNavBar.style.display = "flex";
-            const navBarHeight = platform === "iOS" ? 44 : 56;
-            iframe.style.top = navBarHeight + "px";
-            iframe.style.height = `calc(100% - ${navBarHeight}px)`;
-            browserNavToggleBtn.style.background = "rgba(0, 122, 255, 0.8)"; // Blue when active
+              const response = await chrome.runtime.sendMessage({
+                type: "STOP_SCREEN_RECORDING",
+              });
+              if (response && response.success) {
+                isRecording = false;
+                updateRecordingButton();
+              } else {
+                alert(
+                  "Failed to stop recording: " +
+                    (response?.error || "Unknown error")
+                );
+              }
+            } catch (error) {
+              console.error("Stop recording error:", error);
+              alert("Failed to stop recording: " + error.message);
+            }
           } else {
-            browserNavBar.style.display = "none";
-            iframe.style.top = "0px";
-            iframe.style.height = "100%";
-            browserNavToggleBtn.style.background = "rgba(51, 51, 51, 0.8)"; // Gray when inactive
+            // Start recording
+            try {
+              const response = await chrome.runtime.sendMessage({
+                type: "START_SCREEN_RECORDING",
+              });
+              if (response && response.success) {
+                isRecording = true;
+                updateRecordingButton();
+              } else {
+                alert(
+                  "Failed to start recording: " +
+                    (response?.error || "Unknown error")
+                );
+              }
+            } catch (error) {
+              console.error("Start recording error:", error);
+              alert("Failed to start recording: " + error.message);
+            }
           }
+        };
+
+        // Add buttons to navigation bar
+        navBar.appendChild(closeBtn);
+        navBar.appendChild(deviceBtn);
+        
+        // --- Rotate button ---
+        const rotateBtn = document.createElement("button");
+        rotateBtn.id = "__mf_simulator_rotate_btn__";
+        rotateBtn.title = "Rotate";
+        rotateBtn.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16.24 7.76C14.3 5.82 11.53 5.5 9.24 6.76M7 12a5 5 0 1 0 5-5v-2l-3 3 3 3V9" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `;
+        rotateBtn.style.width = "50px";
+        rotateBtn.style.height = "50px";
+        rotateBtn.style.borderRadius = "50%";
+        rotateBtn.style.background = "rgba(51, 51, 51, 0.8)";
+        rotateBtn.style.border = "none";
+        rotateBtn.style.cursor = "pointer";
+        rotateBtn.style.display = "flex";
+        rotateBtn.style.alignItems = "center";
+        rotateBtn.style.justifyContent = "center";
+        rotateBtn.style.transition = "all 0.16s ease";
+        rotateBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+
+        rotateBtn.onmouseenter = () => {
+          rotateBtn.style.background = "rgba(85,85,85,0.85)";
+          rotateBtn.style.transform = "scale(1.08)";
+        };
+        rotateBtn.onmouseleave = () => {
+          rotateBtn.style.background = "rgba(51,51,51,0.8)";
+          rotateBtn.style.transform = "scale(1)";
+        };
+
+        rotateBtn.onclick = async () => {
+          try {
+            // brief visual rotate animation before applying new orientation
+            const direction = orientation === "landscape" ? -90 : 90;
+            mockupContainer.style.transform = `rotate(${direction}deg)`;
+            setTimeout(async () => {
+              try {
+                await chrome.runtime.sendMessage({ type: "TOGGLE_ORIENTATION_FOR_TAB" });
+              } catch (_) {}
+            }, 230);
+          } catch (e) {}
+        };
+
+        // --- Browser Navigation Toggle button ---
+        const browserNavToggleBtn = document.createElement("button");
+        browserNavToggleBtn.id = "__mf_simulator_browser_nav_toggle_btn__";
+        browserNavToggleBtn.title = "Toggle Browser Navigation";
+        browserNavToggleBtn.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 7H21V9H3V7ZM3 11H21V13H3V11ZM3 15H21V17H3V15Z" stroke="white" stroke-width="1.5"/>
+          </svg>
+        `;
+        browserNavToggleBtn.style.width = "50px";
+        browserNavToggleBtn.style.height = "50px";
+        browserNavToggleBtn.style.borderRadius = "50%";
+        browserNavToggleBtn.style.background = "rgba(51, 51, 51, 0.8)";
+        browserNavToggleBtn.style.border = "none";
+        browserNavToggleBtn.style.cursor = "pointer";
+        browserNavToggleBtn.style.display = "flex";
+        browserNavToggleBtn.style.alignItems = "center";
+        browserNavToggleBtn.style.justifyContent = "center";
+        browserNavToggleBtn.style.transition = "all 0.16s ease";
+        browserNavToggleBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+
+        browserNavToggleBtn.onmouseenter = () => {
+          browserNavToggleBtn.style.background = "rgba(85,85,85,0.85)";
+          browserNavToggleBtn.style.transform = "scale(1.08)";
+        };
+        browserNavToggleBtn.onmouseleave = () => {
+          browserNavToggleBtn.style.background = "rgba(51,51,51,0.8)";
+          browserNavToggleBtn.style.transform = "scale(1)";
+        };
+
+        // Track browser nav visibility state
+        let browserNavVisible = orientation !== "landscape"; // Show by default in portrait
+
+        browserNavToggleBtn.onclick = () => {
+          const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+          const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
+          
+          if (browserNavBar && iframe) {
+            browserNavVisible = !browserNavVisible;
+            
+            if (browserNavVisible) {
+              browserNavBar.style.display = "flex";
+              const navBarHeight = platform === "iOS" ? 44 : 56;
+              iframe.style.top = navBarHeight + "px";
+              iframe.style.height = `calc(100% - ${navBarHeight}px)`;
+              browserNavToggleBtn.style.background = "rgba(0, 122, 255, 0.8)"; // Blue when active
+            } else {
+              browserNavBar.style.display = "none";
+              iframe.style.top = "0px";
+              iframe.style.height = "100%";
+              browserNavToggleBtn.style.background = "rgba(51, 51, 51, 0.8)"; // Gray when inactive
+            }
+          }
+        };
+
+        // Set initial state
+        if (orientation === "landscape") {
+          browserNavToggleBtn.style.background = "rgba(51, 51, 51, 0.8)"; // Gray when hidden
+        } else {
+          browserNavToggleBtn.style.background = "rgba(0, 122, 255, 0.8)"; // Blue when visible
         }
-      };
 
-      // Set initial state
-      if (orientation === "landscape") {
-        browserNavToggleBtn.style.background = "rgba(51, 51, 51, 0.8)"; // Gray when hidden
-      } else {
-        browserNavToggleBtn.style.background = "rgba(0, 122, 255, 0.8)"; // Blue when visible
-      }
+        navBar.appendChild(browserNavToggleBtn);
+        navBar.appendChild(rotateBtn);
+        navBar.appendChild(screenshotBtn);
+        navBar.appendChild(recordingBtn);
 
-      navBar.appendChild(browserNavToggleBtn);
-      navBar.appendChild(rotateBtn);
-      navBar.appendChild(screenshotBtn);
-      navBar.appendChild(recordingBtn);
-
-      overlay.appendChild(mockupContainer);
-      document.body.appendChild(overlay);
-      document.body.appendChild(navBar);
-    },
-    args: [
-      {
-        w: state.orientation === "landscape" ? device.viewport.height : device.viewport.width,
-        h: state.orientation === "landscape" ? device.viewport.width : device.viewport.height,
-        deviceName: device.name,
-        mockupPath: device.mockup,
-        deviceScreenPct: state.orientation === "landscape" ? rotateScreenPctCW(device.screenPct) : device.screenPct,
-        orientation: state.orientation || "portrait",
-        platform: device.platform,
+        overlay.appendChild(mockupContainer);
+        document.body.appendChild(overlay);
+        document.body.appendChild(navBar);
       },
-    ],
-  });
-}
-
-async function hideSimulator(tabId) {
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    func: () => {
-      const el = document.getElementById("__mf_simulator_overlay__");
-      const navBar = document.getElementById("__mf_simulator_nav__");
-      const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
-      if (el) el.remove();
-      if (navBar) navBar.remove();
-      if (browserNavBar) browserNavBar.remove();
-
-      // Restore main page scrolling
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
-    },
-  });
-}
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "SET_DEVICE_FOR_TAB") {
-    (async () => {
-      try {
-        const tabId = sender?.tab?.id;
-        if (typeof tabId !== "number") return;
-        const current = await loadState(tabId);
-        current.deviceSlug = message.deviceSlug;
-        tabState[tabId] = current;
-        await saveState(tabId);
-        if (current.mobile) {
-          await enableMobileHeaders(tabId);
-        }
-        if (current.simulator) {
-          await showSimulator(tabId, current);
-        }
-      } catch (e) {
-        console.error("SET_DEVICE_FOR_TAB (sender) error", e);
-      }
-    })();
+      args: [
+        {
+          w: state.orientation === "landscape" ? device.viewport.height : device.viewport.width,
+          h: state.orientation === "landscape" ? device.viewport.width : device.viewport.height,
+          deviceName: device.name,
+          mockupPath: device.mockup,
+          deviceScreenPct: state.orientation === "landscape" ? rotateScreenPctCW(device.screenPct) : device.screenPct,
+          orientation: state.orientation || "portrait",
+          platform: device.platform,
+        },
+      ],
+    });
   }
-});
 
-// Listen for device change requests from content scripts
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  (async () => {
-    if (msg && msg.type === "DEACTIVATE_FOR_TAB") {
-      try {
-        const tabId = sender?.tab?.id;
-        if (typeof tabId === "number") {
-          // Load and mark simulator off; clear state so we don't auto-apply
-          const state = await loadState(tabId);
-          state.simulator = false;
-          state.showScrollbar = false;
-          tabState[tabId] = state;
-          await saveState(tabId);
+  async function hideSimulator(tabId) {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const el = document.getElementById("__mf_simulator_overlay__");
+        const navBar = document.getElementById("__mf_simulator_nav__");
+        const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+        if (el) el.remove();
+        if (navBar) navBar.remove();
+        if (browserNavBar) browserNavBar.remove();
 
-          // Remove overlays/UI and CSS
-          await hideSimulator(tabId);
-          await applyScrollbar(tabId, false);
+        // Restore main page scrolling
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+      },
+    });
+  }
 
-          // Remove UA/header overrides
-          await disableMobileHeaders(tabId);
-
-          // Finally, remove state so reapply on updated/startup won't trigger
-          delete tabState[tabId];
-          await removeState(tabId);
-        }
-      } catch (e) {
-        console.error("DEACTIVATE_FOR_TAB error", e);
-      }
-      sendResponse({ ok: true });
-      return;
-    } // Background/service worker: capture visible tab and return dataUrl
-    if (msg && msg.type === "CAPTURE_TAB") {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === "SET_DEVICE_FOR_TAB") {
       (async () => {
         try {
-          // captureVisibleTab uses the currently focused window; null is fine
-          chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
-            if (chrome.runtime.lastError) {
-              console.error("captureVisibleTab err", chrome.runtime.lastError);
-              sendResponse({
-                ok: false,
-                error: chrome.runtime.lastError.message,
-              });
-              return;
-            }
-            sendResponse({ ok: true, dataUrl });
-          });
+          const tabId = sender?.tab?.id;
+          if (typeof tabId !== "number") return;
+          const current = await loadState(tabId);
+          current.deviceSlug = message.deviceSlug;
+          tabState[tabId] = current;
+          await saveState(tabId);
+          if (current.mobile) {
+            await enableMobileHeaders(tabId);
+          }
+          if (current.simulator) {
+            await showSimulator(tabId, current);
+          }
         } catch (e) {
-          console.error("CAPTURE_TAB error", e);
-          sendResponse({ ok: false, error: e.message });
+          console.error("SET_DEVICE_FOR_TAB (sender) error", e);
         }
       })();
-      return true; // keep message channel open for async sendResponse
     }
+  });
 
-    if (msg && msg.type === "DEVICE_CHANGE_REQUEST") {
-      const tabId = sender.tab.id;
-      const deviceSlug = msg.deviceSlug;
-      await loadState(tabId);
-      tabState[tabId].deviceSlug = deviceSlug;
-      await saveState(tabId);
-      if (tabState[tabId].mobile) {
-        // re-apply UA with the new device
-        await enableMobileHeaders(tabId);
+  // Listen for device change requests from content scripts
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    (async () => {
+      if (msg && msg.type === "DEACTIVATE_FOR_TAB") {
+        try {
+          const tabId = sender?.tab?.id;
+          if (typeof tabId === "number") {
+            // Load and mark simulator off; clear state so we don't auto-apply
+            const state = await loadState(tabId);
+            state.simulator = false;
+            state.showScrollbar = false;
+            tabState[tabId] = state;
+            await saveState(tabId);
+
+            // Remove overlays/UI and CSS
+            await hideSimulator(tabId);
+            await applyScrollbar(tabId, false);
+
+            // Remove UA/header overrides
+            await disableMobileHeaders(tabId);
+
+            // Finally, remove state so reapply on updated/startup won't trigger
+            delete tabState[tabId];
+            await removeState(tabId);
+          }
+        } catch (e) {
+          console.error("DEACTIVATE_FOR_TAB error", e);
+        }
+        sendResponse({ ok: true });
+        return;
+      } // Background/service worker: capture visible tab and return dataUrl
+      if (msg && msg.type === "CAPTURE_TAB") {
+        (async () => {
+          try {
+            // captureVisibleTab uses the currently focused window; null is fine
+            chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
+              if (chrome.runtime.lastError) {
+                console.error("captureVisibleTab err", chrome.runtime.lastError);
+                sendResponse({
+                  ok: false,
+                  error: chrome.runtime.lastError.message,
+                });
+                return;
+              }
+              sendResponse({ ok: true, dataUrl });
+            });
+          } catch (e) {
+            console.error("CAPTURE_TAB error", e);
+            sendResponse({ ok: false, error: e.message });
+          }
+        })();
+        return true; // keep message channel open for async sendResponse
       }
-      // Refresh simulator with new device if it's active
-      if (tabState[tabId].simulator) {
-        await showSimulator(tabId, tabState[tabId]);
+
+      if (msg && msg.type === "DEVICE_CHANGE_REQUEST") {
+        const tabId = sender.tab.id;
+        const deviceSlug = msg.deviceSlug;
+        await loadState(tabId);
+        tabState[tabId].deviceSlug = deviceSlug;
+        await saveState(tabId);
+        if (tabState[tabId].mobile) {
+          // re-apply UA with the new device
+          await enableMobileHeaders(tabId);
+        }
+        // Refresh simulator with new device if it's active
+        if (tabState[tabId].simulator) {
+          await showSimulator(tabId, tabState[tabId]);
+        }
+        sendResponse({ ok: true });
+        return;
       }
-      sendResponse({ ok: true });
-      return;
-    }
-    if (msg && msg.type === "TOGGLE_ORIENTATION_FOR_TAB") {
-      const tabId = sender?.tab?.id;
-      if (typeof tabId === "number") {
+      if (msg && msg.type === "TOGGLE_ORIENTATION_FOR_TAB") {
+        const tabId = sender?.tab?.id;
+        if (typeof tabId === "number") {
+          const state = await loadState(tabId);
+          state.orientation = state.orientation === "landscape" ? "portrait" : "landscape";
+          tabState[tabId] = state;
+          await saveState(tabId);
+          try {
+            await showSimulator(tabId, state);
+          } catch (_) {}
+          sendResponse({ ok: true, orientation: state.orientation });
+          return;
+        }
+        sendResponse({ ok: false, error: "No tabId" });
+        return;
+      }
+      if (msg && msg.type === "SHOW_DEVICE_PANEL") {
+        const tabId = sender.tab.id;
+        // Send message to content script to show device panel
+        try {
+          await chrome.tabs.sendMessage(tabId, { type: "SHOW_DEVICE_PANEL" });
+          sendResponse({ ok: true });
+        } catch (e) {
+          console.error("Failed to show device panel:", e);
+          sendResponse({ ok: false, error: e.message });
+        }
+        return;
+      }
+
+      // Frame capture message handlers
+      if (msg && msg.type === "mf-request-frame-capture") {
+        const { tabId, frameRate } = msg;
+        startFrameCapture(tabId, frameRate);
+        sendResponse({ success: true });
+        return;
+      }
+
+      // Screen recording message handlers
+      if (msg && msg.type === "START_SCREEN_RECORDING") {
+        const tabId = sender.tab.id;
+        try {
+          const result = await startScreenRecording(tabId);
+          sendResponse(result);
+        } catch (e) {
+          console.error("Start recording error:", e);
+          sendResponse({ success: false, error: e.message });
+        }
+        return;
+      }
+
+      if (msg && msg.type === "STOP_SCREEN_RECORDING") {
+        const tabId = sender.tab.id;
+        try {
+          const result = await stopScreenRecording(tabId);
+          sendResponse(result);
+        } catch (e) {
+          console.error("Stop recording error:", e);
+          sendResponse({ success: false, error: e.message });
+        }
+        return;
+      }
+
+      if (msg && msg.type === "GET_RECORDING_STATUS") {
+        const tabId = sender.tab.id;
+        const isRecording = recordingTabs.has(tabId);
+        sendResponse({ isRecording });
+        return;
+      }
+
+      if (msg && msg.type === "INITIATE_VIDEO_DOWNLOAD") {
+        const videoUrl = msg.videoUrl;
+        if (videoUrl) {
+          chrome.downloads.download({
+            url: videoUrl,
+            filename: `screen-recording-${Date.now()}.webm`,
+            saveAs: true,
+          });
+        }
+        sendResponse({ success: true });
+        return;
+      }
+      if (msg && msg.type === "TOGGLE_MOBILE_FOR_TAB") {
+        const tabId = msg.tabId;
+        await loadState(tabId);
+        tabState[tabId].mobile = !tabState[tabId].mobile;
+        if (tabState[tabId].mobile) await enableMobileHeaders(tabId);
+        else await disableMobileHeaders(tabId);
+        await saveState(tabId);
+        try {
+          const tab = await chrome.tabs.get(tabId);
+          const targetUrl = toMobileUrlIfLikely(tab.url);
+          if (targetUrl !== tab.url) {
+            await chrome.tabs.update(tabId, { url: targetUrl });
+          } else {
+            await chrome.tabs.reload(tabId);
+          }
+        } catch (_) {}
+        sendResponse({ mobile: tabState[tabId].mobile });
+        return;
+      }
+      if (msg && msg.type === "TOGGLE_SCROLLBAR_FOR_TAB") {
+        const tabId = msg.tabId;
+        await loadState(tabId);
+        tabState[tabId].showScrollbar = !tabState[tabId].showScrollbar;
+        await applyScrollbar(tabId, tabState[tabId].showScrollbar);
+        await saveState(tabId);
+        sendResponse({
+          showScrollbar: tabState[tabId].showScrollbar,
+          mobile: tabState[tabId].mobile,
+          simulator: tabState[tabId].simulator,
+          deviceSlug: tabState[tabId].deviceSlug,
+        });
+        return;
+      }
+      if (msg && msg.type === "GET_TAB_STATE") {
+        const tabId = msg.tabId;
         const state = await loadState(tabId);
-        state.orientation = state.orientation === "landscape" ? "portrait" : "landscape";
+        sendResponse({
+          mobile: state.mobile,
+          showScrollbar: state.showScrollbar,
+          deviceSlug: state.deviceSlug,
+          simulator: state.simulator,
+          orientation: state.orientation || "portrait",
+        });
+        return;
+      }
+      if (msg && msg.type === "SET_DEVICE_FOR_TAB") {
+        const { tabId, deviceSlug } = msg;
+        await loadState(tabId);
+        tabState[tabId].deviceSlug = deviceSlug;
+        await saveState(tabId);
+        if (tabState[tabId].mobile) {
+          // re-apply UA with the new device
+          await enableMobileHeaders(tabId);
+        }
+        // Refresh simulator with new device if it's active
+        if (tabState[tabId].simulator) {
+          await showSimulator(tabId, tabState[tabId]);
+        }
+        sendResponse({ ok: true });
+        return true;
+      }
+      if (msg && msg.type === "TOGGLE_SIMULATOR_FOR_TAB") {
+        const { tabId } = msg;
+        const state = await loadState(tabId);
+        state.simulator = !state.simulator;
+        tabState[tabId] = state;
+        await saveState(tabId);
+        if (state.simulator) {
+          try {
+            await showSimulator(tabId, state);
+          } catch (_) {}
+        } else {
+          try {
+            await hideSimulator(tabId);
+          } catch (_) {}
+        }
+        sendResponse({
+          simulator: state.simulator,
+          mobile: state.mobile,
+          showScrollbar: state.showScrollbar,
+          deviceSlug: state.deviceSlug,
+          orientation: state.orientation || "portrait",
+        });
+        return;
+      }
+      if (msg && msg.type === "ACTIVATE_SIMULATOR_FOR_TAB") {
+        const { tabId } = msg;
+        const state = await loadState(tabId);
+        // Ensure simulator is enabled and show it ONLY for this tab
+        state.simulator = true;
+        state.showScrollbar = false; // Always hide scrollbars
         tabState[tabId] = state;
         await saveState(tabId);
         try {
           await showSimulator(tabId, state);
+          // Apply hidden scrollbars
+          await applyScrollbar(tabId, false);
         } catch (_) {}
-        sendResponse({ ok: true, orientation: state.orientation });
+        sendResponse({
+          simulator: state.simulator,
+          mobile: state.mobile,
+          showScrollbar: state.showScrollbar,
+          deviceSlug: state.deviceSlug,
+          orientation: state.orientation || "portrait",
+        });
         return;
       }
-      sendResponse({ ok: false, error: "No tabId" });
-      return;
-    }
-    if (msg && msg.type === "SHOW_DEVICE_PANEL") {
-      const tabId = sender.tab.id;
-      // Send message to content script to show device panel
-      try {
-        await chrome.tabs.sendMessage(tabId, { type: "SHOW_DEVICE_PANEL" });
-        sendResponse({ ok: true });
-      } catch (e) {
-        console.error("Failed to show device panel:", e);
-        sendResponse({ ok: false, error: e.message });
-      }
-      return;
-    }
+    })();
+    return true;
+  });
 
-    // Frame capture message handlers
-    if (msg && msg.type === "mf-request-frame-capture") {
-      const { tabId, frameRate } = msg;
-      startFrameCapture(tabId, frameRate);
-      sendResponse({ success: true });
-      return;
-    }
+  chrome.tabs.onRemoved.addListener(async (tabId) => {
+    delete tabState[tabId];
+    await disableMobileHeaders(tabId);
+    await removeState(tabId);
+  });
 
-    // Screen recording message handlers
-    if (msg && msg.type === "START_SCREEN_RECORDING") {
-      const tabId = sender.tab.id;
-      try {
-        const result = await startScreenRecording(tabId);
-        sendResponse(result);
-      } catch (e) {
-        console.error("Start recording error:", e);
-        sendResponse({ success: false, error: e.message });
-      }
-      return;
-    }
+  // Re-apply settings after reloads/navigation
+  chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    if (!changeInfo.status) return;
 
-    if (msg && msg.type === "STOP_SCREEN_RECORDING") {
-      const tabId = sender.tab.id;
-      try {
-        const result = await stopScreenRecording(tabId);
-        sendResponse(result);
-      } catch (e) {
-        console.error("Stop recording error:", e);
-        sendResponse({ success: false, error: e.message });
-      }
-      return;
-    }
+    // Only apply settings if this tab has been explicitly activated
+    if (!tabState[tabId]) return;
 
-    if (msg && msg.type === "GET_RECORDING_STATUS") {
-      const tabId = sender.tab.id;
-      const isRecording = recordingTabs.has(tabId);
-      sendResponse({ isRecording });
-      return;
-    }
-
-    if (msg && msg.type === "INITIATE_VIDEO_DOWNLOAD") {
-      const videoUrl = msg.videoUrl;
-      if (videoUrl) {
-        chrome.downloads.download({
-          url: videoUrl,
-          filename: `screen-recording-${Date.now()}.webm`,
-          saveAs: true,
-        });
-      }
-      sendResponse({ success: true });
-      return;
-    }
-    if (msg && msg.type === "TOGGLE_MOBILE_FOR_TAB") {
-      const tabId = msg.tabId;
-      await loadState(tabId);
-      tabState[tabId].mobile = !tabState[tabId].mobile;
-      if (tabState[tabId].mobile) await enableMobileHeaders(tabId);
-      else await disableMobileHeaders(tabId);
-      await saveState(tabId);
-      try {
-        const tab = await chrome.tabs.get(tabId);
-        const targetUrl = toMobileUrlIfLikely(tab.url);
-        if (targetUrl !== tab.url) {
-          await chrome.tabs.update(tabId, { url: targetUrl });
-        } else {
-          await chrome.tabs.reload(tabId);
-        }
-      } catch (_) {}
-      sendResponse({ mobile: tabState[tabId].mobile });
-      return;
-    }
-    if (msg && msg.type === "TOGGLE_SCROLLBAR_FOR_TAB") {
-      const tabId = msg.tabId;
-      await loadState(tabId);
-      tabState[tabId].showScrollbar = !tabState[tabId].showScrollbar;
-      await applyScrollbar(tabId, tabState[tabId].showScrollbar);
-      await saveState(tabId);
-      sendResponse({
-        showScrollbar: tabState[tabId].showScrollbar,
-        mobile: tabState[tabId].mobile,
-        simulator: tabState[tabId].simulator,
-        deviceSlug: tabState[tabId].deviceSlug,
-      });
-      return;
-    }
-    if (msg && msg.type === "GET_TAB_STATE") {
-      const tabId = msg.tabId;
+    // Re-apply settings on complete only for activated tabs
+    if (changeInfo.status === "complete") {
       const state = await loadState(tabId);
-      sendResponse({
-        mobile: state.mobile,
-        showScrollbar: state.showScrollbar,
-        deviceSlug: state.deviceSlug,
-        simulator: state.simulator,
-        orientation: state.orientation || "portrait",
-      });
-      return;
-    }
-    if (msg && msg.type === "SET_DEVICE_FOR_TAB") {
-      const { tabId, deviceSlug } = msg;
-      await loadState(tabId);
-      tabState[tabId].deviceSlug = deviceSlug;
-      await saveState(tabId);
-      if (tabState[tabId].mobile) {
-        // re-apply UA with the new device
+      if (state.mobile) {
         await enableMobileHeaders(tabId);
       }
-      // Refresh simulator with new device if it's active
-      if (tabState[tabId].simulator) {
-        await showSimulator(tabId, tabState[tabId]);
+      if (state.showScrollbar) {
+        await applyScrollbar(tabId, true);
       }
-      sendResponse({ ok: true });
-      return true;
-    }
-    if (msg && msg.type === "TOGGLE_SIMULATOR_FOR_TAB") {
-      const { tabId } = msg;
-      const state = await loadState(tabId);
-      state.simulator = !state.simulator;
-      tabState[tabId] = state;
-      await saveState(tabId);
+      // Auto-show simulator if it's enabled (which it is by default)
       if (state.simulator) {
-        try {
-          await showSimulator(tabId, state);
-        } catch (_) {}
-      } else {
-        try {
-          await hideSimulator(tabId);
-        } catch (_) {}
-      }
-      sendResponse({
-        simulator: state.simulator,
-        mobile: state.mobile,
-        showScrollbar: state.showScrollbar,
-        deviceSlug: state.deviceSlug,
-        orientation: state.orientation || "portrait",
-      });
-      return;
-    }
-    if (msg && msg.type === "ACTIVATE_SIMULATOR_FOR_TAB") {
-      const { tabId } = msg;
-      const state = await loadState(tabId);
-      // Ensure simulator is enabled and show it ONLY for this tab
-      state.simulator = true;
-      state.showScrollbar = false; // Always hide scrollbars
-      tabState[tabId] = state;
-      await saveState(tabId);
-      try {
         await showSimulator(tabId, state);
-        // Apply hidden scrollbars
-        await applyScrollbar(tabId, false);
-      } catch (_) {}
-      sendResponse({
-        simulator: state.simulator,
-        mobile: state.mobile,
-        showScrollbar: state.showScrollbar,
-        deviceSlug: state.deviceSlug,
-        orientation: state.orientation || "portrait",
-      });
-      return;
-    }
-  })();
-  return true;
-});
-
-chrome.tabs.onRemoved.addListener(async (tabId) => {
-  delete tabState[tabId];
-  await disableMobileHeaders(tabId);
-  await removeState(tabId);
-});
-
-// Re-apply settings after reloads/navigation
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (!changeInfo.status) return;
-
-  // Only apply settings if this tab has been explicitly activated
-  if (!tabState[tabId]) return;
-
-  // Re-apply settings on complete only for activated tabs
-  if (changeInfo.status === "complete") {
-    const state = await loadState(tabId);
-    if (state.mobile) {
-      await enableMobileHeaders(tabId);
-    }
-    if (state.showScrollbar) {
-      await applyScrollbar(tabId, true);
-    }
-    // Auto-show simulator if it's enabled (which it is by default)
-    if (state.simulator) {
-      await showSimulator(tabId, state);
-    }
-  }
-});
-
-// Remove automatic application to all tabs on startup/installation
-// Only apply to tabs that have been explicitly activated
-async function reapplyActivatedTabs() {
-  try {
-    const tabs = await chrome.tabs.query({});
-    for (const t of tabs) {
-      // Only reapply if this tab has been explicitly activated
-      if (tabState[t.id]) {
-        const state = await loadState(t.id);
-        if (state.mobile) await enableMobileHeaders(t.id);
-        if (state.showScrollbar) await applyScrollbar(t.id, true);
-        if (state.simulator) await showSimulator(t.id, state);
       }
     }
-  } catch (_) {}
-}
+  });
 
-chrome.runtime.onStartup.addListener(reapplyActivatedTabs);
-chrome.runtime.onInstalled.addListener(reapplyActivatedTabs);
-
-// Screen recording functionality
-let recordingTabs = new Set();
-let frameCaptureIntervals = new Map(); // Track frame capture intervals per tab
-
-async function startScreenRecording(tabId) {
-  try {
-    // Check if already recording
-    if (recordingTabs.has(tabId)) {
-      return { success: false, error: "Already recording" };
-    }
-
-    // Close any existing offscreen document to ensure clean state
+  // Remove automatic application to all tabs on startup/installation
+  // Only apply to tabs that have been explicitly activated
+  async function reapplyActivatedTabs() {
     try {
-      await chrome.offscreen.closeDocument();
-    } catch (e) {
-      console.log("No existing offscreen document to close");
-    }
-
-    // First, check if the simulator frame exists and get its bounds
-    const frameInfo = await chrome.scripting.executeScript({
-      target: { tabId },
-      func: () => {
-        const frame = document.getElementById("__mf_simulator_frame__");
-        if (!frame) {
-          return null;
+      const tabs = await chrome.tabs.query({});
+      for (const t of tabs) {
+        // Only reapply if this tab has been explicitly activated
+        if (tabState[t.id]) {
+          const state = await loadState(t.id);
+          if (state.mobile) await enableMobileHeaders(t.id);
+          if (state.showScrollbar) await applyScrollbar(t.id, true);
+          if (state.simulator) await showSimulator(t.id, state);
         }
-
-        const rect = frame.getBoundingClientRect();
-        return {
-          x: rect.left,
-          y: rect.top,
-          width: rect.width,
-          height: rect.height,
-        };
-      },
-    });
-
-    if (!frameInfo || !frameInfo[0] || !frameInfo[0].result) {
-      return { success: false, error: "Simulator frame not found" };
-    }
-
-    const frameBounds = frameInfo[0].result;
-
-    // Get device dimensions from the current state
-    const state = await loadState(tabId);
-    const device = getDeviceBySlug(state.deviceSlug);
-    const baseW = device?.viewport?.width || 375;
-    const baseH = device?.viewport?.height || 812;
-    const isLandscape = (state.orientation === "landscape");
-    const deviceWidth = isLandscape ? baseH : baseW;
-    const deviceHeight = isLandscape ? baseW : baseH;
-
-    // Create fresh offscreen document
-    await chrome.offscreen.createDocument({
-      url: "offscreen/tab_capture/offscreenTabCapture.html",
-      reasons: ["USER_MEDIA"],
-      justification: "Recording from chrome.scripting.captureVisibleTab API",
-    });
-
-    // Test communication with offscreen document
-    try {
-      await chrome.runtime.sendMessage({
-        type: "test",
-        target: "offscreen",
-      });
-      console.log("Test message sent successfully to offscreen document");
-    } catch (error) {
-      console.error(
-        "Failed to send test message to offscreen document:",
-        error
-      );
-    }
-
-    // Get tab dimensions for recording
-    const tab = await chrome.tabs.get(tabId);
-    const measurement = {
-      tabId: tabId, // Add tabId to measurement object
-      window_width: tab.width || 1920,
-      window_height: tab.height || 1080,
-      width: frameBounds.width,
-      height: frameBounds.height,
-      top: frameBounds.y,
-      left: frameBounds.x,
-      device_width: deviceWidth,
-      device_height: deviceHeight,
-    };
-
-    // Start recording using element capture instead of tab capture
-    await chrome.runtime.sendMessage({
-      type: "mf-start-recording",
-      target: "offscreen",
-      measurement: measurement,
-      video_quality: "medium", // Default to medium quality
-      useElementCapture: true, // Flag to indicate we want element capture
-    });
-
-    recordingTabs.add(tabId);
-    return { success: true };
-  } catch (error) {
-    console.error("Start recording error:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-async function stopScreenRecording(tabId) {
-  try {
-    if (!recordingTabs.has(tabId)) {
-      return { success: false, error: "Not recording" };
-    }
-
-    // Stop frame capture
-    stopFrameCapture(tabId);
-
-    // Stop recording
-    await chrome.runtime.sendMessage({
-      type: "mf-stop-recording",
-      target: "offscreen",
-      tabId: tabId,
-    });
-
-    // Wait a bit for the recording to complete and video to be generated
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Close the offscreen document to clean up resources
-    try {
-      await chrome.offscreen.closeDocument();
-    } catch (e) {
-      console.log("Offscreen document already closed or doesn't exist");
-    }
-
-    recordingTabs.delete(tabId);
-    return { success: true };
-  } catch (error) {
-    console.error("Stop recording error:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// Check if a tab is currently recording
-function isTabRecording(tabId) {
-  return recordingTabs.has(tabId);
-}
-
-// Frame capture functions for element-based recording
-async function startFrameCapture(tabId, frameRate) {
-  console.log(`Starting frame capture for tab ${tabId} at ${frameRate} fps`);
-
-  // Stop any existing frame capture for this tab
-  if (frameCaptureIntervals.has(tabId)) {
-    clearInterval(frameCaptureIntervals.get(tabId));
+      }
+    } catch (_) {}
   }
 
-  const frameInterval = 1000 / frameRate;
+  chrome.runtime.onStartup.addListener(reapplyActivatedTabs);
+  chrome.runtime.onInstalled.addListener(reapplyActivatedTabs);
 
-  const intervalId = setInterval(async () => {
+  // Screen recording functionality
+  let recordingTabs = new Set();
+  let frameCaptureIntervals = new Map(); // Track frame capture intervals per tab
+
+  async function startScreenRecording(tabId) {
     try {
-      // Capture the visible tab
-      const dataUrl = await chrome.tabs.captureVisibleTab(tabId, {
-        format: "png",
-        quality: 100,
-      });
+      // Check if already recording
+      if (recordingTabs.has(tabId)) {
+        return { success: false, error: "Already recording" };
+      }
 
-      // Get the current frame bounds
+      // Close any existing offscreen document to ensure clean state
+      try {
+        await chrome.offscreen.closeDocument();
+      } catch (e) {
+        console.log("No existing offscreen document to close");
+      }
+
+      // First, check if the simulator frame exists and get its bounds
       const frameInfo = await chrome.scripting.executeScript({
         target: { tabId },
         func: () => {
@@ -2502,48 +2358,79 @@ async function startFrameCapture(tabId, frameRate) {
         },
       });
 
-      if (frameInfo && frameInfo[0] && frameInfo[0].result) {
-        const frameBounds = frameInfo[0].result;
-        console.log(`Captured frame for tab ${tabId}, bounds:`, frameBounds);
-
-        // Send the frame data to the offscreen document
-        try {
-          await chrome.runtime.sendMessage({
-            type: "mf-frame-data",
-            target: "offscreen",
-            frameData: dataUrl,
-            bounds: frameBounds,
-          });
-          console.log(
-            `Frame data sent successfully for tab ${tabId}, data size:`,
-            dataUrl.length
-          );
-        } catch (error) {
-          console.error(`Failed to send frame data for tab ${tabId}:`, error);
-        }
-      } else {
-        console.warn(`No frame bounds found for tab ${tabId}`);
+      if (!frameInfo || !frameInfo[0] || !frameInfo[0].result) {
+        return { success: false, error: "Simulator frame not found" };
       }
+
+      const frameBounds = frameInfo[0].result;
+
+      // Get device dimensions from the current state
+      const state = await loadState(tabId);
+      const device = getDeviceBySlug(state.deviceSlug);
+      const baseW = device?.viewport?.width || 375;
+      const baseH = device?.viewport?.height || 812;
+      const isLandscape = (state.orientation === "landscape");
+      const deviceWidth = isLandscape ? baseH : baseW;
+      const deviceHeight = isLandscape ? baseW : baseH;
+
+      // Create fresh offscreen document
+      await chrome.offscreen.createDocument({
+        url: "offscreen/tab_capture/offscreenTabCapture.html",
+        reasons: ["USER_MEDIA"],
+        justification: "Recording from chrome.scripting.captureVisibleTab API",
+      });
+
+      // Test communication with offscreen document
+      try {
+        await chrome.runtime.sendMessage({
+          type: "test",
+          target: "offscreen",
+        });
+        console.log("Test message sent successfully to offscreen document");
+      } catch (error) {
+        console.error(
+          "Failed to send test message to offscreen document:",
+          error
+        );
+      }
+
+      // Get tab dimensions for recording
+      const tab = await chrome.tabs.get(tabId);
+      const measurement = {
+        tabId: tabId, // Add tabId to measurement object
+        window_width: tab.width || 1920,
+        window_height: tab.height || 1080,
+        width: frameBounds.width,
+        height: frameBounds.height,
+        top: frameBounds.y,
+        left: frameBounds.x,
+        device_width: deviceWidth,
+        device_height: deviceHeight,
+      };
+
+      // Start recording using element capture instead of tab capture
+      await chrome.runtime.sendMessage({
+        type: "mf-start-recording",
+        target: "offscreen",
+        measurement: measurement,
+        video_quality: "medium", // Default to medium quality
+        useElementCapture: true, // Flag to indicate we want element capture
+      });
+
+      recordingTabs.add(tabId);
+      return { success: true };
     } catch (error) {
-      console.error(`Error capturing frame for tab ${tabId}:`, error);
+      console.error("Start recording error:", error);
+      return { success: false, error: error.message };
     }
-  }, frameInterval);
-
-  frameCaptureIntervals.set(tabId, intervalId);
-  console.log(`Frame capture interval set for tab ${tabId}`);
-}
-
-function stopFrameCapture(tabId) {
-  if (frameCaptureIntervals.has(tabId)) {
-    clearInterval(frameCaptureIntervals.get(tabId));
-    frameCaptureIntervals.delete(tabId);
   }
-}
 
-// Cleanup function to stop recording and close offscreen document
-async function cleanupRecording(tabId) {
-  if (recordingTabs.has(tabId)) {
+  async function stopScreenRecording(tabId) {
     try {
+      if (!recordingTabs.has(tabId)) {
+        return { success: false, error: "Not recording" };
+      }
+
       // Stop frame capture
       stopFrameCapture(tabId);
 
@@ -2554,7 +2441,10 @@ async function cleanupRecording(tabId) {
         tabId: tabId,
       });
 
-      // Close offscreen document
+      // Wait a bit for the recording to complete and video to be generated
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Close the offscreen document to clean up resources
       try {
         await chrome.offscreen.closeDocument();
       } catch (e) {
@@ -2562,58 +2452,168 @@ async function cleanupRecording(tabId) {
       }
 
       recordingTabs.delete(tabId);
-    } catch (e) {
-      console.error("Cleanup recording error:", e);
-      recordingTabs.delete(tabId);
+      return { success: true };
+    } catch (error) {
+      console.error("Stop recording error:", error);
+      return { success: false, error: error.message };
     }
   }
-}
 
-// Listen for tab removal to cleanup recording
-chrome.tabs.onRemoved.addListener(async (tabId) => {
-  await cleanupRecording(tabId);
-});
-
-// Listen for extension reload to cleanup all recordings
-chrome.runtime.onSuspend.addListener(async () => {
-  for (const tabId of recordingTabs) {
-    await cleanupRecording(tabId);
+  // Check if a tab is currently recording
+  function isTabRecording(tabId) {
+    return recordingTabs.has(tabId);
   }
-});
 
-// Handle video generation completion
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "tab_capture_video_generated") {
-    const { tabId, url } = message;
+  // Frame capture functions for element-based recording
+  async function startFrameCapture(tabId, frameRate) {
+    console.log(`Starting frame capture for tab ${tabId} at ${frameRate} fps`);
 
-    // Send message to content script to show download dialog
-    chrome.tabs
-      .sendMessage(tabId, {
-        type: "RECORDING_COMPLETED",
-        videoUrl: url,
-      })
-      .catch(() => {
-        // If content script is not available, create download directly
-        chrome.downloads.download({
-          url: url,
-          filename: `screen-recording-${Date.now()}.webm`,
-          saveAs: true,
+    // Stop any existing frame capture for this tab
+    if (frameCaptureIntervals.has(tabId)) {
+      clearInterval(frameCaptureIntervals.get(tabId));
+    }
+
+    const frameInterval = 1000 / frameRate;
+
+    const intervalId = setInterval(async () => {
+      try {
+        // Capture the visible tab
+        const dataUrl = await chrome.tabs.captureVisibleTab(tabId, {
+          format: "png",
+          quality: 100,
         });
-      });
+
+        // Get the current frame bounds
+        const frameInfo = await chrome.scripting.executeScript({
+          target: { tabId },
+          func: () => {
+            const frame = document.getElementById("__mf_simulator_frame__");
+            if (!frame) {
+              return null;
+            }
+
+            const rect = frame.getBoundingClientRect();
+            return {
+              x: rect.left,
+              y: rect.top,
+              width: rect.width,
+              height: rect.height,
+            };
+          },
+        });
+
+        if (frameInfo && frameInfo[0] && frameInfo[0].result) {
+          const frameBounds = frameInfo[0].result;
+          console.log(`Captured frame for tab ${tabId}, bounds:`, frameBounds);
+
+          // Send the frame data to the offscreen document
+          try {
+            await chrome.runtime.sendMessage({
+              type: "mf-frame-data",
+              target: "offscreen",
+              frameData: dataUrl,
+              bounds: frameBounds,
+            });
+            console.log(
+              `Frame data sent successfully for tab ${tabId}, data size:`,
+              dataUrl.length
+            );
+          } catch (error) {
+            console.error(`Failed to send frame data for tab ${tabId}:`, error);
+          }
+        } else {
+          console.warn(`No frame bounds found for tab ${tabId}`);
+        }
+      } catch (error) {
+        console.error(`Error capturing frame for tab ${tabId}:`, error);
+      }
+    }, frameInterval);
+
+    frameCaptureIntervals.set(tabId, intervalId);
+    console.log(`Frame capture interval set for tab ${tabId}`);
   }
-});
 
-// Handle keyboard shortcuts for recording
-chrome.commands.onCommand.addListener(async (command, tab) => {
-  if (command === "start-stop-video-capture") {
-    const tabId = tab.id;
-
-    if (recordingTabs.has(tabId)) {
-      // Stop recording
-      await stopScreenRecording(tabId);
-    } else {
-      // Start recording
-      await startScreenRecording(tabId);
+  function stopFrameCapture(tabId) {
+    if (frameCaptureIntervals.has(tabId)) {
+      clearInterval(frameCaptureIntervals.get(tabId));
+      frameCaptureIntervals.delete(tabId);
     }
   }
-});
+
+  // Cleanup function to stop recording and close offscreen document
+  async function cleanupRecording(tabId) {
+    if (recordingTabs.has(tabId)) {
+      try {
+        // Stop frame capture
+        stopFrameCapture(tabId);
+
+        // Stop recording
+        await chrome.runtime.sendMessage({
+          type: "mf-stop-recording",
+          target: "offscreen",
+          tabId: tabId,
+        });
+
+        // Close offscreen document
+        try {
+          await chrome.offscreen.closeDocument();
+        } catch (e) {
+          console.log("Offscreen document already closed or doesn't exist");
+        }
+
+        recordingTabs.delete(tabId);
+      } catch (e) {
+        console.error("Cleanup recording error:", e);
+        recordingTabs.delete(tabId);
+      }
+    }
+  }
+
+  // Listen for tab removal to cleanup recording
+  chrome.tabs.onRemoved.addListener(async (tabId) => {
+    await cleanupRecording(tabId);
+  });
+
+  // Listen for extension reload to cleanup all recordings
+  chrome.runtime.onSuspend.addListener(async () => {
+    for (const tabId of recordingTabs) {
+      await cleanupRecording(tabId);
+    }
+  });
+
+  // Handle video generation completion
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "tab_capture_video_generated") {
+      const { tabId, url } = message;
+
+      // Send message to content script to show download dialog
+      chrome.tabs
+        .sendMessage(tabId, {
+          type: "RECORDING_COMPLETED",
+          videoUrl: url,
+        })
+        .catch(() => {
+          // If content script is not available, create download directly
+          chrome.downloads.download({
+            url: url,
+            filename: `screen-recording-${Date.now()}.webm`,
+            saveAs: true,
+          });
+        });
+    }
+  });
+
+  // Handle keyboard shortcuts for recording
+  chrome.commands.onCommand.addListener(async (command, tab) => {
+    if (command === "start-stop-video-capture") {
+      const tabId = tab.id;
+
+      if (recordingTabs.has(tabId)) {
+        // Stop recording
+        await stopScreenRecording(tabId);
+      } else {
+        // Start recording
+        await startScreenRecording(tabId);
+      }
+    }
+  });

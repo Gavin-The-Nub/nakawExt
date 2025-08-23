@@ -1,5 +1,4 @@
 (async function () {
-  
   async function getActiveTab() {
     const [tab] = await chrome.tabs.query({
       active: true,
@@ -9,14 +8,14 @@
   }
 
   const tab = await getActiveTab();
-  
+
   // Automatically activate simulator when popup opens
   try {
     await chrome.runtime.sendMessage({
       type: "ACTIVATE_SIMULATOR_FOR_TAB",
       tabId: tab.id,
     });
-    
+
     // Close popup after activating simulator so user can see it immediately
     setTimeout(() => {
       window.close();
@@ -29,33 +28,33 @@
 
   async function showPopupInterface() {
     // Hide loading section and show main section
-    document.getElementById('loading-section').classList.add('hidden');
-    document.getElementById('main-section').classList.remove('hidden');
-    
+    document.getElementById("loading-section").classList.add("hidden");
+    document.getElementById("main-section").classList.remove("hidden");
+
     // Load current device selection and update UI
     const deviceSelect = document.getElementById("device");
     const currentDeviceSpan = document.getElementById("current-device");
     const currentViewportSpan = document.getElementById("current-viewport");
     const simulatorStatusSpan = document.getElementById("simulator-status");
     const toggleScrollbarBtn = document.getElementById("toggle-scrollbar");
-    
+
     const response = await chrome.runtime.sendMessage({
       type: "GET_TAB_STATE",
       tabId: tab.id,
     });
-    
+
     if (response && response.deviceSlug) {
       deviceSelect.value = response.deviceSlug;
       updateDeviceInfo(response.deviceSlug);
     }
-    
+
     // Update button states
     if (response) {
       updateButtonStates(response);
     }
 
     function updateDeviceInfo(deviceSlug) {
-      const device = DEVICES.find(d => d.slug === deviceSlug) || DEVICES[0];
+      const device = DEVICES.find((d) => d.slug === deviceSlug) || DEVICES[0];
       currentDeviceSpan.textContent = device.name;
       currentViewportSpan.textContent = `${device.viewport.width}×${device.viewport.height}`;
       simulatorStatusSpan.textContent = "Simulator Active";
@@ -73,9 +72,9 @@
 
     deviceSelect.addEventListener("change", async () => {
       const deviceSlug = deviceSelect.value;
-      
+
       updateDeviceInfo(deviceSlug);
-      
+
       chrome.runtime.sendMessage({
         type: "SET_DEVICE_FOR_TAB",
         tabId: tab.id,
@@ -94,9 +93,4 @@
       );
     });
   }
-
-
 })();
-
-
-
