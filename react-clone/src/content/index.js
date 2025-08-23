@@ -1,293 +1,30 @@
 // Content script for device simulation
-let currentDevice = null;
-let isSimulatorActive = false;
-let showScrollbar = false;
-let devicePanel = null;
+// This script injects a floating toolbar when the simulator is active
+
+let toolbar = null;
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  const { type, device, showScrollbar: newShowScrollbar } = message;
+  const { type, device, showScrollbar } = message;
 
   switch (type) {
     case "SIMULATOR_ACTIVATED":
-      activateSimulator(device);
+      injectToolbar();
       break;
 
     case "SIMULATOR_DEACTIVATED":
-      deactivateSimulator();
+      removeToolbar();
       break;
 
     case "DEVICE_CHANGED":
-      changeDevice(device);
+      // Optionally update toolbar state
       break;
 
     case "TOGGLE_SCROLLBAR":
-      toggleScrollbar(newShowScrollbar);
+      // Optionally update toolbar state
       break;
   }
 });
-
-function activateSimulator(device) {
-  currentDevice = device;
-  isSimulatorActive = true;
-
-  // Apply viewport changes
-  applyViewport(device);
-
-  // Apply scrollbar settings
-  toggleScrollbar(showScrollbar);
-
-  // Create device panel
-  createDevicePanel();
-
-  console.log("Device simulator activated:", device.name);
-}
-
-function deactivateSimulator() {
-  isSimulatorActive = false;
-  currentDevice = null;
-
-  // Restore original viewport
-  restoreViewport();
-
-  // Remove device panel
-  removeDevicePanel();
-
-  console.log("Device simulator deactivated");
-}
-
-function changeDevice(device) {
-  currentDevice = device;
-
-  // Update viewport
-  applyViewport(device);
-
-  // Update device panel
-  updateDevicePanel();
-
-  console.log("Device changed to:", device.name);
-}
-
-function applyViewport(device) {
-  const { width, height } = device.viewport;
-
-  // Set viewport meta tag
-  let viewportMeta = document.querySelector('meta[name="viewport"]');
-  if (!viewportMeta) {
-    viewportMeta = document.createElement("meta");
-    viewportMeta.name = "viewport";
-    document.head.appendChild(viewportMeta);
-  }
-
-  viewportMeta.content = `width=${width}, height=${height}, initial-scale=1, user-scalable=no`;
-
-  // Apply CSS for viewport simulation
-  const styleId = "device-simulator-style";
-  let style = document.getElementById(styleId);
-  if (!style) {
-    style = document.createElement("style");
-    style.id = styleId;
-    document.head.appendChild(style);
-  }
-
-  style.textContent = `
-    body {
-      width: ${width}px !important;
-      height: ${height}px !important;
-      margin: 0 auto !important;
-      overflow: hidden !important;
-    }
-    
-    html {
-      overflow: hidden !important;
-    }
-    
-    /* Hide scrollbars by default */
-    ::-webkit-scrollbar {
-      display: none !important;
-    }
-    
-    /* Show scrollbars when enabled */
-    .show-scrollbar ::-webkit-scrollbar {
-      display: block !important;
-    }
-    
-    .show-scrollbar {
-      overflow: auto !important;
-    }
-  `;
-}
-
-function restoreViewport() {
-  // Remove viewport restrictions
-  const style = document.getElementById("device-simulator-style");
-  if (style) {
-    style.remove();
-  }
-
-  // Reset viewport meta tag
-  const viewportMeta = document.querySelector('meta[name="viewport"]');
-  if (viewportMeta) {
-    viewportMeta.content = "width=device-width, initial-scale=1";
-  }
-
-  // Remove body classes
-  document.body.classList.remove("show-scrollbar");
-}
-
-function toggleScrollbar(show) {
-  showScrollbar = show;
-
-  if (show) {
-    document.body.classList.add("show-scrollbar");
-  } else {
-    document.body.classList.remove("show-scrollbar");
-  }
-}
-
-function createDevicePanel() {
-  if (devicePanel) {
-    removeDevicePanel();
-  }
-
-  devicePanel = document.createElement("div");
-  devicePanel.id = "device-simulator-panel";
-  devicePanel.innerHTML = `
-    <div class="device-info">
-      <span class="device-name">${currentDevice.name}</span>
-      <span class="device-resolution">${currentDevice.viewport.width}×${
-    currentDevice.viewport.height
-  }</span>
-    </div>
-    <div class="device-controls">
-      <button id="change-device-btn" class="control-btn">Change Device</button>
-      <button id="toggle-scrollbar-btn" class="control-btn">${
-        showScrollbar ? "Hide" : "Show"
-      } Scrollbar</button>
-      <button id="deactivate-btn" class="control-btn">Deactivate</button>
-    </div>
-  `;
-
-  // Add styles
-  const style = document.createElement("style");
-  style.textContent = `
-    #device-simulator-panel {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      font-family: Arial, sans-serif;
-      font-size: 12px;
-      z-index: 999999;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    .device-info {
-      margin-bottom: 8px;
-    }
-    
-    .device-name {
-      font-weight: bold;
-      display: block;
-    }
-    
-    .device-resolution {
-      color: #ccc;
-      font-size: 11px;
-    }
-    
-    .device-controls {
-      display: flex;
-      gap: 5px;
-    }
-    
-    .control-btn {
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    
-    .control-btn:hover {
-      background: #0056b3;
-    }
-    
-    #deactivate-btn {
-      background: #dc3545;
-    }
-    
-    #deactivate-btn:hover {
-      background: #c82333;
-    }
-  `;
-
-  document.head.appendChild(style);
-  document.body.appendChild(devicePanel);
-
-  // Add event listeners
-  document
-    .getElementById("change-device-btn")
-    .addEventListener("click", openDeviceSelector);
-  document
-    .getElementById("toggle-scrollbar-btn")
-    .addEventListener("click", toggleScrollbarFromPanel);
-  document
-    .getElementById("deactivate-btn")
-    .addEventListener("click", deactivateFromPanel);
-}
-
-function removeDevicePanel() {
-  if (devicePanel) {
-    devicePanel.remove();
-    devicePanel = null;
-  }
-
-  // Remove styles
-  const style = document.querySelector("style");
-  if (style && style.textContent.includes("#device-simulator-panel")) {
-    style.remove();
-  }
-}
-
-function updateDevicePanel() {
-  if (devicePanel && currentDevice) {
-    const deviceName = devicePanel.querySelector(".device-name");
-    const deviceResolution = devicePanel.querySelector(".device-resolution");
-
-    if (deviceName) deviceName.textContent = currentDevice.name;
-    if (deviceResolution)
-      deviceResolution.textContent = `${currentDevice.viewport.width}×${currentDevice.viewport.height}`;
-  }
-}
-
-function openDeviceSelector() {
-  // Open device selection panel
-  chrome.runtime.sendMessage({
-    type: "OPEN_DEVICE_PANEL",
-  });
-}
-
-function toggleScrollbarFromPanel() {
-  chrome.runtime.sendMessage({
-    type: "TOGGLE_SCROLLBAR_FOR_TAB",
-    tabId: null, // Background script will get current tab
-  });
-}
-
-function deactivateFromPanel() {
-  chrome.runtime.sendMessage({
-    type: "DEACTIVATE_SIMULATOR_FOR_TAB",
-    tabId: null, // Background script will get current tab
-  });
-}
 
 // Initialize on page load
 if (document.readyState === "loading") {
@@ -297,19 +34,111 @@ if (document.readyState === "loading") {
 }
 
 function initialize() {
-  // Check if simulator is already active for this tab
-  chrome.runtime.sendMessage(
-    {
-      type: "GET_TAB_STATE",
-      tabId: null,
-    },
-    (response) => {
-      if (response && response.isActive) {
-        activateSimulator(response.device);
-        if (response.showScrollbar) {
-          toggleScrollbar(true);
-        }
+  console.log("Device simulator content script loaded");
+}
+
+function injectToolbar() {
+  if (toolbar) return;
+
+  toolbar = document.createElement("div");
+  toolbar.id = "mf-toolbar";
+  toolbar.innerHTML = `
+    <style>
+      #mf-toolbar {
+        position: fixed;
+        top: 60px;
+        right: 24px;
+        z-index: 2147483647;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        pointer-events: none;
       }
-    }
-  );
+      .mf-toolbar-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #555;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        cursor: pointer;
+        border: none;
+        outline: none;
+        transition: background 0.2s;
+        pointer-events: auto;
+      }
+      .mf-toolbar-btn:active {
+        background: #333;
+      }
+      .mf-toolbar-btn.selected {
+        background: #2196f3;
+      }
+      .mf-toolbar-btn svg {
+        width: 28px;
+        height: 28px;
+        stroke: #fff;
+        fill: none;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+    <button class="mf-toolbar-btn" id="mf-btn-close" title="Close Simulator">
+      <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+    </button>
+    <button class="mf-toolbar-btn" id="mf-btn-device" title="Device Mode">
+      <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="18" r="1.5"/></svg>
+    </button>
+    <button class="mf-toolbar-btn selected" id="mf-btn-panel" title="Show Device Panel">
+      <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="2"/><line x1="4" y1="11" x2="20" y2="11"/></svg>
+    </button>
+    <button class="mf-toolbar-btn" id="mf-btn-rotate" title="Rotate">
+      <svg viewBox="0 0 24 24"><path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/></svg>
+    </button>
+    <button class="mf-toolbar-btn" id="mf-btn-screenshot" title="Screenshot">
+      <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="3.5"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+    </button>
+    <button class="mf-toolbar-btn" id="mf-btn-record" title="Record">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
+    </button>
+  `;
+  document.body.appendChild(toolbar);
+
+  // Button event handlers (placeholders)
+  document.getElementById("mf-btn-close").onclick = () => {
+    chrome.runtime.sendMessage({
+      type: "DEACTIVATE_SIMULATOR_FOR_TAB",
+      tabId: null,
+    });
+  };
+  document.getElementById("mf-btn-device").onclick = () => {
+    // Device mode action (placeholder)
+    alert("Device mode button clicked");
+  };
+  document.getElementById("mf-btn-panel").onclick = () => {
+    // Show device panel (placeholder)
+    alert("Show device panel button clicked");
+  };
+  document.getElementById("mf-btn-rotate").onclick = () => {
+    // Rotate action (placeholder)
+    alert("Rotate button clicked");
+  };
+  document.getElementById("mf-btn-screenshot").onclick = () => {
+    // Screenshot action (placeholder)
+    alert("Screenshot button clicked");
+  };
+  document.getElementById("mf-btn-record").onclick = () => {
+    // Record action (placeholder)
+    alert("Record button clicked");
+  };
+}
+
+function removeToolbar() {
+  if (toolbar) {
+    toolbar.remove();
+    toolbar = null;
+  }
 }

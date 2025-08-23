@@ -4,10 +4,10 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: {
-    popup: "./src/popup/index.js",
+    popup: "./src/popup/popup.js",
     background: "./src/background/index.js",
     content: "./src/content/index.js",
-    devicePanel: "./src/devicePanel/index.js",
+    devicePanel: "./src/devicePanel/devicePanel.js",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -41,11 +41,6 @@ module.exports = {
       template: "./src/popup/popup.html",
       filename: "popup.html",
       chunks: ["popup"],
-    }),
-    new HtmlWebpackPlugin({
-      template: "./src/devicePanel/devicePanel.html",
-      filename: "devicePanel.html",
-      chunks: ["devicePanel"],
     }),
     new CopyWebpackPlugin({
       patterns: [

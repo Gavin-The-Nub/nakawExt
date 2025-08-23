@@ -1,8 +1,4 @@
-import {
-  DEVICES,
-  getDeviceBySlug,
-  getDefaultDevice,
-} from "../shared/devices.js";
+import { DEVICES, getDeviceBySlug } from "../shared/devices.js";
 
 // Store tab states
 const tabStates = new Map();
@@ -108,17 +104,9 @@ function activateSimulatorForTab(tabId, deviceSlug = null) {
 
   tabStates.set(tabId, tabState);
   applyDeviceToTab(tabId, device);
+  showSimulator(tabId, tabState);
 
-  // Notify content script
-  chrome.tabs
-    .sendMessage(tabId, {
-      type: "SIMULATOR_ACTIVATED",
-      device: device,
-    })
-    .catch(() => {
-      // Content script might not be ready yet
-      console.log("Content script not ready for tab:", tabId);
-    });
+  console.log("Device simulator activated:", device.name);
 }
 
 function deactivateSimulatorForTab(tabId) {
@@ -131,16 +119,11 @@ function deactivateSimulatorForTab(tabId) {
       });
     }
 
-    // Remove device simulation
-    chrome.tabs
-      .sendMessage(tabId, {
-        type: "SIMULATOR_DEACTIVATED",
-      })
-      .catch(() => {
-        console.log("Content script not ready for tab:", tabId);
-      });
+    // Remove simulator overlay
+    hideSimulator(tabId);
 
     tabStates.delete(tabId);
+    console.log("Device simulator deactivated");
   }
 }
 
@@ -151,16 +134,9 @@ function setDeviceForTab(tabId, deviceSlug) {
   if (tabState && tabState.isActive) {
     tabState.device = device;
     applyDeviceToTab(tabId, device);
+    showSimulator(tabId, tabState);
 
-    // Notify content script
-    chrome.tabs
-      .sendMessage(tabId, {
-        type: "DEVICE_CHANGED",
-        device: device,
-      })
-      .catch(() => {
-        console.log("Content script not ready for tab:", tabId);
-      });
+    console.log("Device changed to:", device.name);
   }
 }
 
@@ -215,27 +191,325 @@ function toggleScrollbarForTab(tabId, sendResponse) {
   const tabState = getTabState(tabId);
   if (tabState) {
     tabState.showScrollbar = !tabState.showScrollbar;
-
-    chrome.tabs
-      .sendMessage(tabId, {
-        type: "TOGGLE_SCROLLBAR",
-        showScrollbar: tabState.showScrollbar,
-      })
-      .catch(() => {
-        console.log("Content script not ready for tab:", tabId);
-      });
-
+    applyScrollbar(tabId, tabState.showScrollbar);
     sendResponse(tabState);
   }
 }
 
-// Export for testing
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = {
-    tabStates,
-    activateSimulatorForTab,
-    deactivateSimulatorForTab,
-    setDeviceForTab,
-    getTabState,
+async function showSimulator(tabId, state) {
+  try {
+    // Inject the device panel content script
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["devicePanel.js"],
+    });
+
+    await chrome.scripting.insertCSS({
+      target: { tabId },
+      css: `
+        #__mf_simulator_overlay__ {
+          position: fixed;
+          inset: 0;
+          background: #FFFF;
+          z-index: 2147483647;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        #__mf_simulator_frame__ {
+          position: relative;
+          display: inline-block;
+          overflow: hidden;
+          background: transparent;
+        }
+        
+        /* Completely hide main page scrollbar when simulator is active */
+        html, body {
+          overflow: hidden !important;
+        }
+        ::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+        ::-webkit-scrollbar-track {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-thumb {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-corner {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-button {
+          display: none !important;
+        }
+      `,
+    });
+  } catch (error) {
+    console.error("Failed to inject simulator:", error);
+  }
+
+  const device = state.device;
+  const tab = await chrome.tabs.get(tabId);
+
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    func: createSimulatorOverlay,
+    args: [
+      {
+        w: device.viewport.width,
+        h: device.viewport.height,
+        deviceName: device.name,
+        mockupPath: device.mockup,
+        deviceScreenPct: device.screenPct,
+        orientation: "portrait",
+        platform: device.platform,
+      },
+    ],
+  });
+}
+
+function createSimulatorOverlay({
+  w,
+  h,
+  deviceName,
+  mockupPath,
+  deviceScreenPct,
+  orientation,
+  platform,
+}) {
+  const prev = document.getElementById("__mf_simulator_overlay__");
+  if (prev) prev.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "__mf_simulator_overlay__";
+
+  // Create mockup container with proper styling
+  const mockupContainer = document.createElement("div");
+  mockupContainer.id = "__mf_simulator_frame__";
+  mockupContainer.style.position = "relative";
+  mockupContainer.style.display = "inline-block";
+  mockupContainer.style.width = String(w) + "px";
+  mockupContainer.style.height = String(h) + "px";
+  mockupContainer.style.scale = String(deviceScreenPct?.scale || 0.7);
+  mockupContainer.style.overflow = "hidden";
+  mockupContainer.style.transition = "transform 220ms ease";
+  mockupContainer.style.transformOrigin = "50% 50%";
+  mockupContainer.style.willChange = "transform";
+
+  // Create mockup image with proper sizing
+  const mockupImg = document.createElement("img");
+  mockupImg.id = "__mf_simulator_mockup__";
+  mockupImg.src = chrome.runtime.getURL(mockupPath);
+  mockupImg.style.width = String(w) + "px";
+  mockupImg.style.height = String(h) + "px";
+  mockupImg.style.display = "block";
+  mockupImg.style.position = "absolute";
+  mockupImg.style.top = "0";
+  mockupImg.style.left = "0";
+  mockupImg.style.zIndex = "5";
+  mockupImg.style.pointerEvents = "none";
+
+  // Screen container that clips the iframe to the device screen area
+  const pct = deviceScreenPct || {
+    top: 10,
+    right: 6,
+    bottom: 10,
+    left: 6,
+    radius: 3,
+    scale: 0.7,
   };
+  const preset = {
+    x: Math.round((pct.left / 100) * w),
+    y: Math.round((pct.top / 100) * h),
+    w: Math.max(0, Math.round(w - ((pct.left + pct.right) / 100) * w)),
+    h: Math.max(0, Math.round(h - ((pct.top + pct.bottom) / 100) * h)),
+    radius: Math.round((pct.radius / 100) * Math.min(w, h)),
+  };
+
+  const iframeContainer = document.createElement("div");
+  iframeContainer.id = "__mf_simulator_screen__";
+  iframeContainer.style.position = "absolute";
+  iframeContainer.style.top = String(preset.y) + "px";
+  iframeContainer.style.left = String(preset.x) + "px";
+  iframeContainer.style.width = String(preset.w) + "px";
+  iframeContainer.style.height = String(preset.h) + "px";
+  iframeContainer.style.overflow = "hidden";
+  iframeContainer.style.borderRadius = String(preset.radius) + "px";
+  iframeContainer.style.zIndex = "1";
+
+  // Create iframe positioned to fill the screen container
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "absolute";
+  iframe.style.border = "none";
+  iframe.style.background = "transparent";
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.style.top = "0";
+  iframe.style.left = "0";
+  iframe.style.borderRadius = String(preset.radius) + "px";
+  iframe.style.zIndex = "2";
+  iframe.sandbox =
+    "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
+  iframe.src = window.location.href;
+
+  // Add CSS to iframe to hide scrollbars after it loads
+  iframe.onload = function () {
+    try {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const style = iframeDoc.createElement("style");
+      style.textContent = `
+        html, body {
+          overflow: auto !important;
+        }
+        ::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+        ::-webkit-scrollbar-track {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-thumb {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-corner {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-button {
+          display: none !important;
+        }
+      `;
+      iframeDoc.head.appendChild(style);
+    } catch (e) {
+      console.log("Cannot inject CSS into cross-origin iframe");
+    }
+  };
+
+  iframeContainer.appendChild(iframe);
+  mockupContainer.appendChild(mockupImg);
+  mockupContainer.appendChild(iframeContainer);
+  overlay.appendChild(mockupContainer);
+
+  document.body.appendChild(overlay);
+}
+
+async function hideSimulator(tabId) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const overlay = document.getElementById("__mf_simulator_overlay__");
+        if (overlay) overlay.remove();
+      },
+    });
+
+    await chrome.scripting.removeCSS({
+      target: { tabId },
+      css: `
+        #__mf_simulator_overlay__ {
+          position: fixed;
+          inset: 0;
+          background: #FFFF;
+          z-index: 2147483647;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        #__mf_simulator_frame__ {
+          position: relative;
+          display: inline-block;
+          overflow: hidden;
+          background: transparent;
+        }
+        
+        html, body {
+          overflow: hidden !important;
+        }
+        ::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+        ::-webkit-scrollbar-track {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-thumb {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-corner {
+          display: none !important;
+        }
+        ::-webkit-scrollbar-button {
+          display: none !important;
+        }
+      `,
+    });
+  } catch (error) {
+    console.error("Failed to hide simulator:", error);
+  }
+}
+
+async function applyScrollbar(tabId, show) {
+  let css;
+  if (show) {
+    css = `
+      html, body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
+      ::-webkit-scrollbar {
+        background: transparent;
+        width: 13px !important;
+        height: 13px !important;
+      }
+      ::-webkit-scrollbar-thumb {
+        border: solid 3px transparent;
+        background-clip: content-box;
+        border-radius: 17px;
+      }
+    `;
+  } else {
+    css = `
+      html, body {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
+      ::-webkit-scrollbar {
+        background: transparent;
+        width: 0 !important;
+        height: 0 !important;
+        display: none !important;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+        display: none !important;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: transparent;
+        display: none !important;
+      }
+      ::-webkit-scrollbar-corner {
+        background: transparent;
+        display: none !important;
+      }
+      ::-webkit-scrollbar-button {
+        display: none !important;
+      }
+    `;
+  }
+
+  try {
+    await chrome.scripting.insertCSS({
+      target: { tabId, allFrames: true },
+      css,
+    });
+  } catch (error) {
+    console.error("Failed to apply scrollbar CSS:", error);
+  }
+}
+
+function getDefaultDevice() {
+  return DEVICES[0];
 }
