@@ -4,13 +4,15 @@
 let toolbar = null;
 let deviceSelector = null;
 let devicePanel = null;
+let currentOrientation = "portrait"; // Track current orientation
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  const { type, device, showScrollbar } = message;
+  const { type, device, showScrollbar, orientation } = message;
 
   switch (type) {
     case "SIMULATOR_ACTIVATED":
+      currentOrientation = orientation || "portrait";
       injectToolbar();
       break;
 
@@ -31,6 +33,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           injectToolbar();
         }
       }, 100); // Small delay to ensure overlay recreation is complete
+      break;
+
+    case "ORIENTATION_CHANGED":
+      currentOrientation = orientation || "portrait";
+      updateToolbarOrientation();
       break;
 
     case "TOGGLE_SCROLLBAR":
@@ -100,6 +107,23 @@ function injectToolbar() {
         stroke-linejoin: round;
       }
       
+      .orientation-indicator {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 20px;
+        height: 20px;
+        background: #ff6b6b;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        color: white;
+        border: 2px solid #333;
+      }
+      
       #mf-device-selector {
         position: fixed;
         top: 60px;
@@ -163,8 +187,9 @@ function injectToolbar() {
     <button class="mf-toolbar-btn selected" id="mf-btn-panel" title="Show Device Panel">
       <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="2"/><line x1="4" y1="11" x2="20" y2="11"/></svg>
     </button>
-    <button class="mf-toolbar-btn" id="mf-btn-rotate" title="Rotate">
+    <button class="mf-toolbar-btn" id="mf-btn-rotate" title="Rotate to Landscape" style="position: relative;">
       <svg viewBox="0 0 24 24"><path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/></svg>
+      <div class="orientation-indicator">P</div>
     </button>
     <button class="mf-toolbar-btn" id="mf-btn-screenshot" title="Screenshot">
       <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="3.5"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
@@ -206,8 +231,42 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-rotate").onclick = () => {
-    // Rotate action (placeholder)
-    alert("Rotate functionality coming soon!");
+    // Implement rotate functionality with visual animation (like basic_clone)
+    try {
+      // Get current orientation from the button indicator
+      const isCurrentlyLandscape = currentOrientation === "landscape";
+      
+      // Find the mockup container and do a brief visual rotation
+      const mockupContainer = document.querySelector("#__mf_simulator_frame__");
+      if (mockupContainer) {
+        // Brief visual rotate animation before applying new orientation
+        const direction = isCurrentlyLandscape ? -90 : 90;
+        mockupContainer.style.transform = `rotate(${direction}deg)`;
+        
+        // Send message after animation completes
+        setTimeout(async () => {
+          try {
+            await chrome.runtime.sendMessage({
+              type: "TOGGLE_ORIENTATION_FOR_TAB",
+              tabId: null,
+            });
+          } catch (_) {}
+        }, 230);
+      } else {
+        // Fallback: send message immediately if no mockup found
+        chrome.runtime.sendMessage({
+          type: "TOGGLE_ORIENTATION_FOR_TAB",
+          tabId: null,
+        });
+      }
+    } catch (e) {
+      console.error("Rotation error:", e);
+      // Fallback: send message immediately on error
+      chrome.runtime.sendMessage({
+        type: "TOGGLE_ORIENTATION_FOR_TAB",
+        tabId: null,
+      });
+    }
   };
 
   document.getElementById("mf-btn-screenshot").onclick = () => {
@@ -219,6 +278,9 @@ function injectToolbar() {
     // Record action (placeholder)
     alert("Record functionality coming soon!");
   };
+  
+  // Update orientation indicator after toolbar is created
+  updateToolbarOrientation();
 }
 
 function createDeviceSelector() {
@@ -335,6 +397,30 @@ function toggleDevicePanel() {
     } else {
       existingPanel.style.display = "none";
       document.getElementById("mf-btn-panel").classList.remove("selected");
+    }
+  }
+}
+
+function updateToolbarOrientation() {
+  // Update the rotate button to show current orientation
+  const rotateBtn = document.getElementById("mf-btn-rotate");
+  if (rotateBtn) {
+    if (currentOrientation === "landscape") {
+      rotateBtn.title = "Rotate to Portrait";
+      rotateBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" style="transform: rotate(90deg);">
+          <path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/>
+        </svg>
+      `;
+      rotateBtn.querySelector(".orientation-indicator").textContent = "L";
+    } else {
+      rotateBtn.title = "Rotate to Landscape";
+      rotateBtn.innerHTML = `
+        <svg viewBox="0 0 24 24">
+          <path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/>
+        </svg>
+      `;
+      rotateBtn.querySelector(".orientation-indicator").textContent = "P";
     }
   }
 }

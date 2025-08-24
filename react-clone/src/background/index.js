@@ -1,6 +1,6 @@
 import { DEVICES, getDeviceBySlug } from "../shared/devices.js";
 
-// Store tab states
+// Store tab states with orientation information
 const tabStates = new Map();
 
 // Initialize extension
@@ -47,6 +47,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
       } else {
         setDeviceForTab(tabId, deviceSlug);
+      }
+      break;
+
+    case "TOGGLE_ORIENTATION_FOR_TAB":
+      // If tabId is null, get the current active tab
+      if (tabId === null) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]) {
+            toggleOrientationForTab(tabs[0].id);
+          }
+        });
+      } else {
+        toggleOrientationForTab(tabId);
       }
       break;
 
@@ -123,13 +136,13 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // Core functions
 function activateSimulatorForTab(tabId, deviceSlug = null) {
   const device = deviceSlug ? getDeviceBySlug(deviceSlug) : getDefaultDevice();
-
-  const tabState = {
-    isActive: true,
-    device: device,
-    showScrollbar: false,
-    originalUA: null,
-  };
+  const tabState = getTabState(tabId);
+  
+  tabState.isActive = true;
+  tabState.device = device;
+  tabState.orientation = "portrait"; // Reset to portrait when activating
+  tabState.showScrollbar = false;
+  tabState.originalUA = null;
 
   tabStates.set(tabId, tabState);
   applyDeviceToTab(tabId, device);
@@ -159,23 +172,40 @@ function deactivateSimulatorForTab(tabId) {
 function setDeviceForTab(tabId, deviceSlug) {
   const device = getDeviceBySlug(deviceSlug);
   const tabState = getTabState(tabId);
-
+  
   if (tabState && tabState.isActive) {
     tabState.device = device;
+    tabState.orientation = "portrait"; // Reset orientation when changing device
+    tabStates.set(tabId, tabState);
+    
     applyDeviceToTab(tabId, device);
     showSimulator(tabId, tabState);
+    
+    console.log("Device changed to:", device.name);
+  }
+}
 
-    // Notify content script that device changed (so it can maintain toolbar)
+function toggleOrientationForTab(tabId) {
+  const tabState = getTabState(tabId);
+  if (tabState && tabState.isActive) {
+    // Toggle between portrait and landscape
+    tabState.orientation = tabState.orientation === "portrait" ? "landscape" : "portrait";
+    tabStates.set(tabId, tabState);
+    
+    // Recreate simulator with new orientation
+    showSimulator(tabId, tabState);
+    
+    // Notify content script about orientation change
     try {
       chrome.tabs.sendMessage(tabId, {
-        type: "DEVICE_CHANGED",
-        device: device,
+        type: "ORIENTATION_CHANGED",
+        orientation: tabState.orientation,
       });
     } catch (error) {
-      console.log("Content script not ready for device change message:", tabId);
+      console.log("Content script not ready for orientation change message:", tabId);
     }
-
-    console.log("Device changed to:", device.name);
+    
+    console.log("Orientation changed to:", tabState.orientation);
   }
 }
 
@@ -217,13 +247,16 @@ function applyDeviceToTab(tabId, device) {
 }
 
 function getTabState(tabId) {
-  return (
-    tabStates.get(tabId) || {
+  if (!tabStates.has(tabId)) {
+    tabStates.set(tabId, {
       isActive: false,
-      device: getDefaultDevice(),
+      device: null,
+      orientation: "portrait", // Add orientation state
       showScrollbar: false,
-    }
-  );
+      originalUA: null,
+    });
+  }
+  return tabStates.get(tabId);
 }
 
 function toggleScrollbarForTab(tabId, sendResponse) {
@@ -237,12 +270,18 @@ function toggleScrollbarForTab(tabId, sendResponse) {
 
 async function showSimulator(tabId, state) {
   try {
-    // (Removed) Inject the device panel content script
-    // await chrome.scripting.executeScript({
-    //   target: { tabId },
-    //   files: ["devicePanel.js"],
-    // });
+    const device = state.device;
+    const orientation = state.orientation || "portrait";
+    
+    // Calculate dimensions based on orientation
+    const isLandscape = orientation === "landscape";
+    const w = isLandscape ? device.viewport.height : device.viewport.width;
+    const h = isLandscape ? device.viewport.width : device.viewport.height;
+    
+    // Adjust screen percentages for landscape orientation
+    const adjustedScreenPct = isLandscape ? rotateScreenPctCW(device.screenPct) : device.screenPct;
 
+    // Inject the simulator CSS
     await chrome.scripting.insertCSS({
       target: { tabId },
       css: `
@@ -285,37 +324,35 @@ async function showSimulator(tabId, state) {
         }
       `,
     });
-  } catch (error) {
-    console.error("Failed to inject simulator:", error);
-  }
 
-  const device = state.device;
-  const tab = await chrome.tabs.get(tabId);
-
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    func: createSimulatorOverlay,
-    args: [
-      {
-        w: device.viewport.width,
-        h: device.viewport.height,
-        deviceName: device.name,
-        mockupPath: device.mockup,
-        deviceScreenPct: device.screenPct,
-        orientation: "portrait",
-        platform: device.platform,
-      },
-    ],
-  });
-
-  // Notify content script that simulator is activated
-  try {
-    await chrome.tabs.sendMessage(tabId, {
-      type: "SIMULATOR_ACTIVATED",
-      device: device,
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: createSimulatorOverlay,
+      args: [
+        {
+          w,
+          h,
+          deviceName: device.name,
+          mockupPath: device.mockup,
+          deviceScreenPct: adjustedScreenPct,
+          orientation,
+          platform: device.platform,
+        },
+      ],
     });
+
+    // Notify content script that simulator is activated
+    try {
+      await chrome.tabs.sendMessage(tabId, {
+        type: "SIMULATOR_ACTIVATED",
+        device: device,
+        orientation: orientation,
+      });
+    } catch (error) {
+      console.log("Content script not ready yet for tab:", tabId);
+    }
   } catch (error) {
-    console.log("Content script not ready yet for tab:", tabId);
+    console.error("Failed to show simulator:", error);
   }
 }
 
@@ -346,6 +383,9 @@ function createSimulatorOverlay({
   mockupContainer.style.transition = "transform 220ms ease";
   mockupContainer.style.transformOrigin = "50% 50%";
   mockupContainer.style.willChange = "transform";
+  
+  // Store orientation data for future reference
+  mockupContainer.setAttribute("data-orientation", orientation);
 
   // Create mockup image with proper sizing
   const mockupImg = document.createElement("img");
@@ -355,8 +395,20 @@ function createSimulatorOverlay({
   mockupImg.style.height = String(h) + "px";
   mockupImg.style.display = "block";
   mockupImg.style.position = "absolute";
-  mockupImg.style.top = "0";
-  mockupImg.style.left = "0";
+  
+  // Apply rotation for landscape orientation (like in basic_clone)
+  if (orientation === "landscape") {
+    mockupImg.style.width = String(h) + "px";
+    mockupImg.style.height = String(w) + "px";
+    mockupImg.style.top = "50%";
+    mockupImg.style.left = "50%";
+    mockupImg.style.transform = "translate(-50%, -50%) rotate(90deg)";
+    mockupImg.style.transformOrigin = "center center";
+  } else {
+    mockupImg.style.top = "0";
+    mockupImg.style.left = "0";
+  }
+  
   mockupImg.style.zIndex = "5";
   mockupImg.style.pointerEvents = "none";
 
@@ -566,6 +618,20 @@ async function applyScrollbar(tabId, show) {
   } catch (error) {
     console.error("Failed to apply scrollbar CSS:", error);
   }
+}
+
+// Rotate screen percentage insets 90° clockwise to match landscape orientation
+function rotateScreenPctCW(pct) {
+  if (!pct) return pct;
+  const { top = 0, right = 0, bottom = 0, left = 0, radius = 0, scale } = pct;
+  return {
+    top: left,
+    right: top,
+    bottom: right,
+    left: bottom,
+    radius,
+    scale,
+  };
 }
 
 function getDefaultDevice() {
