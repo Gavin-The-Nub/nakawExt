@@ -94,6 +94,77 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })();
       return true; // keep message channel open for async sendResponse
 
+    // Handle recording functionality
+    case "START_RECORDING":
+      (async () => {
+        try {
+          const tabId = sender.tab?.id;
+          if (!tabId) {
+            sendResponse({ ok: false, error: "No tab ID found" });
+            return;
+          }
+
+          // Get the mockup bounds from the content script
+          const mockupBounds = await getMockupBounds(tabId);
+          if (!mockupBounds) {
+            sendResponse({ ok: false, error: "Mockup not found" });
+            return;
+          }
+
+          // Create offscreen page for recording if it doesn't exist
+          await createOffscreenPage();
+
+          // Create offscreen page for recording if it doesn't exist
+          await createOffscreenPage();
+
+          // Wait for offscreen page to be ready
+          await waitForOffscreenPage();
+
+          // Start recording in the offscreen page with the mockup bounds
+          chrome.runtime.sendMessage({
+            type: "START_RECORDING",
+            mockupBounds: mockupBounds
+          });
+
+          sendResponse({ ok: true });
+        } catch (e) {
+          console.error("START_RECORDING error", e);
+          sendResponse({ ok: false, error: e.message });
+        }
+      })();
+      return true;
+
+    case "STOP_RECORDING":
+      (async () => {
+        try {
+          // Stop recording in the offscreen page
+          chrome.runtime.sendMessage({
+            type: "STOP_RECORDING"
+          });
+          sendResponse({ ok: true });
+        } catch (e) {
+          console.error("STOP_RECORDING error", e);
+          sendResponse({ ok: false, error: e.message });
+        }
+      })();
+      return true;
+
+    case "GET_RECORDING_STATUS":
+      (async () => {
+        try {
+          // Get recording status from offscreen page
+          chrome.runtime.sendMessage({
+            type: "GET_RECORDING_STATUS"
+          }, (response) => {
+            sendResponse(response);
+          });
+        } catch (e) {
+          console.error("GET_RECORDING_STATUS error", e);
+          sendResponse({ ok: false, error: e.message });
+        }
+      })();
+      return true;
+
     default:
       console.warn("Unknown message type:", type);
   }
@@ -660,3 +731,78 @@ function rotateScreenPctCW(pct) {
 function getDefaultDevice() {
   return DEVICES[0];
 }
+
+// Helper function to get mockup bounds from content script
+async function getMockupBounds(tabId) {
+  try {
+    const response = await chrome.tabs.sendMessage(tabId, {
+      type: "GET_MOCKUP_BOUNDS"
+    });
+    return response;
+  } catch (error) {
+    console.error("Failed to get mockup bounds:", error);
+    return null;
+  }
+}
+
+// Helper function to create offscreen page for recording
+async function createOffscreenPage() {
+  try {
+    // Create new offscreen page
+    await chrome.offscreen.createDocument({
+      url: chrome.runtime.getURL('offscreen/recording.html'),
+      reasons: ['DISPLAY_MEDIA'],
+      justification: 'Recording mockup screen'
+    });
+  } catch (error) {
+    // If page already exists, that's fine
+    if (error.message.includes('already exists') || error.message.includes('Only a single offscreen document may be created')) {
+      return;
+    }
+    console.error("Failed to create offscreen page:", error);
+    throw error;
+  }
+}
+
+// Helper function to wait for offscreen page to be ready
+async function waitForOffscreenPage() {
+  return new Promise((resolve) => {
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds max wait
+    
+    function checkReady() {
+      attempts++;
+      chrome.runtime.sendMessage({ type: "PING" }, (response) => {
+        if (chrome.runtime.lastError) {
+          if (attempts < maxAttempts) {
+            setTimeout(checkReady, 100);
+          } else {
+            console.log("Offscreen page not ready after max attempts, proceeding anyway");
+            resolve();
+          }
+        } else {
+          resolve();
+        }
+      });
+    }
+    
+    checkReady();
+  });
+}
+
+// Listen for messages from offscreen page
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (sender.id === chrome.runtime.id && sender.origin === chrome.runtime.getURL('')) {
+    // Message from offscreen page
+    const { type } = message;
+    
+    switch (type) {
+      case "RECORDING_STARTED":
+        console.log("Recording started");
+        break;
+      case "RECORDING_COMPLETED":
+        console.log("Recording completed");
+        break;
+    }
+  }
+});

@@ -43,6 +43,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "TOGGLE_SCROLLBAR":
       // Update toolbar state if needed
       break;
+
+    case "GET_MOCKUP_BOUNDS":
+      const frameEl = document.getElementById("__mf_simulator_frame__");
+      const screenEl = document.getElementById("__mf_simulator_screen__");
+      
+      if (frameEl && screenEl) {
+        const frameRect = frameEl.getBoundingClientRect();
+        const screenRect = screenEl.getBoundingClientRect();
+        
+        sendResponse({
+          frame: {
+            left: frameRect.left,
+            top: frameRect.top,
+            width: frameRect.width,
+            height: frameRect.height
+          },
+          screen: {
+            left: screenRect.left,
+            top: screenRect.top,
+            width: screenRect.width,
+            height: screenRect.height
+          },
+          orientation: currentOrientation
+        });
+      } else {
+        sendResponse(null);
+      }
+      return true; // Keep message channel open for async response
   }
 });
 
@@ -472,8 +500,36 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-record").onclick = () => {
-    // Record action (placeholder)
-    alert("Record functionality coming soon!");
+    // Check if simulator is active
+    const frameEl = document.getElementById("__mf_simulator_frame__");
+    if (!frameEl) {
+      return alert("Simulator not active. Please activate the device simulator first.");
+    }
+
+    // Get current recording status
+    chrome.runtime.sendMessage({ type: "GET_RECORDING_STATUS" }, (response) => {
+      if (response && response.isRecording) {
+        // Stop recording
+        chrome.runtime.sendMessage({ type: "STOP_RECORDING" }, (resp) => {
+          if (resp && resp.ok) {
+            updateRecordButton(false);
+            showRecordingStatus("Recording stopped. Processing...");
+          } else {
+            alert("Failed to stop recording: " + (resp && resp.error ? resp.error : "unknown error"));
+          }
+        });
+      } else {
+        // Start recording
+        chrome.runtime.sendMessage({ type: "START_RECORDING" }, (resp) => {
+          if (resp && resp.ok) {
+            updateRecordButton(true);
+            showRecordingStatus("Recording started...");
+          } else {
+            alert("Failed to start recording: " + (resp && resp.error ? resp.error : "unknown error"));
+          }
+        });
+      }
+    });
   };
   
   // Update orientation indicator after toolbar is created
@@ -631,4 +687,63 @@ function removeToolbar() {
     deviceSelector.remove();
     deviceSelector = null;
   }
+}
+
+// Helper functions for recording
+function updateRecordButton(isRecording) {
+  const recordBtn = document.getElementById("mf-btn-record");
+  if (recordBtn) {
+    if (isRecording) {
+      recordBtn.style.background = "#ff4444";
+      recordBtn.title = "Stop Recording";
+      recordBtn.innerHTML = `
+        <svg viewBox="0 0 24 24">
+          <rect x="6" y="6" width="12" height="12" rx="2"/>
+        </svg>
+      `;
+    } else {
+      recordBtn.style.background = "#555";
+      recordBtn.title = "Start Recording";
+      recordBtn.innerHTML = `
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="8"/>
+        </svg>
+      `;
+    }
+  }
+}
+
+function showRecordingStatus(message) {
+  // Remove any existing status message
+  const existingStatus = document.getElementById("mf-recording-status");
+  if (existingStatus) {
+    existingStatus.remove();
+  }
+
+  // Create status message
+  const status = document.createElement("div");
+  status.id = "mf-recording-status";
+  status.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    z-index: 2147483649;
+    pointer-events: none;
+  `;
+  status.textContent = message;
+  document.body.appendChild(status);
+
+  // Auto-remove after 3 seconds
+  setTimeout(() => {
+    if (status.parentNode) {
+      status.remove();
+    }
+  }, 3000);
 }
