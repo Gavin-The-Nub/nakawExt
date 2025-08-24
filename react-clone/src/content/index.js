@@ -241,6 +241,9 @@ function injectToolbar() {
 
   // Create device selector
   createDeviceSelector();
+  
+  // Initialize recording status
+  initRecordingStatus();
 
   // Button event handlers
   document.getElementById("mf-btn-close").onclick = () => {
@@ -500,36 +503,52 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-record").onclick = () => {
+    console.log('Record button clicked!');
+    
     // Check if simulator is active
     const frameEl = document.getElementById("__mf_simulator_frame__");
     if (!frameEl) {
       return alert("Simulator not active. Please activate the device simulator first.");
     }
 
-    // Get current recording status
-    chrome.runtime.sendMessage({ type: "GET_RECORDING_STATUS" }, (response) => {
-      if (response && response.isRecording) {
-        // Stop recording
-        chrome.runtime.sendMessage({ type: "STOP_RECORDING" }, (resp) => {
-          if (resp && resp.ok) {
-            updateRecordButton(false);
-            showRecordingStatus("Recording stopped. Processing...");
-          } else {
-            alert("Failed to stop recording: " + (resp && resp.error ? resp.error : "unknown error"));
-          }
-        });
-      } else {
-        // Start recording
-        chrome.runtime.sendMessage({ type: "START_RECORDING" }, (resp) => {
-          if (resp && resp.ok) {
-            updateRecordButton(true);
-            showRecordingStatus("Recording started...");
-          } else {
-            alert("Failed to start recording: " + (resp && resp.error ? resp.error : "unknown error"));
-          }
-        });
-      }
-    });
+    // Use the improved recording system via background script
+    if (isRecording) {
+      console.log('Stopping recording via background script...');
+      isRecording = false; // Set state immediately for UI responsiveness
+      updateRecordButton(false);
+      showRecordingStatus('Stopping recording...');
+      
+      chrome.runtime.sendMessage({ type: "STOP_RECORDING" }, (response) => {
+        if (response && response.ok) {
+          console.log('Recording stopped successfully');
+          showRecordingStatus('Recording stopped');
+        } else {
+          console.error('Failed to stop recording:', response);
+          showRecordingStatus('Failed to stop recording');
+          // Reset state if stop failed
+          isRecording = true;
+          updateRecordButton(true);
+        }
+      });
+    } else {
+      console.log('Starting recording via background script...');
+      isRecording = true; // Set state immediately for UI responsiveness
+      updateRecordButton(true);
+      showRecordingStatus('Starting recording...');
+      
+      chrome.runtime.sendMessage({ type: "START_RECORDING" }, (response) => {
+        if (response && response.ok) {
+          console.log('Recording started successfully');
+          showRecordingStatus('Recording started...');
+        } else {
+          console.error('Failed to start recording:', response);
+          showRecordingStatus('Failed to start recording: ' + (response?.error || 'Unknown error'));
+          // Reset state if start failed
+          isRecording = false;
+          updateRecordButton(false);
+        }
+      });
+    }
   };
   
   // Update orientation indicator after toolbar is created
@@ -713,37 +732,39 @@ function updateRecordButton(isRecording) {
   }
 }
 
-function showRecordingStatus(message) {
-  // Remove any existing status message
-  const existingStatus = document.getElementById("mf-recording-status");
-  if (existingStatus) {
-    existingStatus.remove();
-  }
+// Improved recording system - uses background script
+let isRecording = false;
+let recordingStatus = null;
 
-  // Create status message
-  const status = document.createElement("div");
-  status.id = "mf-recording-status";
-  status.style.cssText = `
+// Initialize recording status display
+function initRecordingStatus() {
+  // Add recording status display
+  recordingStatus = document.createElement('div');
+  recordingStatus.className = 'recording-status';
+  recordingStatus.style.cssText = `
     position: fixed;
     top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 20px;
     background: rgba(0, 0, 0, 0.8);
     color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
     font-size: 14px;
-    z-index: 2147483649;
-    pointer-events: none;
+    z-index: 10000;
+    display: none;
   `;
-  status.textContent = message;
-  document.body.appendChild(status);
+  document.body.appendChild(recordingStatus);
+}
 
-  // Auto-remove after 3 seconds
-  setTimeout(() => {
-    if (status.parentNode) {
-      status.remove();
-    }
-  }, 3000);
+function showRecordingStatus(message) {
+  if (recordingStatus) {
+    recordingStatus.textContent = message;
+    recordingStatus.style.display = 'block';
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      recordingStatus.style.display = 'none';
+    }, 3000);
+  }
 }

@@ -114,19 +114,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Create offscreen page for recording if it doesn't exist
           await createOffscreenPage();
 
-          // Create offscreen page for recording if it doesn't exist
-          await createOffscreenPage();
-
           // Wait for offscreen page to be ready
           await waitForOffscreenPage();
 
           // Start recording in the offscreen page with the mockup bounds
-          chrome.runtime.sendMessage({
-            type: "START_RECORDING",
-            mockupBounds: mockupBounds
-          });
-
-          sendResponse({ ok: true });
+          try {
+            // Send message to offscreen page with retry logic
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            const sendMessageWithRetry = () => {
+              chrome.runtime.sendMessage({
+                type: "START_RECORDING",
+                mockupBounds: mockupBounds
+              }, (response) => {
+                if (chrome.runtime.lastError) {
+                  console.error("Failed to send message to offscreen page:", chrome.runtime.lastError);
+                  if (retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`Retrying message send (${retryCount}/${maxRetries})...`);
+                    setTimeout(sendMessageWithRetry, 1000);
+                  } else {
+                    console.error("Max retries reached, recording failed to start");
+                    sendResponse({ ok: false, error: "Failed to start recording after retries" });
+                  }
+                } else {
+                  console.log("Recording started successfully in offscreen page");
+                  sendResponse({ ok: true });
+                }
+              });
+            };
+            
+            sendMessageWithRetry();
+          } catch (error) {
+            console.error("Error sending message to offscreen page:", error);
+            sendResponse({ ok: false, error: "Failed to start recording: " + error.message });
+          }
         } catch (e) {
           console.error("START_RECORDING error", e);
           sendResponse({ ok: false, error: e.message });
@@ -140,8 +163,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Stop recording in the offscreen page
           chrome.runtime.sendMessage({
             type: "STOP_RECORDING"
+          }, (response) => {
+            if (chrome.runtime.lastError) {
+              console.error("Failed to stop recording:", chrome.runtime.lastError);
+              sendResponse({ ok: false, error: "Failed to stop recording" });
+            } else {
+              console.log("Recording stopped successfully");
+              sendResponse({ ok: true });
+            }
           });
-          sendResponse({ ok: true });
         } catch (e) {
           console.error("STOP_RECORDING error", e);
           sendResponse({ ok: false, error: e.message });
@@ -160,6 +190,143 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
         } catch (e) {
           console.error("GET_RECORDING_STATUS error", e);
+          sendResponse({ ok: false, error: e.message });
+        }
+      })();
+      return true;
+
+    case "REQUEST_FRAME":
+      (async () => {
+        try {
+          console.log("REQUEST_FRAME received, capturing tab...");
+          
+          // Get the current active tab - use the sender's tab if available, otherwise query
+          let tabId = sender.tab?.id;
+          
+          if (!tabId) {
+            // Fallback: query for active tab
+            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tabs[0]) {
+              sendResponse({ ok: false, error: "No active tab found" });
+              return;
+            }
+            tabId = tabs[0].id;
+          }
+          
+          console.log("Capturing tab:", tabId);
+          
+          // Verify the tab still exists before trying to capture
+          try {
+            const tab = await chrome.tabs.get(tabId);
+            if (!tab) {
+              sendResponse({ ok: false, error: "Tab no longer exists" });
+              return;
+            }
+            console.log("Tab verified:", tab.id, tab.url);
+          } catch (tabError) {
+            console.error("Tab verification failed:", tabError);
+            sendResponse({ ok: false, error: "Tab no longer exists or is not accessible" });
+            return;
+          }
+          
+          // Request activeTab permission if not already granted
+          try {
+            const hasPermission = await chrome.permissions.contains({ permissions: ['activeTab'] });
+            if (!hasPermission) {
+              console.log("Requesting activeTab permission...");
+              await chrome.permissions.request({ permissions: ['activeTab'] });
+            }
+          } catch (permError) {
+            console.log("Permission request failed:", permError);
+            // Continue anyway, the capture might still work
+          }
+          
+          // Capture the current tab and send to offscreen page
+          chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
+            if (chrome.runtime.lastError) {
+              const errorMessage = chrome.runtime.lastError.message || 'Unknown error';
+              console.error("Tab capture error:", errorMessage);
+              
+              // Handle specific permission errors
+              if (errorMessage.includes("activeTab permission not in effect")) {
+                sendResponse({ 
+                  ok: false, 
+                  error: "Please click the record button again to grant permissions" 
+                });
+              } else if (errorMessage.includes("MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND")) {
+                sendResponse({ 
+                  ok: false, 
+                  error: "Rate limit exceeded, please wait a moment" 
+                });
+              } else if (errorMessage.includes("Cannot access contents")) {
+                sendResponse({ 
+                  ok: false, 
+                  error: "Cannot access tab contents. Try refreshing the page." 
+                });
+              } else if (errorMessage.includes("No window with id")) {
+                sendResponse({ 
+                  ok: false, 
+                  error: "Window no longer exists. Try refreshing the page." 
+                });
+              } else {
+                sendResponse({ ok: false, error: errorMessage });
+              }
+              return;
+            }
+            
+            if (dataUrl) {
+              console.log("Tab captured successfully, dataUrl length:", dataUrl.length);
+              const response = { ok: true, dataUrl: dataUrl };
+              sendResponse(response);
+            } else {
+              console.error("No dataUrl received from tab capture");
+              sendResponse({ ok: false, error: "No dataUrl received" });
+            }
+          });
+        } catch (e) {
+          console.error("REQUEST_FRAME error:", e.message || e);
+          sendResponse({ ok: false, error: e.message || "Unknown error occurred" });
+        }
+      })();
+      return true;
+
+    case "CREATE_VIDEO_FROM_FRAMES":
+      (async () => {
+        try {
+          console.log("CREATE_VIDEO_FROM_FRAMES received");
+          const { frames, width, height } = message;
+          
+          if (!frames || frames.length === 0) {
+            sendResponse({ ok: false, error: "No frames provided" });
+            return;
+          }
+          
+          console.log(`Creating video from ${frames.length} frames, dimensions: ${width}x${height}`);
+          
+          // Create offscreen page for video creation
+          await createOffscreenPage();
+          
+          // Send frames to offscreen page for video creation
+          chrome.runtime.sendMessage({
+            type: "CREATE_VIDEO_FROM_FRAMES",
+            frames: frames,
+            width: width,
+            height: height
+          }, (response) => {
+            if (chrome.runtime.lastError) {
+              console.error("Failed to send frames to offscreen page:", chrome.runtime.lastError);
+              sendResponse({ ok: false, error: "Failed to create video" });
+            } else if (response && response.ok && response.videoBlob) {
+              console.log("Video created successfully in offscreen page");
+              sendResponse({ ok: true, videoBlob: response.videoBlob });
+            } else {
+              console.error("Video creation failed in offscreen page:", response);
+              sendResponse({ ok: false, error: "Video creation failed" });
+            }
+          });
+          
+        } catch (e) {
+          console.error("CREATE_VIDEO_FROM_FRAMES error", e);
           sendResponse({ ok: false, error: e.message });
         }
       })();

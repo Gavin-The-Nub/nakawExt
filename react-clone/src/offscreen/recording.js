@@ -1,13 +1,19 @@
-// Offscreen recording functionality
-let mediaRecorder = null;
-let recordedChunks = [];
+// Offscreen recording functionality - Improved video-based approach
+let isRecording = false;
 let recordingStartTime = null;
 let timerInterval = null;
-let currentStream = null;
+let capturedFrames = [];
+let frameInterval = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let canvas = null;
+let ctx = null;
+let stream = null;
+let recordingTimeout = null; // Timeout to ensure recording can be stopped
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    const { type, streamId, mockupBounds } = message;
+    const { type, mockupBounds } = message;
 
     switch (type) {
         case "START_RECORDING":
@@ -20,144 +26,399 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
         case "GET_RECORDING_STATUS":
             sendResponse({
-                isRecording: mediaRecorder && mediaRecorder.state === "recording",
-                duration: getRecordingDuration()
+                isRecording: isRecording,
+                duration: getRecordingDuration(),
+                frameCount: capturedFrames.length
             });
             break;
         case "PING":
-            // Simple ping to check if offscreen page is ready
             sendResponse({ ok: true, ready: true });
+            break;
+        case "CREATE_VIDEO_FROM_FRAMES":
+            createVideoFromFrames(message.frames, message.width, message.height, sendResponse);
             break;
     }
     return true; // Keep message channel open for async responses
 });
 
 function startRecording(mockupBounds) {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
+    console.log("Starting improved video recording with bounds:", mockupBounds);
+    
+    if (isRecording) {
         console.log("Already recording");
         return;
     }
 
-    // Create a canvas to capture the mockup area
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Set canvas size to match the mockup frame
-    canvas.width = mockupBounds.frame.width;
-    canvas.height = mockupBounds.frame.height;
-    
-    // Start recording using canvas capture
-    startCanvasRecording(canvas, ctx, mockupBounds);
-}
+    if (!mockupBounds || !mockupBounds.frame) {
+        console.error("Invalid mockup bounds:", mockupBounds);
+        updateStatus("Error: Invalid mockup bounds");
+        return;
+    }
 
-function startCanvasRecording(canvas, ctx, mockupBounds) {
+    // Initialize recording state
+    isRecording = true;
+    capturedFrames = [];
     recordedChunks = [];
     recordingStartTime = Date.now();
     
-    // Create MediaRecorder with canvas stream
-    const canvasStream = canvas.captureStream(30); // 30 FPS
-    mediaRecorder = new MediaRecorder(canvasStream, {
-        mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 8000000 // 8 Mbps for high quality
-    });
+    // Start timer
+    startTimer();
+    updateStatus("Recording... (Capturing frames)");
+    updateRecordButton(true);
+    
+    // Initialize canvas for video creation
+    initializeCanvas(mockupBounds);
+    
+    // Draw initial placeholder frame to start video stream
+    drawPlaceholderFrame();
+    
+    // Start capturing frames at regular intervals
+    startFrameCapture();
+    
+    // Set a timeout to ensure recording can be stopped (max 5 minutes)
+    recordingTimeout = setTimeout(() => {
+        if (isRecording) {
+            console.log("Recording timeout reached, stopping automatically");
+            stopRecording();
+        }
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    console.log("Improved video recording started");
+}
 
+function initializeCanvas(mockupBounds) {
+    // Create canvas for video recording
+    canvas = document.createElement('canvas');
+    ctx = canvas.getContext('2d');
+    
+    // Set canvas size to match mockup frame
+    canvas.width = mockupBounds.frame.width;
+    canvas.height = mockupBounds.frame.height;
+    
+    console.log('Canvas initialized with dimensions:', canvas.width, 'x', canvas.height);
+    
+    // Create stream from canvas
+    stream = canvas.captureStream(2); // 2 FPS
+    
+    // Initialize MediaRecorder
+    const mimeType = getSupportedMimeType();
+    if (!mimeType) {
+        throw new Error('No supported video format found');
+    }
+    
+    mediaRecorder = new MediaRecorder(stream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 2000000 // 2 Mbps
+    });
+    
     mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
             recordedChunks.push(event.data);
+            console.log('Video chunk recorded:', event.data.size, 'bytes');
+        } else {
+            console.warn('Empty video chunk received');
         }
     };
-
+    
     mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        downloadRecording(blob);
-        cleanup();
+        console.log('MediaRecorder stopped, chunks:', recordedChunks.length);
+        if (recordedChunks.length > 0) {
+            const videoBlob = new Blob(recordedChunks, { type: mimeType });
+            console.log('Video blob created:', videoBlob.size, 'bytes');
+            downloadVideo(videoBlob);
+        } else {
+            console.error('No video data recorded');
+            updateStatus("No video data recorded - trying fallback method");
+            // Try fallback method if no video data
+            if (capturedFrames.length > 0) {
+                createVideoFromCapturedFrames();
+            } else {
+                updateStatus("No frames captured");
+            }
+        }
     };
-
+    
     mediaRecorder.onerror = (event) => {
-        console.error("Recording error:", event.error);
+        console.error('MediaRecorder error:', event.error);
         updateStatus("Recording error: " + event.error.message);
-        cleanup();
     };
-
+    
     // Start recording
     mediaRecorder.start(1000); // Collect data every second
-    startTimer();
-    updateStatus("Recording...");
-    updateRecordButton(true);
+    console.log('MediaRecorder started with MIME type:', mimeType);
+}
+
+function getSupportedMimeType() {
+    const types = [
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm',
+        'video/mp4',
+        'video/ogg'
+    ];
     
-    // Start drawing frames to canvas using tab capture
-    function drawFrame() {
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-            // Capture the current tab
-            chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
-                if (chrome.runtime.lastError) {
-                    console.error("Tab capture error:", chrome.runtime.lastError);
-                    return;
-                }
-                
-                if (dataUrl) {
-                    // Create an image from the captured data
-                    const img = new Image();
-                    img.onload = () => {
-                        // Clear canvas
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        
-                        // Draw the mockup area from the captured image
-                        const { frame, screen } = mockupBounds;
-                        
-                        // Calculate the source rectangle in the captured image
-                        const imgAspectRatio = img.width / img.height;
-                        const frameAspectRatio = frame.width / frame.height;
-                        
-                        let sx, sy, sw, sh;
-                        if (imgAspectRatio > frameAspectRatio) {
-                            // Image is wider than frame
-                            sw = img.height * frameAspectRatio;
-                            sh = img.height;
-                            sx = (img.width - sw) / 2;
-                            sy = 0;
-                        } else {
-                            // Image is taller than frame
-                            sw = img.width;
-                            sh = img.width / frameAspectRatio;
-                            sx = 0;
-                            sy = (img.height - sh) / 2;
-                        }
-                        
-                        // Draw the mockup area to canvas
-                        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-                        
-                        // Request next frame
-                        requestAnimationFrame(drawFrame);
-                    };
-                    img.src = dataUrl;
-                }
-            });
+    for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+            return type;
         }
     }
+    return null;
+}
+
+function startFrameCapture() {
+    if (!isRecording) return;
     
-    drawFrame();
+    // Capture a frame
+    captureFrame();
     
-    // Notify background script that recording started
+    // Schedule next frame capture (every 500ms = 2 FPS)
+    frameInterval = setTimeout(startFrameCapture, 500);
+}
+
+function captureFrame() {
+    if (!isRecording) return;
+    
+    console.log("Requesting frame capture...");
+    
     chrome.runtime.sendMessage({
-        type: "RECORDING_STARTED"
+        type: "REQUEST_FRAME"
+    }, (response) => {
+        if (chrome.runtime.lastError) {
+            const errorMessage = chrome.runtime.lastError.message || 'Unknown error';
+            console.error("Frame request error:", errorMessage);
+            
+            // If we can't communicate with background script, stop recording
+            if (errorMessage.includes("Could not establish connection")) {
+                console.error("Lost connection to background script, stopping recording");
+                stopRecording();
+                return;
+            }
+            return;
+        }
+        
+        if (response && response.dataUrl) {
+            console.log("Frame captured successfully, length:", response.dataUrl.length);
+            
+            // Store the frame with timestamp
+            capturedFrames.push({
+                dataUrl: response.dataUrl,
+                timestamp: Date.now() - recordingStartTime
+            });
+            
+            // Draw frame to canvas for video recording
+            drawFrameToCanvas(response.dataUrl);
+            
+            updateStatus(`Recording... (${capturedFrames.length} frames captured)`);
+        } else {
+            const errorMessage = response?.error || 'Unknown frame capture error';
+            console.warn("Frame capture failed:", errorMessage);
+            
+            // If we hit quota or permission issues, wait longer
+            if (response && response.error) {
+                if (response.error.includes("MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND") || 
+                    response.error.includes("activeTab permission not in effect") ||
+                    response.error.includes("Cannot access tab contents") ||
+                    response.error.includes("Window no longer exists") ||
+                    response.error.includes("Tab no longer exists")) {
+                    console.log("Rate limit, permission, or window issue, waiting 2 seconds...");
+                    // Wait longer before next frame
+                    if (frameInterval) {
+                        clearTimeout(frameInterval);
+                        frameInterval = setTimeout(startFrameCapture, 2000);
+                    }
+                } else {
+                    // For other errors, try to continue but log the issue
+                    console.log("Frame capture error, continuing...");
+                }
+            }
+        }
     });
 }
 
+function drawFrameToCanvas(dataUrl) {
+    if (!canvas || !ctx) return;
+    
+    const img = new Image();
+    img.onload = () => {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw the captured frame to canvas
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        console.log("Frame drawn to canvas for video recording");
+    };
+    img.onerror = (error) => {
+        console.error("Error loading frame for canvas:", error);
+        // Draw a placeholder frame if image fails to load
+        drawPlaceholderFrame();
+    };
+    img.src = dataUrl;
+}
+
+function drawPlaceholderFrame() {
+    if (!canvas || !ctx) return;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw a placeholder frame
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw some text
+    ctx.fillStyle = '#333';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Recording...', canvas.width / 2, canvas.height / 2);
+    ctx.fillText(`Frame ${capturedFrames.length + 1}`, canvas.width / 2, canvas.height / 2 + 30);
+    
+    console.log("Placeholder frame drawn to canvas");
+}
+
 function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-        mediaRecorder.stop();
-        updateStatus("Processing recording...");
-        updateRecordButton(false);
-        stopTimer();
+    if (!isRecording) return;
+    
+    console.log("Stopping recording...");
+    isRecording = false;
+    
+    // Clear recording timeout
+    if (recordingTimeout) {
+        clearTimeout(recordingTimeout);
+        recordingTimeout = null;
+    }
+    
+    // Stop frame capture
+    if (frameInterval) {
+        clearTimeout(frameInterval);
+        frameInterval = null;
+    }
+    
+    // Stop timer
+    stopTimer();
+    
+    updateStatus("Processing recording...");
+    updateRecordButton(false);
+    
+    // Stop MediaRecorder if it's recording
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        try {
+            mediaRecorder.stop();
+            console.log("MediaRecorder stopped successfully");
+        } catch (error) {
+            console.error("Error stopping MediaRecorder:", error);
+            // Fallback: create video from captured frames
+            if (capturedFrames.length > 0) {
+                createVideoFromCapturedFrames();
+            } else {
+                updateStatus("No frames captured");
+            }
+        }
+    } else {
+        // Fallback: create video from captured frames
+        if (capturedFrames.length > 0) {
+            createVideoFromCapturedFrames();
+        } else {
+            updateStatus("No frames captured");
+        }
     }
 }
 
-function downloadRecording(blob) {
-    const url = URL.createObjectURL(blob);
+function createVideoFromCapturedFrames() {
+    console.log(`Creating video from ${capturedFrames.length} captured frames...`);
+    
+    if (capturedFrames.length < 2) {
+        updateStatus("Not enough frames for recording (need at least 2)");
+        return;
+    }
+    
+    // Create canvas for video creation
+    const videoCanvas = document.createElement('canvas');
+    const videoCtx = videoCanvas.getContext('2d');
+    
+    // Set canvas size to match frame dimensions
+    const firstFrame = capturedFrames[0];
+    videoCanvas.width = firstFrame.width || 800;
+    videoCanvas.height = firstFrame.height || 600;
+    
+    console.log('Video canvas created with dimensions:', videoCanvas.width, 'x', videoCanvas.height);
+    
+    // Create stream from canvas
+    const videoStream = videoCanvas.captureStream(2); // 2 FPS
+    
+    // Initialize MediaRecorder
+    const mimeType = getSupportedMimeType();
+    if (!mimeType) {
+        updateStatus("No supported video format found");
+        return;
+    }
+    
+    const videoRecorder = new MediaRecorder(videoStream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 2000000 // 2 Mbps
+    });
+    
+    const videoChunks = [];
+    
+    videoRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+            videoChunks.push(event.data);
+        }
+    };
+    
+    videoRecorder.onstop = () => {
+        if (videoChunks.length > 0) {
+            const videoBlob = new Blob(videoChunks, { type: mimeType });
+            downloadVideo(videoBlob);
+        } else {
+            updateStatus("No video data created");
+        }
+    };
+    
+    videoRecorder.onerror = (event) => {
+        console.error('Video creation error:', event.error);
+        updateStatus("Video creation error: " + event.error.message);
+    };
+    
+    // Start recording
+    videoRecorder.start(1000);
+    
+    // Draw frames to canvas at regular intervals
+    let frameIndex = 0;
+    const frameInterval = setInterval(() => {
+        if (frameIndex >= capturedFrames.length) {
+            clearInterval(frameInterval);
+            videoRecorder.stop();
+            return;
+        }
+        
+        // Draw the current frame
+        const frame = capturedFrames[frameIndex];
+        const img = new Image();
+        img.onload = () => {
+            videoCtx.clearRect(0, 0, videoCanvas.width, videoCanvas.height);
+            videoCtx.drawImage(img, 0, 0, videoCanvas.width, videoCanvas.height);
+            console.log(`Frame ${frameIndex + 1} drawn to video canvas`);
+        };
+        img.onerror = (error) => {
+            console.error(`Error loading frame ${frameIndex + 1}:`, error);
+        };
+        img.src = frame.dataUrl;
+        
+        frameIndex++;
+    }, 500); // 500ms per frame (2 FPS)
+}
+
+function downloadVideo(videoBlob) {
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const extension = videoBlob.type.includes('webm') ? 'webm' : 
+                     videoBlob.type.includes('mp4') ? 'mp4' : 'ogg';
+    const filename = `mockup-recording-${timestamp}.${extension}`;
+    
+    const url = URL.createObjectURL(videoBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `mockup-recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -167,29 +428,13 @@ function downloadRecording(blob) {
         URL.revokeObjectURL(url);
     }, 1000);
     
-    updateStatus("Recording downloaded successfully!");
+    console.log(`Video downloaded: ${filename}`);
+    updateStatus("Video recording completed successfully!");
     
     // Notify background script that recording completed
     chrome.runtime.sendMessage({
         type: "RECORDING_COMPLETED"
     });
-}
-
-function cleanup() {
-    if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
-        currentStream = null;
-    }
-    
-    // Remove canvas if it exists
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-        canvas.remove();
-    }
-    
-    mediaRecorder = null;
-    recordedChunks = [];
-    recordingStartTime = null;
 }
 
 function startTimer() {
@@ -219,30 +464,133 @@ function getRecordingDuration() {
 }
 
 function updateStatus(text) {
-    document.getElementById('statusText').textContent = text;
+    const statusElement = document.getElementById('statusText');
+    if (statusElement) {
+        statusElement.textContent = text;
+    }
+    console.log("Status:", text);
 }
 
 function updateRecordButton(isRecording) {
     const btn = document.getElementById('recordBtn');
-    if (isRecording) {
-        btn.textContent = 'Stop Recording';
-        btn.classList.add('recording');
-    } else {
-        btn.textContent = 'Start Recording';
-        btn.classList.remove('recording');
+    if (btn) {
+        if (isRecording) {
+            btn.textContent = 'Stop Recording';
+            btn.classList.add('recording');
+        } else {
+            btn.textContent = 'Start Recording';
+            btn.classList.remove('recording');
+        }
     }
 }
 
 // Handle manual button clicks (for testing)
-document.getElementById('recordBtn').addEventListener('click', () => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-        stopRecording();
-    } else {
-        // This would normally be triggered by the background script
-        updateStatus("Click the record button in the toolbar to start recording");
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('recordBtn');
+    if (btn) {
+        btn.addEventListener('click', () => {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                updateStatus("Click the record button in the toolbar to start recording");
+            }
+        });
     }
+    
+    // Initialize
+    updateStatus("Ready to record (Improved video-based)");
+    updateRecordButton(false);
 });
 
-// Initialize
-updateStatus("Ready to record");
-updateRecordButton(false);
+// Function to create video from frames (called by background script)
+function createVideoFromFrames(frames, width, height, sendResponse) {
+    console.log(`Creating video from ${frames.length} frames, dimensions: ${width}x${height}`);
+    
+    try {
+        // Create a canvas to draw frames
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size to match frame dimensions
+        canvas.width = width;
+        canvas.height = height;
+        
+        console.log('Canvas created with dimensions:', canvas.width, 'x', canvas.height);
+        
+        // Check supported MIME types
+        const mimeType = getSupportedMimeType();
+        if (!mimeType) {
+            throw new Error('No supported video format found');
+        }
+        
+        // Create MediaRecorder with canvas stream
+        const stream = canvas.captureStream(2); // 2 FPS to match our capture rate
+        console.log('Canvas stream created:', stream);
+        
+        const mediaRecorder = new MediaRecorder(stream, {
+            mimeType: mimeType,
+            videoBitsPerSecond: 2000000 // 2 Mbps for reasonable quality
+        });
+        
+        console.log('MediaRecorder created:', mediaRecorder);
+        
+        const recordedChunks = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+            console.log('Data available:', event.data.size, 'bytes');
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+        
+        mediaRecorder.onstop = () => {
+            console.log('MediaRecorder stopped, chunks:', recordedChunks.length);
+            if (recordedChunks.length > 0) {
+                const blob = new Blob(recordedChunks, { type: mimeType });
+                console.log('Video blob created:', blob.size, 'bytes');
+                sendResponse({ ok: true, videoBlob: blob });
+            } else {
+                sendResponse({ ok: false, error: 'No video data recorded' });
+            }
+        };
+        
+        mediaRecorder.onerror = (event) => {
+            console.error('MediaRecorder error:', event.error);
+            sendResponse({ ok: false, error: 'MediaRecorder error: ' + event.error.message });
+        };
+        
+        // Start recording
+        mediaRecorder.start(1000); // Collect data every second
+        console.log('MediaRecorder started');
+        
+        // Draw frames to canvas at regular intervals
+        let frameIndex = 0;
+        const frameInterval = setInterval(() => {
+            if (frameIndex >= frames.length) {
+                console.log('All frames processed, stopping recording');
+                clearInterval(frameInterval);
+                mediaRecorder.stop();
+                return;
+            }
+            
+            // Draw the current frame
+            const frame = frames[frameIndex];
+            const img = new Image();
+            img.onload = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                console.log(`Frame ${frameIndex + 1} drawn to canvas`);
+            };
+            img.onerror = (error) => {
+                console.error(`Error loading frame ${frameIndex + 1}:`, error);
+            };
+            img.src = frame.dataUrl;
+            
+            frameIndex++;
+        }, 500); // 500ms per frame (2 FPS)
+        
+    } catch (error) {
+        console.error('Video creation error:', error);
+        sendResponse({ ok: false, error: error.message });
+    }
+}
