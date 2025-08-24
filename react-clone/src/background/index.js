@@ -268,6 +268,16 @@ async function showSimulator(tabId, state) {
       },
     ],
   });
+
+  // Notify content script that simulator is activated
+  try {
+    await chrome.tabs.sendMessage(tabId, {
+      type: "SIMULATOR_ACTIVATED",
+      device: device,
+    });
+  } catch (error) {
+    console.log("Content script not ready yet for tab:", tabId);
+  }
 }
 
 function createSimulatorOverlay({
@@ -397,6 +407,15 @@ function createSimulatorOverlay({
 
 async function hideSimulator(tabId) {
   try {
+    // Notify content script that simulator is deactivated
+    try {
+      await chrome.tabs.sendMessage(tabId, {
+        type: "SIMULATOR_DEACTIVATED",
+      });
+    } catch (error) {
+      console.log("Content script not ready for tab:", tabId);
+    }
+
     await chrome.scripting.executeScript({
       target: { tabId },
       func: () => {

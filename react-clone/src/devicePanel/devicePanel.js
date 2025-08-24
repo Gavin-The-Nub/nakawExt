@@ -38,7 +38,7 @@ function createDevicePanel() {
     border-radius: 12px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 14px;
-    z-index: 2147483646;
+    z-index: 92147483650;
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     max-width: 300px;

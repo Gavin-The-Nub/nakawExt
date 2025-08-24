@@ -48,8 +48,8 @@ function injectToolbar() {
         position: fixed;
         top: 60px;
         right: 24px;
-        z-index: 2147483647;
-        display: flex;
+        z-index: 2147483648 !important;
+        display: flex !important;
         flex-direction: column;
         gap: 24px;
         pointer-events: none;
