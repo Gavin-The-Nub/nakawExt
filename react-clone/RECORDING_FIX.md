@@ -9,6 +9,7 @@ I've completely rewritten the recording system to create actual video files usin
 ### 1. Improved Video Creation
 - **Direct Video Recording**: The system now uses MediaRecorder API to create actual video files (WebM, MP4, or OGG format)
 - **Canvas-based Recording**: Frames are drawn to a canvas and streamed directly to MediaRecorder
+- **Mockup Cropping**: Automatically crops captured frames to only include the device mockup area (excludes toolbar buttons)
 - **Multiple Format Support**: Automatically detects and uses the best supported video format
 
 ### 2. Better Error Handling
@@ -53,6 +54,8 @@ I've completely rewritten the recording system to create actual video files usin
 
 ### File Output
 - **Format**: Actual video files (not HTML)
+- **Content**: Only the device mockup area (toolbar buttons excluded)
+- **Dimensions**: Matches the selected device mockup size
 - **Naming**: `mockup-recording-{timestamp}.{extension}`
 - **Location**: Downloads folder (browser default)
 

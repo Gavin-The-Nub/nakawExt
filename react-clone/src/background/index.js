@@ -229,6 +229,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
           
+          // Get mockup bounds from content script
+          let mockupBounds = null;
+          try {
+            mockupBounds = await chrome.tabs.sendMessage(tabId, { type: "GET_MOCKUP_BOUNDS" });
+            console.log("Mockup bounds received:", mockupBounds);
+          } catch (boundsError) {
+            console.error("Failed to get mockup bounds:", boundsError);
+            // Continue without bounds - will use full tab
+          }
+          
           // Request activeTab permission if not already granted
           try {
             const hasPermission = await chrome.permissions.contains({ permissions: ['activeTab'] });
@@ -276,8 +286,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             
             if (dataUrl) {
               console.log("Tab captured successfully, dataUrl length:", dataUrl.length);
-              const response = { ok: true, dataUrl: dataUrl };
-              sendResponse(response);
+              
+              // If we have mockup bounds, crop the image to just the mockup area
+              if (mockupBounds && mockupBounds.frame) {
+                console.log("Cropping to mockup area:", mockupBounds.frame);
+                const response = { 
+                  ok: true, 
+                  dataUrl: dataUrl,
+                  cropBounds: mockupBounds.frame
+                };
+                sendResponse(response);
+              } else {
+                console.log("No mockup bounds, using full tab");
+                const response = { ok: true, dataUrl: dataUrl };
+                sendResponse(response);
+              }
             } else {
               console.error("No dataUrl received from tab capture");
               sendResponse({ ok: false, error: "No dataUrl received" });

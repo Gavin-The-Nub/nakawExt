@@ -199,16 +199,33 @@ function captureFrame() {
         if (response && response.dataUrl) {
             console.log("Frame captured successfully, length:", response.dataUrl.length);
             
-            // Store the frame with timestamp
-            capturedFrames.push({
-                dataUrl: response.dataUrl,
-                timestamp: Date.now() - recordingStartTime
-            });
-            
-            // Draw frame to canvas for video recording
-            drawFrameToCanvas(response.dataUrl);
-            
-            updateStatus(`Recording... (${capturedFrames.length} frames captured)`);
+            // Process the frame (crop if needed)
+            if (response.cropBounds) {
+                console.log("Cropping frame to bounds:", response.cropBounds);
+                cropImage(response.dataUrl, response.cropBounds).then((processedDataUrl) => {
+                    // Store the frame with timestamp
+                    capturedFrames.push({
+                        dataUrl: processedDataUrl,
+                        timestamp: Date.now() - recordingStartTime
+                    });
+                    
+                    // Draw frame to canvas for video recording
+                    drawFrameToCanvas(processedDataUrl);
+                    
+                    updateStatus(`Recording... (${capturedFrames.length} frames captured)`);
+                });
+            } else {
+                // Store the frame with timestamp
+                capturedFrames.push({
+                    dataUrl: response.dataUrl,
+                    timestamp: Date.now() - recordingStartTime
+                });
+                
+                // Draw frame to canvas for video recording
+                drawFrameToCanvas(response.dataUrl);
+                
+                updateStatus(`Recording... (${capturedFrames.length} frames captured)`);
+            }
         } else {
             const errorMessage = response?.error || 'Unknown frame capture error';
             console.warn("Frame capture failed:", errorMessage);
@@ -274,6 +291,38 @@ function drawPlaceholderFrame() {
     ctx.fillText(`Frame ${capturedFrames.length + 1}`, canvas.width / 2, canvas.height / 2 + 30);
     
     console.log("Placeholder frame drawn to canvas");
+}
+
+function cropImage(dataUrl, cropBounds) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            // Create a temporary canvas for cropping
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Set canvas size to the crop dimensions
+            tempCanvas.width = cropBounds.width;
+            tempCanvas.height = cropBounds.height;
+            
+            // Draw the cropped portion of the image
+            tempCtx.drawImage(
+                img,
+                cropBounds.left, cropBounds.top, cropBounds.width, cropBounds.height, // Source rectangle
+                0, 0, cropBounds.width, cropBounds.height // Destination rectangle
+            );
+            
+            // Convert back to data URL
+            const croppedDataUrl = tempCanvas.toDataURL('image/png');
+            console.log("Image cropped successfully");
+            resolve(croppedDataUrl);
+        };
+        img.onerror = (error) => {
+            console.error("Error loading image for cropping:", error);
+            resolve(dataUrl); // Return original if cropping fails
+        };
+        img.src = dataUrl;
+    });
 }
 
 function stopRecording() {
