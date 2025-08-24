@@ -270,8 +270,205 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-screenshot").onclick = () => {
-    // Screenshot action (placeholder)
-    alert("Screenshot functionality coming soon!");
+    // Screenshot action - implement actual functionality
+    const frameEl = document.getElementById("__mf_simulator_frame__");
+    const screenEl = document.getElementById("__mf_simulator_screen__");
+    const mockupImgEl = document.getElementById("__mf_simulator_mockup__");
+    
+    if (!frameEl || !screenEl || !mockupImgEl) {
+      return alert("Simulator elements not found. Please ensure the simulator is active.");
+    }
+
+    const frameRect = frameEl.getBoundingClientRect(); // relative to viewport
+    const screenRect = screenEl.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+
+    // Ask background to capture the visible tab as PNG dataUrl
+    chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, async (resp) => {
+      try {
+        if (!resp || !resp.ok) {
+          console.error("Capture failed", resp && resp.error);
+          return alert(
+            "Screenshot failed: " +
+              (resp && resp.error ? resp.error : "unknown")
+          );
+        }
+
+        const dataUrl = resp.dataUrl;
+        const fullTabImg = new Image();
+        fullTabImg.onload = async () => {
+          try {
+            // Create canvas sized to the mockup frame in device pixels with alpha
+            const cw = Math.round(frameRect.width * dpr);
+            const ch = Math.round(frameRect.height * dpr);
+            const canvas = document.createElement("canvas");
+            canvas.width = cw;
+            canvas.height = ch;
+            const ctx = canvas.getContext("2d");
+
+            // Draw only the screen area (cropped from the full tab image)
+            const sxScreen = Math.round(screenRect.left * dpr);
+            const syScreen = Math.round(screenRect.top * dpr);
+            const sw = Math.round(screenRect.width * dpr);
+            const sh = Math.round(screenRect.height * dpr);
+            const dx = Math.round((screenRect.left - frameRect.left) * dpr);
+            const dy = Math.round((screenRect.top - frameRect.top) * dpr);
+            ctx.drawImage(fullTabImg, sxScreen, syScreen, sw, sh, dx, dy, sw, sh);
+
+            // Load the device image as a safe same-origin blob to avoid canvas tainting
+            let deviceBlobUrl;
+            try {
+              const res = await fetch(mockupImgEl.src);
+              const blob = await res.blob();
+              deviceBlobUrl = URL.createObjectURL(blob);
+            } catch (e) {
+              console.error("Failed to fetch device image", e);
+              return alert("Failed to fetch device image for compositing.");
+            }
+
+            await new Promise((resolve, reject) => {
+              const deviceImg = new Image();
+              deviceImg.onload = () => {
+                try {
+                  // Get current orientation from the mockup container or use currentOrientation
+                  const orientation = frameEl.getAttribute("data-orientation") || currentOrientation || "portrait";
+                  
+                  // Draw device bezel on top (keeps transparent outside)
+                  if (orientation === "landscape") {
+                    ctx.save();
+                    ctx.translate(cw / 2, ch / 2);
+                    ctx.rotate(Math.PI / 2);
+                    // After rotation, width/height swapped
+                    ctx.drawImage(deviceImg, -ch / 2, -cw / 2, ch, cw);
+                    ctx.restore();
+                  } else {
+                    ctx.drawImage(deviceImg, 0, 0, cw, ch);
+                  }
+                } finally {
+                  try { URL.revokeObjectURL(deviceBlobUrl); } catch (_) {}
+                  resolve();
+                }
+              };
+              deviceImg.onerror = (err) => reject(err);
+              deviceImg.src = deviceBlobUrl;
+            });
+
+            // Convert to blob
+            canvas.toBlob(async (blob) => {
+              if (!blob) {
+                return alert("Failed to create screenshot blob.");
+              }
+
+              // Build a small floating menu next to the toolbar
+              const menu = document.createElement("div");
+              menu.style.position = "fixed";
+              menu.style.right = "100px"; // slightly left of toolbar
+              menu.style.top = "60px";
+              menu.style.zIndex = "2147483649";
+              menu.style.display = "flex";
+              menu.style.flexDirection = "column";
+              menu.style.gap = "8px";
+              menu.style.padding = "10px";
+              menu.style.borderRadius = "10px";
+              menu.style.boxShadow = "0 8px 24px rgba(0,0,0,0.4)";
+              menu.style.background = "rgba(30,30,30,0.85)";
+              menu.style.color = "white";
+              menu.style.alignItems = "center";
+
+              const downloadBtn = document.createElement("button");
+              downloadBtn.textContent = "Download";
+              downloadBtn.style.padding = "8px 12px";
+              downloadBtn.style.border = "none";
+              downloadBtn.style.borderRadius = "8px";
+              downloadBtn.style.cursor = "pointer";
+              downloadBtn.style.background = "#007AFF";
+              downloadBtn.style.color = "white";
+              downloadBtn.style.fontSize = "14px";
+
+              const copyBtn = document.createElement("button");
+              copyBtn.textContent = "Copy";
+              copyBtn.style.padding = "8px 12px";
+              copyBtn.style.border = "none";
+              copyBtn.style.borderRadius = "8px";
+              copyBtn.style.cursor = "pointer";
+              copyBtn.style.background = "#34C759";
+              copyBtn.style.color = "white";
+              copyBtn.style.fontSize = "14px";
+
+              const closeBtnSmall = document.createElement("button");
+              closeBtnSmall.textContent = "Close";
+              closeBtnSmall.style.padding = "6px 10px";
+              closeBtnSmall.style.border = "none";
+              closeBtnSmall.style.borderRadius = "8px";
+              closeBtnSmall.style.cursor = "pointer";
+              closeBtnSmall.style.background = "#FF3B30";
+              closeBtnSmall.style.color = "white";
+              closeBtnSmall.style.fontSize = "14px";
+
+              // Download behavior
+              downloadBtn.onclick = () => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "mockup-screenshot.png";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                menu.remove();
+              };
+
+              // Copy behavior (Clipboard API)
+              copyBtn.onclick = async () => {
+                try {
+                  await navigator.clipboard.write([
+                    new ClipboardItem({ "image/png": blob }),
+                  ]);
+                  copyBtn.textContent = "Copied!";
+                  setTimeout(() => {
+                    try { copyBtn.textContent = "Copy"; } catch (e) {}
+                    menu.remove();
+                  }, 900);
+                } catch (err) {
+                  console.error("Copy failed", err);
+                  alert(
+                    "Copy to clipboard failed: " +
+                      (err && err.message ? err.message : err)
+                  );
+                }
+              };
+
+              closeBtnSmall.onclick = () => menu.remove();
+
+              menu.appendChild(downloadBtn);
+              menu.appendChild(copyBtn);
+              menu.appendChild(closeBtnSmall);
+              document.body.appendChild(menu);
+
+              // Auto-remove menu if user clicks elsewhere
+              const onDocClick = (ev) => {
+                if (!menu.contains(ev.target) && ev.target !== document.getElementById("mf-btn-screenshot")) {
+                  menu.remove();
+                  document.removeEventListener("mousedown", onDocClick);
+                }
+              };
+              document.addEventListener("mousedown", onDocClick);
+            }, "image/png");
+          } catch (e) {
+            console.error("Processing failed", e);
+            alert("Screenshot processing failed: " + e.message);
+          }
+        };
+        fullTabImg.onerror = (e) => {
+          console.error("Image load error", e);
+          alert("Failed to load captured image.");
+        };
+        fullTabImg.src = dataUrl;
+      } catch (error) {
+        console.error("Screenshot error:", error);
+        alert("Screenshot failed: " + error.message);
+      }
+    });
   };
 
   document.getElementById("mf-btn-record").onclick = () => {

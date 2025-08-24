@@ -1,128 +1,75 @@
-# Mobile Device Simulator - React Version
+# Mobile Device Simulator - React Clone
 
-A Chrome extension that simulates mobile devices with realistic mockups, recreated in React.js with Three.js support for future 3D visualization.
+A browser extension that simulates mobile devices with realistic mockups, built with React and modern web technologies.
 
-## 🎯 How It Works
+## Features
 
-This extension replicates the original Mobile FIRST extension's functionality:
+- **Device Simulation**: Simulate various mobile devices and desktop computers
+- **Orientation Support**: Switch between portrait and landscape modes
+- **Realistic Mockups**: High-quality device mockups with proper screen clipping
+- **Screenshot Functionality**: Capture device mockups with web content
+- **Device Selection**: Choose from a wide range of iOS, Android, and macOS devices
+- **Responsive Design**: Modern UI with smooth animations and transitions
 
-1. **Popup**: Automatically activates the simulator and closes immediately
-2. **Background Script**: Manages device states, user agent spoofing, and simulator overlay
-3. **Device Panel**: Floating panel with device selection buttons
-4. **Simulator Overlay**: Full-screen overlay with realistic device mockups containing iframes
+## Screenshot Functionality
 
-## ✨ Features
+The extension includes a powerful screenshot feature that captures the current page content within the device mockup:
 
-- **Realistic Device Mockups**: Uses actual device PNG images with proper screen cutouts
-- **User Agent Spoofing**: Changes browser user agent to match selected device
-- **Device Selection**: Choose from 30+ devices (iPhone, Android, MacBook, etc.)
-- **Scrollbar Control**: Toggle scrollbar visibility
-- **Keyboard Shortcuts**: Ctrl+Shift+M to toggle simulator
-- **Context Menu**: Right-click to toggle simulator
-- **Automatic Activation**: Popup activates simulator immediately
+### How to Use Screenshots
 
-## 🚀 Installation
+1. **Activate the Simulator**: Click the extension icon or use the keyboard shortcut `Ctrl+Shift+M` (or `Cmd+Shift+M` on Mac)
+2. **Select a Device**: Choose your preferred device from the device selector
+3. **Navigate to Your Page**: Browse to the webpage you want to capture
+4. **Take Screenshot**: Click the camera icon (📷) in the floating toolbar
+5. **Choose Action**: 
+   - **Download**: Save the screenshot as a PNG file
+   - **Copy**: Copy the image to your clipboard
+   - **Close**: Dismiss the options menu
 
-1. **Build the Extension**:
+### Screenshot Features
 
-   ```bash
-   npm install
-   npm run build
-   ```
+- **High Quality**: Captures at full device pixel ratio for crisp images
+- **Device Mockup**: Automatically composites the screenshot with the device bezel
+- **Orientation Aware**: Correctly handles both portrait and landscape orientations
+- **Screen Clipping**: Only captures the content within the device screen area
+- **Transparent Background**: Maintains transparency for easy integration into designs
 
-2. **Load in Chrome**:
+### Supported Devices
 
-   - Open Chrome and go to `chrome://extensions/`
-   - Enable "Developer mode"
-   - Click "Load unpacked"
-   - Select the `dist` folder
+The screenshot functionality works with all supported devices:
 
-3. **Use the Extension**:
-   - Click the extension icon to activate simulator
-   - Use the floating device panel to change devices
-   - Right-click or use Ctrl+Shift+M to toggle
+- **iOS Devices**: iPhone 11-16 series, iPad models, Apple Watch
+- **Android Devices**: Google Pixel series, Samsung Galaxy series, Huawei, OnePlus
+- **Desktop Devices**: MacBook Air, iMac, Dell Latitude
 
-## 📱 Supported Devices
+## Installation
 
-### iOS Devices
+1. Clone this repository
+2. Install dependencies: `npm install`
+3. Build the extension: `npm run build`
+4. Load the `dist` folder as an unpacked extension in Chrome/Edge
 
-- iPhone 16, 15, 14, 13, 12, 11 series
-- iPhone SE, X, XR
-- iPad Air, Mini, Pro
-- Apple Watch
+## Development
 
-### Android Devices
+- **Development mode**: `npm run dev` (watches for changes)
+- **Production build**: `npm run build`
+- **Start dev server**: `npm start`
 
-- Google Pixel 5, 6, 8
-- Samsung Galaxy S20, S22, S24 series
-- Samsung Galaxy Fold, Z Flip
-- Huawei P30 Pro
-- OnePlus Nord 2
+## Technical Details
 
-### Desktop Devices
+The screenshot functionality uses:
+- `chrome.tabs.captureVisibleTab` API for tab capture
+- HTML5 Canvas for image processing and compositing
+- Device mockup images for realistic bezel overlay
+- Clipboard API for copy functionality
+- Proper error handling and loading states
 
-- MacBook Air, MacBook Pro
-- Apple iMac
-- Dell Latitude
+## Browser Compatibility
 
-## 🏗️ Architecture
+- Chrome 88+
+- Edge 88+
+- Other Chromium-based browsers
 
-```
-src/
-├── background/          # Background service worker
-│   └── index.js        # Device state management, UA spoofing
-├── popup/              # Extension popup
-│   ├── popup.html      # Simple popup interface
-│   └── popup.js        # Auto-activate simulator
-├── devicePanel/        # Device selection panel
-│   └── devicePanel.js  # Floating device selector
-├── content/            # Content script
-│   └── index.js        # Message handling
-├── shared/             # Shared utilities
-│   └── devices.js      # Device definitions
-└── assets/             # Device mockup images
-    └── devices/        # PNG mockups
-```
+## License
 
-## 🔧 Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build for production
-npm run build
-
-# Development mode (watch for changes)
-npm run dev
-```
-
-## 🎨 Key Differences from Original
-
-- **React Ready**: Built with React.js architecture for future Three.js integration
-- **Modern Build**: Uses Webpack for bundling and optimization
-- **Clean Code**: Well-structured, maintainable codebase
-- **Future-Proof**: Prepared for 3D device visualization with Three.js
-
-## 🚧 Future Enhancements
-
-- **Three.js Integration**: 3D device visualization
-- **Device Rotation**: Landscape/portrait orientation
-- **Custom Devices**: Add your own device mockups
-- **Advanced Controls**: Touch simulation, device-specific features
-
-## 📄 License
-
-This project recreates the functionality of the original Mobile FIRST extension for educational and development purposes.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
----
-
-**Note**: This is a React-based recreation of the original Mobile FIRST extension, designed to maintain the same functionality while providing a modern development foundation for future enhancements.
+ISC License

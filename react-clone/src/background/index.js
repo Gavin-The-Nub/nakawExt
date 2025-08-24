@@ -59,7 +59,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
         });
       } else {
-        toggleOrientationForTab(tabId);
+        toggleOrientationForTab(tabs[0].id);
       }
       break;
 
@@ -70,6 +70,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "TOGGLE_SCROLLBAR_FOR_TAB":
       toggleScrollbarForTab(tabId, sendResponse);
       break;
+
+    // Background/service worker: capture visible tab and return dataUrl
+    case "CAPTURE_TAB":
+      (async () => {
+        try {
+          // captureVisibleTab uses the currently focused window; null is fine
+          chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
+            if (chrome.runtime.lastError) {
+              console.error("captureVisibleTab err", chrome.runtime.lastError);
+              sendResponse({
+                ok: false,
+                error: chrome.runtime.lastError.message,
+              });
+              return;
+            }
+            sendResponse({ ok: true, dataUrl });
+          });
+        } catch (e) {
+          console.error("CAPTURE_TAB error", e);
+          sendResponse({ ok: false, error: e.message });
+        }
+      })();
+      return true; // keep message channel open for async sendResponse
 
     default:
       console.warn("Unknown message type:", type);
