@@ -34,7 +34,7 @@
   "web_accessible_resources": [
     {
       "matches": ["<all_urls>"],
-      "resources": ["devicePanel.js", "assets/**/*", "icons/**/*"]
+      "resources": ["devicePanel.js", "assets/**/*", "icons/**/*", "offscreen/**/*"]
     }
   ],
   "commands": {

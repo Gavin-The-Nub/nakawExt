@@ -39,6 +39,7 @@ module.exports = {
         { from: "src/manifest.json", to: "manifest.json" },
         { from: "src/icons", to: "icons" },
         { from: "src/assets", to: "assets", noErrorOnMissing: true },
+        { from: "src/offscreen", to: "offscreen" },
       ],
     }),
   ],

@@ -43,6 +43,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "TOGGLE_SCROLLBAR":
       // Update toolbar state if needed
       break;
+
+    case "GET_MOCKUP_BOUNDS":
+      const frameEl = document.getElementById("__mf_simulator_frame__");
+      const screenEl = document.getElementById("__mf_simulator_screen__");
+      
+      if (frameEl && screenEl) {
+        const frameRect = frameEl.getBoundingClientRect();
+        const screenRect = screenEl.getBoundingClientRect();
+        
+        sendResponse({
+          frame: {
+            left: frameRect.left,
+            top: frameRect.top,
+            width: frameRect.width,
+            height: frameRect.height
+          },
+          screen: {
+            left: screenRect.left,
+            top: screenRect.top,
+            width: screenRect.width,
+            height: screenRect.height
+          },
+          orientation: currentOrientation
+        });
+      } else {
+        sendResponse(null);
+      }
+      return true; // Keep message channel open for async response
   }
 });
 
@@ -216,6 +244,9 @@ function injectToolbar() {
 
   // Create device selector
   createDeviceSelector();
+  
+  // Initialize recording status
+  initRecordingStatus();
 
   // Button event handlers
   document.getElementById("mf-btn-close").onclick = () => {
@@ -497,8 +528,52 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-record").onclick = () => {
-    // Record action (placeholder)
-    alert("Record functionality coming soon!");
+    console.log('Record button clicked!');
+    
+    // Check if simulator is active
+    const frameEl = document.getElementById("__mf_simulator_frame__");
+    if (!frameEl) {
+      return alert("Simulator not active. Please activate the device simulator first.");
+    }
+
+    // Use the improved recording system via background script
+    if (isRecording) {
+      console.log('Stopping recording via background script...');
+      isRecording = false; // Set state immediately for UI responsiveness
+      updateRecordButton(false);
+      showRecordingStatus('Stopping recording...');
+      
+      chrome.runtime.sendMessage({ type: "STOP_RECORDING" }, (response) => {
+        if (response && response.ok) {
+          console.log('Recording stopped successfully');
+          showRecordingStatus('Recording stopped');
+        } else {
+          console.error('Failed to stop recording:', response);
+          showRecordingStatus('Failed to stop recording');
+          // Reset state if stop failed
+          isRecording = true;
+          updateRecordButton(true);
+        }
+      });
+    } else {
+      console.log('Starting recording via background script...');
+      isRecording = true; // Set state immediately for UI responsiveness
+      updateRecordButton(true);
+      showRecordingStatus('Starting recording...');
+      
+      chrome.runtime.sendMessage({ type: "START_RECORDING" }, (response) => {
+        if (response && response.ok) {
+          console.log('Recording started successfully');
+          showRecordingStatus('Recording started...');
+        } else {
+          console.error('Failed to start recording:', response);
+          showRecordingStatus('Failed to start recording: ' + (response?.error || 'Unknown error'));
+          // Reset state if start failed
+          isRecording = false;
+          updateRecordButton(false);
+        }
+      });
+    }
   };
 
   let scrollBarVisible = false;
@@ -691,5 +766,66 @@ function removeToolbar() {
   if (deviceSelector) {
     deviceSelector.remove();
     deviceSelector = null;
+  }
+}
+
+// Helper functions for recording
+function updateRecordButton(isRecording) {
+  const recordBtn = document.getElementById("mf-btn-record");
+  if (recordBtn) {
+    if (isRecording) {
+      recordBtn.style.background = "#ff4444";
+      recordBtn.title = "Stop Recording";
+      recordBtn.innerHTML = `
+        <svg viewBox="0 0 24 24">
+          <rect x="6" y="6" width="12" height="12" rx="2"/>
+        </svg>
+      `;
+    } else {
+      recordBtn.style.background = "#555";
+      recordBtn.title = "Start Recording";
+      recordBtn.innerHTML = `
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="8"/>
+        </svg>
+      `;
+    }
+  }
+}
+
+// Improved recording system - uses background script
+let isRecording = false;
+let recordingStatus = null;
+
+// Initialize recording status display
+function initRecordingStatus() {
+  // Add recording status display
+  recordingStatus = document.createElement('div');
+  recordingStatus.className = 'recording-status';
+  recordingStatus.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    z-index: 10000;
+    display: none;
+  `;
+  document.body.appendChild(recordingStatus);
+}
+
+function showRecordingStatus(message) {
+  if (recordingStatus) {
+    recordingStatus.textContent = message;
+    recordingStatus.style.display = 'block';
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      recordingStatus.style.display = 'none';
+    }, 3000);
   }
 }
