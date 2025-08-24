@@ -25,11 +25,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case "DEACTIVATE_SIMULATOR_FOR_TAB":
-      deactivateSimulatorForTab(tabId);
+      // If tabId is null, get the current active tab
+      if (tabId === null) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]) {
+            deactivateSimulatorForTab(tabs[0].id);
+          }
+        });
+      } else {
+        deactivateSimulatorForTab(tabId);
+      }
       break;
 
     case "SET_DEVICE_FOR_TAB":
-      setDeviceForTab(tabId, deviceSlug);
+      // If tabId is null, get the current active tab
+      if (tabId === null) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]) {
+            setDeviceForTab(tabs[0].id, deviceSlug);
+          }
+        });
+      } else {
+        setDeviceForTab(tabId, deviceSlug);
+      }
       break;
 
     case "GET_TAB_STATE":
@@ -72,6 +90,17 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     } else {
       activateSimulatorForTab(tab.id);
     }
+  }
+});
+
+// Toggle simulator when extension icon is clicked
+chrome.action.onClicked.addListener((tab) => {
+  if (!tab.id) return;
+  const tabState = getTabState(tab.id);
+  if (tabState && tabState.isActive) {
+    deactivateSimulatorForTab(tab.id);
+  } else {
+    activateSimulatorForTab(tab.id);
   }
 });
 
@@ -136,6 +165,16 @@ function setDeviceForTab(tabId, deviceSlug) {
     applyDeviceToTab(tabId, device);
     showSimulator(tabId, tabState);
 
+    // Notify content script that device changed (so it can maintain toolbar)
+    try {
+      chrome.tabs.sendMessage(tabId, {
+        type: "DEVICE_CHANGED",
+        device: device,
+      });
+    } catch (error) {
+      console.log("Content script not ready for device change message:", tabId);
+    }
+
     console.log("Device changed to:", device.name);
   }
 }
@@ -198,11 +237,11 @@ function toggleScrollbarForTab(tabId, sendResponse) {
 
 async function showSimulator(tabId, state) {
   try {
-    // Inject the device panel content script
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ["devicePanel.js"],
-    });
+    // (Removed) Inject the device panel content script
+    // await chrome.scripting.executeScript({
+    //   target: { tabId },
+    //   files: ["devicePanel.js"],
+    // });
 
     await chrome.scripting.insertCSS({
       target: { tabId },

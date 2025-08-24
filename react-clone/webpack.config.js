@@ -1,13 +1,10 @@
 const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: {
-    popup: "./src/popup/popup.js",
     background: "./src/background/index.js",
     content: "./src/content/index.js",
-    devicePanel: "./src/devicePanel/devicePanel.js",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -37,11 +34,6 @@ module.exports = {
     ],
   },
   plugins: [
-    new HtmlWebpackPlugin({
-      template: "./src/popup/popup.html",
-      filename: "popup.html",
-      chunks: ["popup"],
-    }),
     new CopyWebpackPlugin({
       patterns: [
         { from: "src/manifest.json", to: "manifest.json" },

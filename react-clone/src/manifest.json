@@ -22,7 +22,6 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {}
   },
   "content_scripts": [
@@ -34,14 +33,15 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["devicePanel.html", "assets/**/*"],
-      "matches": ["<all_urls>"]
+      "matches": ["<all_urls>"],
+      "resources": ["devicePanel.js", "assets/**/*", "icons/**/*"]
     }
   ],
   "commands": {
     "toggle-simulator": {
       "suggested_key": {
-        "default": "Ctrl+Shift+M"
+        "default": "Ctrl+Shift+M",
+        "mac": "Command+Shift+M"
       },
       "description": "Toggle device simulator"
     }
