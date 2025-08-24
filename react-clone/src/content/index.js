@@ -197,6 +197,9 @@ function injectToolbar() {
     <button class="mf-toolbar-btn" id="mf-btn-record" title="Record">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
     </button>
+    <button class="mf-toolbar-btn" id="mf-btn-scrollbar" title="Show Scroll Bar">
+      <svg viewBox="0 0 24 24"><rect x="10" y="4" width="4" height="16" rx="2"/><rect x="4" y="10" width="16" height="4" rx="2"/></svg>
+    </button>
   `;
 
   // Ensure we append to body and it's properly attached
@@ -235,14 +238,14 @@ function injectToolbar() {
     try {
       // Get current orientation from the button indicator
       const isCurrentlyLandscape = currentOrientation === "landscape";
-      
+
       // Find the mockup container and do a brief visual rotation
       const mockupContainer = document.querySelector("#__mf_simulator_frame__");
       if (mockupContainer) {
         // Brief visual rotate animation before applying new orientation
         const direction = isCurrentlyLandscape ? -90 : 90;
         mockupContainer.style.transform = `rotate(${direction}deg)`;
-        
+
         // Send message after animation completes
         setTimeout(async () => {
           try {
@@ -274,9 +277,11 @@ function injectToolbar() {
     const frameEl = document.getElementById("__mf_simulator_frame__");
     const screenEl = document.getElementById("__mf_simulator_screen__");
     const mockupImgEl = document.getElementById("__mf_simulator_mockup__");
-    
+
     if (!frameEl || !screenEl || !mockupImgEl) {
-      return alert("Simulator elements not found. Please ensure the simulator is active.");
+      return alert(
+        "Simulator elements not found. Please ensure the simulator is active."
+      );
     }
 
     const frameRect = frameEl.getBoundingClientRect(); // relative to viewport
@@ -313,7 +318,17 @@ function injectToolbar() {
             const sh = Math.round(screenRect.height * dpr);
             const dx = Math.round((screenRect.left - frameRect.left) * dpr);
             const dy = Math.round((screenRect.top - frameRect.top) * dpr);
-            ctx.drawImage(fullTabImg, sxScreen, syScreen, sw, sh, dx, dy, sw, sh);
+            ctx.drawImage(
+              fullTabImg,
+              sxScreen,
+              syScreen,
+              sw,
+              sh,
+              dx,
+              dy,
+              sw,
+              sh
+            );
 
             // Load the device image as a safe same-origin blob to avoid canvas tainting
             let deviceBlobUrl;
@@ -331,8 +346,11 @@ function injectToolbar() {
               deviceImg.onload = () => {
                 try {
                   // Get current orientation from the mockup container or use currentOrientation
-                  const orientation = frameEl.getAttribute("data-orientation") || currentOrientation || "portrait";
-                  
+                  const orientation =
+                    frameEl.getAttribute("data-orientation") ||
+                    currentOrientation ||
+                    "portrait";
+
                   // Draw device bezel on top (keeps transparent outside)
                   if (orientation === "landscape") {
                     ctx.save();
@@ -345,7 +363,9 @@ function injectToolbar() {
                     ctx.drawImage(deviceImg, 0, 0, cw, ch);
                   }
                 } finally {
-                  try { URL.revokeObjectURL(deviceBlobUrl); } catch (_) {}
+                  try {
+                    URL.revokeObjectURL(deviceBlobUrl);
+                  } catch (_) {}
                   resolve();
                 }
               };
@@ -426,7 +446,9 @@ function injectToolbar() {
                   ]);
                   copyBtn.textContent = "Copied!";
                   setTimeout(() => {
-                    try { copyBtn.textContent = "Copy"; } catch (e) {}
+                    try {
+                      copyBtn.textContent = "Copy";
+                    } catch (e) {}
                     menu.remove();
                   }, 900);
                 } catch (err) {
@@ -447,7 +469,10 @@ function injectToolbar() {
 
               // Auto-remove menu if user clicks elsewhere
               const onDocClick = (ev) => {
-                if (!menu.contains(ev.target) && ev.target !== document.getElementById("mf-btn-screenshot")) {
+                if (
+                  !menu.contains(ev.target) &&
+                  ev.target !== document.getElementById("mf-btn-screenshot")
+                ) {
                   menu.remove();
                   document.removeEventListener("mousedown", onDocClick);
                 }
@@ -475,7 +500,43 @@ function injectToolbar() {
     // Record action (placeholder)
     alert("Record functionality coming soon!");
   };
-  
+
+  let scrollBarVisible = false;
+  const scrollBarBtn = document.getElementById("mf-btn-scrollbar");
+
+  // Query current tab's scrollbar state on toolbar injection
+  chrome.runtime.sendMessage(
+    { type: "GET_TAB_STATE", tabId: null },
+    (state) => {
+      if (state && typeof state.showScrollbar === "boolean") {
+        scrollBarVisible = state.showScrollbar;
+        updateScrollBarBtn();
+      }
+    }
+  );
+
+  function updateScrollBarBtn() {
+    if (scrollBarVisible) {
+      scrollBarBtn.classList.add("selected");
+      scrollBarBtn.title = "Hide Scroll Bar";
+    } else {
+      scrollBarBtn.classList.remove("selected");
+      scrollBarBtn.title = "Show Scroll Bar";
+    }
+  }
+
+  scrollBarBtn.onclick = () => {
+    chrome.runtime.sendMessage(
+      { type: "TOGGLE_SCROLLBAR_FOR_TAB", tabId: null },
+      (response) => {
+        if (response && typeof response.showScrollbar === "boolean") {
+          scrollBarVisible = response.showScrollbar;
+          updateScrollBarBtn();
+        }
+      }
+    );
+  };
+
   // Update orientation indicator after toolbar is created
   updateToolbarOrientation();
 }

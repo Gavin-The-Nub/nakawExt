@@ -68,7 +68,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case "TOGGLE_SCROLLBAR_FOR_TAB":
-      toggleScrollbarForTab(tabId, sendResponse);
+      // If tabId is null, get the current active tab
+      if (tabId === null) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]) {
+            toggleScrollbarForTab(tabs[0].id, sendResponse);
+          }
+        });
+        return true; // keep message channel open for async sendResponse
+      } else {
+        toggleScrollbarForTab(tabId, sendResponse);
+      }
       break;
 
     // Background/service worker: capture visible tab and return dataUrl
@@ -160,12 +170,15 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 function activateSimulatorForTab(tabId, deviceSlug = null) {
   const device = deviceSlug ? getDeviceBySlug(deviceSlug) : getDefaultDevice();
   const tabState = getTabState(tabId);
-  
+
   tabState.isActive = true;
   tabState.device = device;
   tabState.orientation = "portrait"; // Reset to portrait when activating
   tabState.showScrollbar = false;
   tabState.originalUA = null;
+  tabState.mobile = true;
+  tabState.simulator = true;
+  tabState.deviceSlug = device.slug;
 
   tabStates.set(tabId, tabState);
   applyDeviceToTab(tabId, device);
@@ -195,15 +208,15 @@ function deactivateSimulatorForTab(tabId) {
 function setDeviceForTab(tabId, deviceSlug) {
   const device = getDeviceBySlug(deviceSlug);
   const tabState = getTabState(tabId);
-  
+
   if (tabState && tabState.isActive) {
     tabState.device = device;
     tabState.orientation = "portrait"; // Reset orientation when changing device
     tabStates.set(tabId, tabState);
-    
+
     applyDeviceToTab(tabId, device);
     showSimulator(tabId, tabState);
-    
+
     console.log("Device changed to:", device.name);
   }
 }
@@ -212,12 +225,13 @@ function toggleOrientationForTab(tabId) {
   const tabState = getTabState(tabId);
   if (tabState && tabState.isActive) {
     // Toggle between portrait and landscape
-    tabState.orientation = tabState.orientation === "portrait" ? "landscape" : "portrait";
+    tabState.orientation =
+      tabState.orientation === "portrait" ? "landscape" : "portrait";
     tabStates.set(tabId, tabState);
-    
+
     // Recreate simulator with new orientation
     showSimulator(tabId, tabState);
-    
+
     // Notify content script about orientation change
     try {
       chrome.tabs.sendMessage(tabId, {
@@ -225,9 +239,12 @@ function toggleOrientationForTab(tabId) {
         orientation: tabState.orientation,
       });
     } catch (error) {
-      console.log("Content script not ready for orientation change message:", tabId);
+      console.log(
+        "Content script not ready for orientation change message:",
+        tabId
+      );
     }
-    
+
     console.log("Orientation changed to:", tabState.orientation);
   }
 }
@@ -277,6 +294,9 @@ function getTabState(tabId) {
       orientation: "portrait", // Add orientation state
       showScrollbar: false,
       originalUA: null,
+      mobile: true,
+      simulator: true,
+      deviceSlug: "ip16",
     });
   }
   return tabStates.get(tabId);
@@ -287,7 +307,12 @@ function toggleScrollbarForTab(tabId, sendResponse) {
   if (tabState) {
     tabState.showScrollbar = !tabState.showScrollbar;
     applyScrollbar(tabId, tabState.showScrollbar);
-    sendResponse(tabState);
+    sendResponse({
+      showScrollbar: tabState.showScrollbar,
+      mobile: tabState.mobile,
+      simulator: tabState.simulator,
+      deviceSlug: tabState.deviceSlug,
+    });
   }
 }
 
@@ -295,14 +320,16 @@ async function showSimulator(tabId, state) {
   try {
     const device = state.device;
     const orientation = state.orientation || "portrait";
-    
+
     // Calculate dimensions based on orientation
     const isLandscape = orientation === "landscape";
     const w = isLandscape ? device.viewport.height : device.viewport.width;
     const h = isLandscape ? device.viewport.width : device.viewport.height;
-    
+
     // Adjust screen percentages for landscape orientation
-    const adjustedScreenPct = isLandscape ? rotateScreenPctCW(device.screenPct) : device.screenPct;
+    const adjustedScreenPct = isLandscape
+      ? rotateScreenPctCW(device.screenPct)
+      : device.screenPct;
 
     // Inject the simulator CSS
     await chrome.scripting.insertCSS({
@@ -406,7 +433,7 @@ function createSimulatorOverlay({
   mockupContainer.style.transition = "transform 220ms ease";
   mockupContainer.style.transformOrigin = "50% 50%";
   mockupContainer.style.willChange = "transform";
-  
+
   // Store orientation data for future reference
   mockupContainer.setAttribute("data-orientation", orientation);
 
@@ -418,7 +445,7 @@ function createSimulatorOverlay({
   mockupImg.style.height = String(h) + "px";
   mockupImg.style.display = "block";
   mockupImg.style.position = "absolute";
-  
+
   // Apply rotation for landscape orientation (like in basic_clone)
   if (orientation === "landscape") {
     mockupImg.style.width = String(h) + "px";
@@ -431,7 +458,7 @@ function createSimulatorOverlay({
     mockupImg.style.top = "0";
     mockupImg.style.left = "0";
   }
-  
+
   mockupImg.style.zIndex = "5";
   mockupImg.style.pointerEvents = "none";
 
@@ -585,8 +612,10 @@ async function hideSimulator(tabId) {
 }
 
 async function applyScrollbar(tabId, show) {
+  // inject CSS that properly controls scrollbar visibility
   let css;
   if (show) {
+    // Show scrollbar with proper styling
     css = `
       html, body {
         overflow-y: auto !important;
@@ -604,6 +633,7 @@ async function applyScrollbar(tabId, show) {
       }
     `;
   } else {
+    // Completely hide scrollbar but keep scrolling functional
     css = `
       html, body {
         overflow-y: auto !important;
@@ -634,13 +664,24 @@ async function applyScrollbar(tabId, show) {
   }
 
   try {
-    await chrome.scripting.insertCSS({
+    // Remove any existing scrollbar CSS first
+    await chrome.scripting.removeCSS({
       target: { tabId, allFrames: true },
-      css,
+      css: "html,body{overflow-y:auto !important;overflow-x:hidden !important}::-webkit-scrollbar{background:transparent;width:13px !important;height:13px !important}::-webkit-scrollbar-thumb{border:solid 3px transparent;background-clip:content-box;border-radius:17px}",
     });
-  } catch (error) {
-    console.error("Failed to apply scrollbar CSS:", error);
-  }
+  } catch (_) {}
+
+  try {
+    await chrome.scripting.removeCSS({
+      target: { tabId, allFrames: true },
+      css: "html,body{overflow-y:auto !important;overflow-x:hidden !important}::-webkit-scrollbar{background:transparent;width:0 !important;height:0 !important}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:transparent}",
+    });
+  } catch (_) {}
+
+  await chrome.scripting.insertCSS({
+    target: { tabId, allFrames: true },
+    css,
+  });
 }
 
 // Rotate screen percentage insets 90° clockwise to match landscape orientation
