@@ -8,16 +8,31 @@ let currentOrientation = "portrait"; // Track current orientation
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  const { type, device, showScrollbar, orientation } = message;
+  const { type, device, showScrollbar, orientation, platform } = message;
 
   switch (type) {
     case "SIMULATOR_ACTIVATED":
       currentOrientation = orientation || "portrait";
       injectToolbar();
+      // Set initial state of browser navigation toggle button
+      setTimeout(() => {
+        const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+        const button = document.getElementById("mf-btn-browser-nav");
+        if (browserNavBar && button) {
+          // In landscape mode, navigation bar is hidden by default
+          if (orientation === "landscape") {
+            button.classList.remove("selected");
+          } else {
+            button.classList.add("selected");
+          }
+        }
+      }, 100); // Small delay to ensure elements are created
       break;
 
     case "SIMULATOR_DEACTIVATED":
       removeToolbar();
+      // Reset browser navigation toggle button state
+      currentOrientation = "portrait";
       break;
 
     case "DEVICE_CHANGED":
@@ -32,45 +47,43 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           toolbar = null; // Reset toolbar reference
           injectToolbar();
         }
+        // Update browser navigation toggle button state after device change
+        setTimeout(() => {
+          const browserNavBar = document.getElementById(
+            "__mf_browser_nav_bar__"
+          );
+          const button = document.getElementById("mf-btn-browser-nav");
+          if (browserNavBar && button) {
+            if (currentOrientation === "landscape") {
+              button.classList.remove("selected");
+            } else {
+              button.classList.add("selected");
+            }
+          }
+        }, 50); // Additional delay to ensure browser nav bar is created
       }, 100); // Small delay to ensure overlay recreation is complete
       break;
 
     case "ORIENTATION_CHANGED":
       currentOrientation = orientation || "portrait";
       updateToolbarOrientation();
+      // Update browser navigation toggle button state based on orientation
+      setTimeout(() => {
+        const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+        const button = document.getElementById("mf-btn-browser-nav");
+        if (browserNavBar && button) {
+          if (orientation === "landscape") {
+            button.classList.remove("selected");
+          } else {
+            button.classList.add("selected");
+          }
+        }
+      }, 100);
       break;
 
     case "TOGGLE_SCROLLBAR":
       // Update toolbar state if needed
       break;
-
-    case "GET_MOCKUP_BOUNDS":
-      const frameEl = document.getElementById("__mf_simulator_frame__");
-      const screenEl = document.getElementById("__mf_simulator_screen__");
-      
-      if (frameEl && screenEl) {
-        const frameRect = frameEl.getBoundingClientRect();
-        const screenRect = screenEl.getBoundingClientRect();
-        
-        sendResponse({
-          frame: {
-            left: frameRect.left,
-            top: frameRect.top,
-            width: frameRect.width,
-            height: frameRect.height
-          },
-          screen: {
-            left: screenRect.left,
-            top: screenRect.top,
-            width: screenRect.width,
-            height: screenRect.height
-          },
-          orientation: currentOrientation
-        });
-      } else {
-        sendResponse(null);
-      }
-      return true; // Keep message channel open for async response
   }
 });
 
@@ -212,9 +225,7 @@ function injectToolbar() {
     <button class="mf-toolbar-btn" id="mf-btn-device" title="Device Mode">
       <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="18" r="1.5"/></svg>
     </button>
-    <button class="mf-toolbar-btn selected" id="mf-btn-panel" title="Show Device Panel">
-      <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="2"/><line x1="4" y1="11" x2="20" y2="11"/></svg>
-    </button>
+  
     <button class="mf-toolbar-btn" id="mf-btn-rotate" title="Rotate to Landscape" style="position: relative;">
       <svg viewBox="0 0 24 24"><path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/></svg>
       <div class="orientation-indicator">P</div>
@@ -225,8 +236,8 @@ function injectToolbar() {
     <button class="mf-toolbar-btn" id="mf-btn-record" title="Record">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
     </button>
-    <button class="mf-toolbar-btn" id="mf-btn-scrollbar" title="Show Scroll Bar">
-      <svg viewBox="0 0 24 24"><rect x="10" y="4" width="4" height="16" rx="2"/><rect x="4" y="10" width="16" height="4" rx="2"/></svg>
+    <button class="mf-toolbar-btn" id="mf-btn-browser-nav" title="Toggle Browser Navigation">
+      <svg viewBox="0 0 24 24"><path d="M3 7H21V9H3V7ZM3 11H21V13H3V11ZM3 15H21V17H3V15Z" stroke="currentColor" stroke-width="1.5"/></svg>
     </button>
   `;
 
@@ -244,9 +255,6 @@ function injectToolbar() {
 
   // Create device selector
   createDeviceSelector();
-  
-  // Initialize recording status
-  initRecordingStatus();
 
   // Button event handlers
   document.getElementById("mf-btn-close").onclick = () => {
@@ -258,10 +266,6 @@ function injectToolbar() {
 
   document.getElementById("mf-btn-device").onclick = () => {
     toggleDeviceSelector();
-  };
-
-  document.getElementById("mf-btn-panel").onclick = () => {
-    toggleDevicePanel();
   };
 
   document.getElementById("mf-btn-rotate").onclick = () => {
@@ -528,92 +532,57 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-record").onclick = () => {
-    console.log('Record button clicked!');
-    
-    // Check if simulator is active
-    const frameEl = document.getElementById("__mf_simulator_frame__");
-    if (!frameEl) {
-      return alert("Simulator not active. Please activate the device simulator first.");
-    }
-
-    // Use the improved recording system via background script
-    if (isRecording) {
-      console.log('Stopping recording via background script...');
-      isRecording = false; // Set state immediately for UI responsiveness
-      updateRecordButton(false);
-      showRecordingStatus('Stopping recording...');
-      
-      chrome.runtime.sendMessage({ type: "STOP_RECORDING" }, (response) => {
-        if (response && response.ok) {
-          console.log('Recording stopped successfully');
-          showRecordingStatus('Recording stopped');
-        } else {
-          console.error('Failed to stop recording:', response);
-          showRecordingStatus('Failed to stop recording');
-          // Reset state if stop failed
-          isRecording = true;
-          updateRecordButton(true);
-        }
-      });
-    } else {
-      console.log('Starting recording via background script...');
-      isRecording = true; // Set state immediately for UI responsiveness
-      updateRecordButton(true);
-      showRecordingStatus('Starting recording...');
-      
-      chrome.runtime.sendMessage({ type: "START_RECORDING" }, (response) => {
-        if (response && response.ok) {
-          console.log('Recording started successfully');
-          showRecordingStatus('Recording started...');
-        } else {
-          console.error('Failed to start recording:', response);
-          showRecordingStatus('Failed to start recording: ' + (response?.error || 'Unknown error'));
-          // Reset state if start failed
-          isRecording = false;
-          updateRecordButton(false);
-        }
-      });
-    }
+    // Record action (placeholder)
+    alert("Record functionality coming soon!");
   };
 
-  let scrollBarVisible = false;
-  const scrollBarBtn = document.getElementById("mf-btn-scrollbar");
+  document.getElementById("mf-btn-browser-nav").onclick = () => {
+    // Toggle browser navigation bar visibility
+    const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+    const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
+    const button = document.getElementById("mf-btn-browser-nav");
 
-  // Query current tab's scrollbar state on toolbar injection
-  chrome.runtime.sendMessage(
-    { type: "GET_TAB_STATE", tabId: null },
-    (state) => {
-      if (state && typeof state.showScrollbar === "boolean") {
-        scrollBarVisible = state.showScrollbar;
-        updateScrollBarBtn();
+    if (browserNavBar && iframe) {
+      const isVisible = browserNavBar.style.display !== "none";
+
+      if (isVisible) {
+        // Hide the navigation bar
+        browserNavBar.style.display = "none";
+        iframe.style.top = "0px";
+        iframe.style.height = "100%";
+        button.classList.remove("selected");
+      } else {
+        // Show the navigation bar
+        browserNavBar.style.display = "flex";
+        // Get platform from the mockup container data attribute or infer from device
+        const mockupContainer = document.querySelector(
+          "#__mf_simulator_frame__"
+        );
+        const platform =
+          mockupContainer?.getAttribute("data-platform") || "iOS";
+        const navBarHeight = platform === "iOS" ? 44 : 56;
+        iframe.style.top = navBarHeight + "px";
+        iframe.style.height = `calc(100% - ${navBarHeight}px)`;
+        button.classList.add("selected");
       }
     }
-  );
-
-  function updateScrollBarBtn() {
-    if (scrollBarVisible) {
-      scrollBarBtn.classList.add("selected");
-      scrollBarBtn.title = "Hide Scroll Bar";
-    } else {
-      scrollBarBtn.classList.remove("selected");
-      scrollBarBtn.title = "Show Scroll Bar";
-    }
-  }
-
-  scrollBarBtn.onclick = () => {
-    chrome.runtime.sendMessage(
-      { type: "TOGGLE_SCROLLBAR_FOR_TAB", tabId: null },
-      (response) => {
-        if (response && typeof response.showScrollbar === "boolean") {
-          scrollBarVisible = response.showScrollbar;
-          updateScrollBarBtn();
-        }
-      }
-    );
   };
 
   // Update orientation indicator after toolbar is created
   updateToolbarOrientation();
+
+  // Set initial state of browser navigation toggle button
+  setTimeout(() => {
+    const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+    const button = document.getElementById("mf-btn-browser-nav");
+    if (browserNavBar && button) {
+      if (currentOrientation === "landscape") {
+        button.classList.remove("selected");
+      } else {
+        button.classList.add("selected");
+      }
+    }
+  }, 100);
 }
 
 function createDeviceSelector() {
@@ -720,20 +689,6 @@ function hideDeviceSelector() {
   }
 }
 
-function toggleDevicePanel() {
-  // Toggle the existing device panel visibility
-  const existingPanel = document.getElementById("__mf_device_panel__");
-  if (existingPanel) {
-    if (existingPanel.style.display === "none") {
-      existingPanel.style.display = "block";
-      document.getElementById("mf-btn-panel").classList.add("selected");
-    } else {
-      existingPanel.style.display = "none";
-      document.getElementById("mf-btn-panel").classList.remove("selected");
-    }
-  }
-}
-
 function updateToolbarOrientation() {
   // Update the rotate button to show current orientation
   const rotateBtn = document.getElementById("mf-btn-rotate");
@@ -756,6 +711,16 @@ function updateToolbarOrientation() {
       rotateBtn.querySelector(".orientation-indicator").textContent = "P";
     }
   }
+
+  // Update browser navigation toggle button state based on orientation
+  const browserNavToggleBtn = document.getElementById("mf-btn-browser-nav");
+  if (browserNavToggleBtn) {
+    if (currentOrientation === "landscape") {
+      browserNavToggleBtn.classList.remove("selected");
+    } else {
+      browserNavToggleBtn.classList.add("selected");
+    }
+  }
 }
 
 function removeToolbar() {
@@ -767,65 +732,6 @@ function removeToolbar() {
     deviceSelector.remove();
     deviceSelector = null;
   }
-}
-
-// Helper functions for recording
-function updateRecordButton(isRecording) {
-  const recordBtn = document.getElementById("mf-btn-record");
-  if (recordBtn) {
-    if (isRecording) {
-      recordBtn.style.background = "#ff4444";
-      recordBtn.title = "Stop Recording";
-      recordBtn.innerHTML = `
-        <svg viewBox="0 0 24 24">
-          <rect x="6" y="6" width="12" height="12" rx="2"/>
-        </svg>
-      `;
-    } else {
-      recordBtn.style.background = "#555";
-      recordBtn.title = "Start Recording";
-      recordBtn.innerHTML = `
-        <svg viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="8"/>
-        </svg>
-      `;
-    }
-  }
-}
-
-// Improved recording system - uses background script
-let isRecording = false;
-let recordingStatus = null;
-
-// Initialize recording status display
-function initRecordingStatus() {
-  // Add recording status display
-  recordingStatus = document.createElement('div');
-  recordingStatus.className = 'recording-status';
-  recordingStatus.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    z-index: 10000;
-    display: none;
-  `;
-  document.body.appendChild(recordingStatus);
-}
-
-function showRecordingStatus(message) {
-  if (recordingStatus) {
-    recordingStatus.textContent = message;
-    recordingStatus.style.display = 'block';
-    
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
-      recordingStatus.style.display = 'none';
-    }, 3000);
-  }
+  // Reset orientation state
+  currentOrientation = "portrait";
 }

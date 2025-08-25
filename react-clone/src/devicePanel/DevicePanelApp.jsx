@@ -4,7 +4,6 @@ import { DEVICES, getDeviceBySlug } from "../shared/devices";
 const DevicePanelApp = () => {
   const [selectedDevice, setSelectedDevice] = useState(DEVICES[0]);
   const [is3DMode, setIs3DMode] = useState(false);
-  const [showScrollBar, setShowScrollBar] = useState(false);
 
   useEffect(() => {
     // Listen for messages from content script
@@ -48,13 +47,6 @@ const DevicePanelApp = () => {
             disabled
           >
             3D View (Coming Soon)
-          </button>
-          <button
-            className={`mode-btn${showScrollBar ? " active" : ""}`}
-            onClick={() => setShowScrollBar((prev) => !prev)}
-            title="Show Scroll Bar"
-          >
-            {showScrollBar ? "Hide Scroll Bar" : "Show Scroll Bar"}
           </button>
         </div>
       </header>
@@ -123,7 +115,6 @@ const DevicePanelApp = () => {
                     left: "5%",
                     borderRadius:
                       selectedDevice.platform === "iOS" ? "12px" : "6px",
-                    overflow: showScrollBar ? "auto" : "hidden",
                   }}
                 >
                   <div className="screen-content">
