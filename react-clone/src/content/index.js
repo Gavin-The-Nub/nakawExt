@@ -271,13 +271,15 @@ function injectToolbar() {
   document.getElementById("mf-btn-rotate").onclick = () => {
     // Implement rotate functionality with visual animation (like basic_clone)
     try {
-      // Get current orientation from the button indicator
-      const isCurrentlyLandscape = currentOrientation === "landscape";
+      // Get current orientation from frame attribute (fallback to tracked state)
+      const frame = document.getElementById("__mf_simulator_frame__");
+      const frameOrientation = frame?.getAttribute("data-orientation");
+      const isCurrentlyLandscape = (frameOrientation || currentOrientation) === "landscape";
 
       // Find the mockup container and do a brief visual rotation
       const mockupContainer = document.querySelector("#__mf_simulator_frame__");
       if (mockupContainer) {
-        // Brief visual rotate animation before applying new orientation
+        // Match basic_clone behavior: brief rotate then toggle orientation
         const direction = isCurrentlyLandscape ? -90 : 90;
         mockupContainer.style.transform = `rotate(${direction}deg)`;
 

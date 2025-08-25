@@ -94,7 +94,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })();
       return true; // keep message channel open for async sendResponse
 
-<<<<<<< HEAD
     // Handle recording functionality
     case "START_RECORDING":
       (async () => {
@@ -277,8 +276,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })();
       return true;
 
-=======
->>>>>>> d8a4ecfb5c42046b31dab75c9149919828e55e7f
     default:
       console.warn("Unknown message type:", type);
   }
@@ -345,7 +342,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 function activateSimulatorForTab(tabId, deviceSlug = null) {
   const device = deviceSlug ? getDeviceBySlug(deviceSlug) : getDefaultDevice();
   const tabState = getTabState(tabId);
-
+  
   tabState.isActive = true;
   tabState.device = device;
   tabState.orientation = "portrait"; // Reset to portrait when activating
@@ -380,15 +377,15 @@ function deactivateSimulatorForTab(tabId) {
 function setDeviceForTab(tabId, deviceSlug) {
   const device = getDeviceBySlug(deviceSlug);
   const tabState = getTabState(tabId);
-
+  
   if (tabState && tabState.isActive) {
     tabState.device = device;
     tabState.orientation = "portrait"; // Reset orientation when changing device
     tabStates.set(tabId, tabState);
-
+    
     applyDeviceToTab(tabId, device);
     showSimulator(tabId, tabState);
-
+    
     console.log("Device changed to:", device.name);
   }
 }
@@ -397,13 +394,12 @@ function toggleOrientationForTab(tabId) {
   const tabState = getTabState(tabId);
   if (tabState && tabState.isActive) {
     // Toggle between portrait and landscape
-    tabState.orientation =
-      tabState.orientation === "portrait" ? "landscape" : "portrait";
+    tabState.orientation = tabState.orientation === "portrait" ? "landscape" : "portrait";
     tabStates.set(tabId, tabState);
-
+    
     // Recreate simulator with new orientation
     showSimulator(tabId, tabState);
-
+    
     // Notify content script about orientation change
     try {
       chrome.tabs.sendMessage(tabId, {
@@ -411,12 +407,9 @@ function toggleOrientationForTab(tabId) {
         orientation: tabState.orientation,
       });
     } catch (error) {
-      console.log(
-        "Content script not ready for orientation change message:",
-        tabId
-      );
+      console.log("Content script not ready for orientation change message:", tabId);
     }
-
+    
     console.log("Orientation changed to:", tabState.orientation);
   }
 }
@@ -484,16 +477,14 @@ async function showSimulator(tabId, state) {
   try {
     const device = state.device;
     const orientation = state.orientation || "portrait";
-
+    
     // Calculate dimensions based on orientation
     const isLandscape = orientation === "landscape";
     const w = isLandscape ? device.viewport.height : device.viewport.width;
     const h = isLandscape ? device.viewport.width : device.viewport.height;
-
+    
     // Adjust screen percentages for landscape orientation
-    const adjustedScreenPct = isLandscape
-      ? rotateScreenPctCW(device.screenPct)
-      : device.screenPct;
+    const adjustedScreenPct = isLandscape ? rotateScreenPctCW(device.screenPct) : device.screenPct;
 
     // Inject the simulator CSS
     await chrome.scripting.insertCSS({
@@ -597,7 +588,7 @@ function createSimulatorOverlay({
   mockupContainer.style.transition = "transform 220ms ease";
   mockupContainer.style.transformOrigin = "50% 50%";
   mockupContainer.style.willChange = "transform";
-
+  
   // Store orientation data for future reference
   mockupContainer.setAttribute("data-orientation", orientation);
 
@@ -609,7 +600,7 @@ function createSimulatorOverlay({
   mockupImg.style.height = String(h) + "px";
   mockupImg.style.display = "block";
   mockupImg.style.position = "absolute";
-
+  
   // Apply rotation for landscape orientation (like in basic_clone)
   if (orientation === "landscape") {
     mockupImg.style.width = String(h) + "px";
@@ -622,7 +613,7 @@ function createSimulatorOverlay({
     mockupImg.style.top = "0";
     mockupImg.style.left = "0";
   }
-
+  
   mockupImg.style.zIndex = "5";
   mockupImg.style.pointerEvents = "none";
 
@@ -705,289 +696,6 @@ function createSimulatorOverlay({
   iframeContainer.appendChild(iframe);
   mockupContainer.appendChild(mockupImg);
   mockupContainer.appendChild(iframeContainer);
-
-  // Create browser navigation bar based on device platform
-  const createBrowserNavBar = () => {
-    const navBar = document.createElement("div");
-    navBar.id = "__mf_browser_nav_bar__";
-    navBar.style.position = "absolute";
-    navBar.style.top = "0";
-    navBar.style.left = "0";
-    navBar.style.right = "0";
-    navBar.style.zIndex = "10"; // Above iframe, below mockup
-    navBar.style.pointerEvents = "none"; // Let clicks pass through to iframe
-
-    if (platform === "iOS") {
-      // iOS Safari Navigation Bar
-      navBar.style.height = "44px";
-      navBar.style.background =
-        "linear-gradient(180deg, #f2f2f7 0%, #e5e5ea 100%)";
-      navBar.style.borderBottom = "0.5px solid #c6c6c8";
-      navBar.style.display = "flex";
-      navBar.style.alignItems = "center";
-      navBar.style.justifyContent = "space-between";
-      navBar.style.padding = "0 8px";
-      navBar.style.fontFamily =
-        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-      navBar.style.fontSize = "17px";
-      navBar.style.fontWeight = "600";
-      navBar.style.color = "#000";
-
-      // Left side - Back button and page title
-      const leftSection = document.createElement("div");
-      leftSection.style.display = "flex";
-      leftSection.style.alignItems = "center";
-      leftSection.style.gap = "8px";
-      leftSection.style.flex = "1";
-
-      const backBtn = document.createElement("div");
-      backBtn.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `;
-      backBtn.style.color = "#007AFF";
-      backBtn.style.cursor = "pointer";
-      backBtn.style.pointerEvents = "auto";
-      backBtn.style.padding = "4px";
-      backBtn.style.borderRadius = "4px";
-      backBtn.style.transition = "background-color 0.2s";
-      backBtn.onmouseenter = () =>
-        (backBtn.style.backgroundColor = "rgba(0, 122, 255, 0.1)");
-      backBtn.onmouseleave = () =>
-        (backBtn.style.backgroundColor = "transparent");
-
-      const pageTitle = document.createElement("div");
-      pageTitle.textContent = "Safari";
-      pageTitle.style.fontWeight = "500";
-      pageTitle.style.color = "#000";
-      pageTitle.style.overflow = "hidden";
-      pageTitle.style.textOverflow = "ellipsis";
-      pageTitle.style.whiteSpace = "nowrap";
-
-      leftSection.appendChild(backBtn);
-      leftSection.appendChild(pageTitle);
-
-      // Center - URL bar
-      const centerSection = document.createElement("div");
-      centerSection.style.flex = "2";
-      centerSection.style.display = "flex";
-      centerSection.style.alignItems = "center";
-      centerSection.style.justifyContent = "center";
-
-      const urlBar = document.createElement("div");
-      urlBar.style.background = "rgba(142, 142, 147, 0.12)";
-      urlBar.style.borderRadius = "10px";
-      urlBar.style.padding = "6px 12px";
-      urlBar.style.fontSize = "15px";
-      urlBar.style.color = "#000";
-      urlBar.style.fontWeight = "400";
-      urlBar.style.maxWidth = "200px";
-      urlBar.style.overflow = "hidden";
-      urlBar.style.textOverflow = "ellipsis";
-      urlBar.style.whiteSpace = "nowrap";
-      urlBar.style.border = "1px solid rgba(142, 142, 147, 0.2)";
-      urlBar.textContent = window.location.hostname || "example.com";
-
-      centerSection.appendChild(urlBar);
-
-      // Right side - Share and tabs buttons
-      const rightSection = document.createElement("div");
-      rightSection.style.display = "flex";
-      rightSection.style.alignItems = "center";
-      rightSection.style.gap = "8px";
-      rightSection.style.flex = "1";
-      rightSection.style.justifyContent = "flex-end";
-
-      const shareBtn = document.createElement("div");
-      shareBtn.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 12V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M16 6L12 2L8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M12 2V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `;
-      shareBtn.style.color = "#007AFF";
-      shareBtn.style.cursor = "pointer";
-      shareBtn.style.pointerEvents = "auto";
-      shareBtn.style.padding = "4px";
-      shareBtn.style.borderRadius = "4px";
-      shareBtn.style.transition = "background-color 0.2s";
-      shareBtn.onmouseenter = () =>
-        (shareBtn.style.backgroundColor = "rgba(0, 122, 255, 0.1)");
-      shareBtn.onmouseleave = () =>
-        (shareBtn.style.backgroundColor = "transparent");
-
-      const tabsBtn = document.createElement("div");
-      tabsBtn.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="3" y="3" width="7" height="9" rx="1" stroke="currentColor" stroke-width="2"/>
-          <rect x="10" y="3" width="7" height="9" rx="1" stroke="currentColor" stroke-width="2"/>
-          <rect x="17" y="3" width="4" height="9" rx="1" stroke="currentColor" stroke-width="2"/>
-        </svg>
-      `;
-      tabsBtn.style.color = "#007AFF";
-      tabsBtn.style.cursor = "pointer";
-      tabsBtn.style.pointerEvents = "auto";
-      tabsBtn.style.padding = "4px";
-      tabsBtn.style.borderRadius = "4px";
-      tabsBtn.style.transition = "background-color 0.2s";
-      tabsBtn.onmouseenter = () =>
-        (tabsBtn.style.backgroundColor = "rgba(0, 122, 255, 0.1)");
-      tabsBtn.onmouseleave = () =>
-        (tabsBtn.style.backgroundColor = "transparent");
-
-      rightSection.appendChild(shareBtn);
-      rightSection.appendChild(tabsBtn);
-
-      navBar.appendChild(leftSection);
-      navBar.appendChild(centerSection);
-      navBar.appendChild(rightSection);
-    } else if (platform === "Android") {
-      // Android Chrome Navigation Bar
-      navBar.style.height = "56px";
-      navBar.style.background = "#ffffff";
-      navBar.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.1)";
-      navBar.style.display = "flex";
-      navBar.style.alignItems = "center";
-      navBar.style.justifyContent = "space-between";
-      navBar.style.padding = "0 8px";
-      navBar.style.fontFamily = "'Roboto', 'Noto Sans', sans-serif";
-      navBar.style.fontSize = "16px";
-      navBar.style.color = "#000";
-
-      // Left side - Back button
-      const leftSection = document.createElement("div");
-      leftSection.style.display = "flex";
-      leftSection.style.alignItems = "center";
-      leftSection.style.gap = "8px";
-
-      const backBtn = document.createElement("div");
-      backBtn.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
-        </svg>
-      `;
-      backBtn.style.color = "#5f6368";
-      backBtn.style.cursor = "pointer";
-      backBtn.style.pointerEvents = "auto";
-      backBtn.style.padding = "8px";
-      backBtn.style.borderRadius = "50%";
-      backBtn.style.transition = "background-color 0.2s";
-      backBtn.onmouseenter = () =>
-        (backBtn.style.backgroundColor = "rgba(95, 99, 104, 0.1)");
-      backBtn.onmouseleave = () =>
-        (backBtn.style.backgroundColor = "transparent");
-
-      leftSection.appendChild(backBtn);
-
-      // Center - URL bar
-      const centerSection = document.createElement("div");
-      centerSection.style.flex = "1";
-      centerSection.style.display = "flex";
-      centerSection.style.alignItems = "center";
-      centerSection.style.justifyContent = "center";
-      centerSection.style.margin = "0 16px";
-
-      const urlBar = document.createElement("div");
-      urlBar.style.background = "#f1f3f4";
-      urlBar.style.borderRadius = "24px";
-      urlBar.style.padding = "8px 16px";
-      urlBar.style.fontSize = "14px";
-      urlBar.style.color = "#5f6368";
-      urlBar.style.fontWeight = "400";
-      urlBar.style.maxWidth = "280px";
-      urlBar.style.overflow = "hidden";
-      urlBar.style.textOverflow = "ellipsis";
-      urlBar.style.whiteSpace = "nowrap";
-      urlBar.style.display = "flex";
-      urlBar.style.alignItems = "center";
-      urlBar.style.gap = "8px";
-
-      const lockIcon = document.createElement("div");
-      lockIcon.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z" fill="#34a853"/>
-        </svg>
-      `;
-
-      const urlText = document.createElement("span");
-      urlText.textContent = window.location.hostname || "example.com";
-
-      urlBar.appendChild(lockIcon);
-      urlBar.appendChild(urlText);
-
-      centerSection.appendChild(urlBar);
-
-      // Right side - More options and tabs
-      const rightSection = document.createElement("div");
-      rightSection.style.display = "flex";
-      rightSection.style.alignItems = "center";
-      rightSection.style.gap = "8px";
-
-      const moreBtn = document.createElement("div");
-      moreBtn.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 8C13.1 8 14 7.1 14 6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6C10 7.1 10.9 8 12 8ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10ZM12 16C10.9 16 10 16.9 10 18C10 19.1 10.9 20 12 20C13.1 20 14 19.1 14 18C14 16.9 13.1 16 12 16Z" fill="currentColor"/>
-        </svg>
-      `;
-      moreBtn.style.color = "#5f6368";
-      moreBtn.style.cursor = "pointer";
-      moreBtn.style.pointerEvents = "auto";
-      moreBtn.style.padding = "8px";
-      moreBtn.style.borderRadius = "50%";
-      moreBtn.style.transition = "background-color 0.2s";
-      moreBtn.onmouseenter = () =>
-        (moreBtn.style.backgroundColor = "rgba(95, 99, 104, 0.1)");
-      moreBtn.onmouseleave = () =>
-        (moreBtn.style.backgroundColor = "transparent");
-
-      const tabsBtn = document.createElement("div");
-      tabsBtn.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19Z" fill="currentColor"/>
-          <path d="M7 7H17V9H7V7ZM7 11H17V13H7V11ZM7 15H13V17H7V15Z" fill="currentColor"/>
-        </svg>
-      `;
-      tabsBtn.style.color = "#5f6368";
-      tabsBtn.style.cursor = "pointer";
-      tabsBtn.style.pointerEvents = "auto";
-      tabsBtn.style.padding = "8px";
-      tabsBtn.style.borderRadius = "50%";
-      tabsBtn.style.transition = "background-color 0.2s";
-      tabsBtn.onmouseenter = () =>
-        (tabsBtn.style.backgroundColor = "rgba(95, 99, 104, 0.1)");
-      tabsBtn.onmouseleave = () =>
-        (tabsBtn.style.backgroundColor = "transparent");
-
-      rightSection.appendChild(moreBtn);
-      rightSection.appendChild(tabsBtn);
-
-      navBar.appendChild(leftSection);
-      navBar.appendChild(centerSection);
-      navBar.appendChild(rightSection);
-    }
-
-    return navBar;
-  };
-
-  // Add browser navigation bar to iframe container
-  const browserNavBar = createBrowserNavBar();
-  iframeContainer.appendChild(browserNavBar);
-
-  // Adjust iframe to account for navigation bar height
-  const navBarHeight = platform === "iOS" ? 44 : 56;
-  iframe.style.top = navBarHeight + "px";
-  iframe.style.height = `calc(100% - ${navBarHeight}px)`;
-
-  // Handle landscape orientation for browser nav bar
-  if (orientation === "landscape") {
-    // In landscape, we might want to hide the nav bar or make it more compact
-    browserNavBar.style.display = "none"; // Hide nav bar in landscape for better space usage
-    iframe.style.top = "0px";
-    iframe.style.height = "100%";
-  }
-
   overlay.appendChild(mockupContainer);
 
   document.body.appendChild(overlay);
@@ -1008,9 +716,7 @@ async function hideSimulator(tabId) {
       target: { tabId },
       func: () => {
         const overlay = document.getElementById("__mf_simulator_overlay__");
-        const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
         if (overlay) overlay.remove();
-        if (browserNavBar) browserNavBar.remove();
       },
     });
 
@@ -1136,7 +842,6 @@ function rotateScreenPctCW(pct) {
 function getDefaultDevice() {
   return DEVICES[0];
 }
-<<<<<<< HEAD
 
 // Helper function to get mockup bounds from content script
 async function getMockupBounds(tabId) {
@@ -1222,5 +927,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   }
 });
-=======
->>>>>>> d8a4ecfb5c42046b31dab75c9149919828e55e7f
