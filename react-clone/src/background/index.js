@@ -117,39 +117,47 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Wait for offscreen page to be ready
           await waitForOffscreenPage();
 
-          // Start recording in the offscreen page with the mockup bounds
-          try {
-            // Send message to offscreen page with retry logic
-            let retryCount = 0;
-            const maxRetries = 3;
-            
-            const sendMessageWithRetry = () => {
-              chrome.runtime.sendMessage({
-                type: "START_RECORDING",
-                mockupBounds: mockupBounds
-              }, (response) => {
-                if (chrome.runtime.lastError) {
-                  console.error("Failed to send message to offscreen page:", chrome.runtime.lastError);
-                  if (retryCount < maxRetries) {
-                    retryCount++;
-                    console.log(`Retrying message send (${retryCount}/${maxRetries})...`);
-                    setTimeout(sendMessageWithRetry, 1000);
-                  } else {
-                    console.error("Max retries reached, recording failed to start");
-                    sendResponse({ ok: false, error: "Failed to start recording after retries" });
-                  }
-                } else {
-                  console.log("Recording started successfully in offscreen page");
-                  sendResponse({ ok: true });
-                }
-              });
-            };
-            
-            sendMessageWithRetry();
-          } catch (error) {
-            console.error("Error sending message to offscreen page:", error);
-            sendResponse({ ok: false, error: "Failed to start recording: " + error.message });
-          }
+                     // Start recording using captureVisibleTab approach
+           try {
+             console.log("Starting recording with captureVisibleTab...");
+             
+             // Request activeTab permission first
+             try {
+               const hasPermission = await chrome.permissions.contains({ permissions: ['activeTab'] });
+               if (!hasPermission) {
+                 console.log("Requesting activeTab permission...");
+                 const granted = await chrome.permissions.request({ permissions: ['activeTab'] });
+                 if (!granted) {
+                   sendResponse({ ok: false, error: "Permission denied - please click the record button again" });
+                   return;
+                 }
+               }
+             } catch (permError) {
+               console.log("Permission request failed:", permError);
+               sendResponse({ ok: false, error: "Permission request failed" });
+               return;
+             }
+             
+             // Send message to offscreen page to start frame-based recording
+             chrome.runtime.sendMessage({
+               type: "START_FRAME_RECORDING",
+               mockupBounds: mockupBounds
+             }, (response) => {
+               if (chrome.runtime.lastError) {
+                 console.error("Failed to start frame recording:", chrome.runtime.lastError);
+                 sendResponse({ ok: false, error: "Failed to start recording" });
+               } else if (response && response.ok) {
+                 console.log("Frame-based recording started successfully");
+                 sendResponse({ ok: true });
+               } else {
+                 console.error("Frame recording failed:", response?.error);
+                 sendResponse({ ok: false, error: response?.error || "Failed to start recording" });
+               }
+             });
+           } catch (error) {
+             console.error("Error starting recording:", error);
+             sendResponse({ ok: false, error: "Failed to start recording: " + error.message });
+           }
         } catch (e) {
           console.error("START_RECORDING error", e);
           sendResponse({ ok: false, error: e.message });
@@ -195,120 +203,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })();
       return true;
 
-    case "REQUEST_FRAME":
+
+
+    case "CAPTURE_FRAME":
       (async () => {
         try {
-          console.log("REQUEST_FRAME received, capturing tab...");
+          console.log("CAPTURE_FRAME received");
           
-          // Get the current active tab - use the sender's tab if available, otherwise query
-          let tabId = sender.tab?.id;
-          
-          if (!tabId) {
-            // Fallback: query for active tab
-            const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-            if (!tabs[0]) {
-              sendResponse({ ok: false, error: "No active tab found" });
-              return;
-            }
-            tabId = tabs[0].id;
-          }
-          
-          console.log("Capturing tab:", tabId);
-          
-          // Verify the tab still exists before trying to capture
-          try {
-            const tab = await chrome.tabs.get(tabId);
-            if (!tab) {
-              sendResponse({ ok: false, error: "Tab no longer exists" });
-              return;
-            }
-            console.log("Tab verified:", tab.id, tab.url);
-          } catch (tabError) {
-            console.error("Tab verification failed:", tabError);
-            sendResponse({ ok: false, error: "Tab no longer exists or is not accessible" });
-            return;
-          }
-          
-          // Get mockup bounds from content script
-          let mockupBounds = null;
-          try {
-            mockupBounds = await chrome.tabs.sendMessage(tabId, { type: "GET_MOCKUP_BOUNDS" });
-            console.log("Mockup bounds received:", mockupBounds);
-          } catch (boundsError) {
-            console.error("Failed to get mockup bounds:", boundsError);
-            // Continue without bounds - will use full tab
-          }
-          
-          // Request activeTab permission if not already granted
-          try {
-            const hasPermission = await chrome.permissions.contains({ permissions: ['activeTab'] });
-            if (!hasPermission) {
-              console.log("Requesting activeTab permission...");
-              await chrome.permissions.request({ permissions: ['activeTab'] });
-            }
-          } catch (permError) {
-            console.log("Permission request failed:", permError);
-            // Continue anyway, the capture might still work
-          }
-          
-          // Capture the current tab and send to offscreen page
-          chrome.tabs.captureVisibleTab(null, { format: 'png' }, (dataUrl) => {
+          // Capture the current visible tab
+          chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
             if (chrome.runtime.lastError) {
-              const errorMessage = chrome.runtime.lastError.message || 'Unknown error';
-              console.error("Tab capture error:", errorMessage);
-              
-              // Handle specific permission errors
-              if (errorMessage.includes("activeTab permission not in effect")) {
-                sendResponse({ 
-                  ok: false, 
-                  error: "Please click the record button again to grant permissions" 
-                });
-              } else if (errorMessage.includes("MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND")) {
-                sendResponse({ 
-                  ok: false, 
-                  error: "Rate limit exceeded, please wait a moment" 
-                });
-              } else if (errorMessage.includes("Cannot access contents")) {
-                sendResponse({ 
-                  ok: false, 
-                  error: "Cannot access tab contents. Try refreshing the page." 
-                });
-              } else if (errorMessage.includes("No window with id")) {
-                sendResponse({ 
-                  ok: false, 
-                  error: "Window no longer exists. Try refreshing the page." 
-                });
-              } else {
-                sendResponse({ ok: false, error: errorMessage });
-              }
+              console.error("Frame capture error:", chrome.runtime.lastError);
+              sendResponse({ ok: false, error: chrome.runtime.lastError.message });
               return;
             }
             
             if (dataUrl) {
-              console.log("Tab captured successfully, dataUrl length:", dataUrl.length);
-              
-              // If we have mockup bounds, crop the image to just the mockup area
-              if (mockupBounds && mockupBounds.frame) {
-                console.log("Cropping to mockup area:", mockupBounds.frame);
-                const response = { 
-                  ok: true, 
-                  dataUrl: dataUrl,
-                  cropBounds: mockupBounds.frame
-                };
-                sendResponse(response);
-              } else {
-                console.log("No mockup bounds, using full tab");
-                const response = { ok: true, dataUrl: dataUrl };
-                sendResponse(response);
-              }
+              console.log("Frame captured successfully");
+              sendResponse({ ok: true, dataUrl: dataUrl });
             } else {
-              console.error("No dataUrl received from tab capture");
-              sendResponse({ ok: false, error: "No dataUrl received" });
+              console.error("No frame data received");
+              sendResponse({ ok: false, error: "No frame data received" });
             }
           });
+          
         } catch (e) {
-          console.error("REQUEST_FRAME error:", e.message || e);
-          sendResponse({ ok: false, error: e.message || "Unknown error occurred" });
+          console.error("CAPTURE_FRAME error", e);
+          sendResponse({ ok: false, error: e.message });
         }
       })();
       return true;
@@ -958,22 +879,32 @@ async function createOffscreenPage() {
 async function waitForOffscreenPage() {
   return new Promise((resolve) => {
     let attempts = 0;
-    const maxAttempts = 50; // 5 seconds max wait
+    const maxAttempts = 100; // 10 seconds max wait
     
     function checkReady() {
       attempts++;
-      chrome.runtime.sendMessage({ type: "PING" }, (response) => {
-        if (chrome.runtime.lastError) {
-          if (attempts < maxAttempts) {
-            setTimeout(checkReady, 100);
+      try {
+        chrome.runtime.sendMessage({ type: "PING" }, (response) => {
+          if (chrome.runtime.lastError) {
+            if (attempts < maxAttempts) {
+              setTimeout(checkReady, 100);
+            } else {
+              console.log("Offscreen page not ready after max attempts, proceeding anyway");
+              resolve();
+            }
           } else {
-            console.log("Offscreen page not ready after max attempts, proceeding anyway");
+            console.log("Offscreen page is ready");
             resolve();
           }
+        });
+      } catch (error) {
+        if (attempts < maxAttempts) {
+          setTimeout(checkReady, 100);
         } else {
+          console.log("Offscreen page check failed after max attempts, proceeding anyway");
           resolve();
         }
-      });
+      }
     }
     
     checkReady();
