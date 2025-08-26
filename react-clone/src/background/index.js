@@ -120,42 +120,65 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Wait for offscreen page to be ready
           await waitForOffscreenPage();
 
-          // Store recording state in background script
-          globalRecordingState = {
-            isRecording: true,
-            mockupBounds: mockupBounds,
-            tabId: tabId,
-            startTime: Date.now(),
-            videoBlobData: null,
-            stopTime: null,
-          };
-
-          // Send message to offscreen page to start recording
-          chrome.runtime.sendMessage(
-            {
-              type: "START_FRAME_RECORDING",
-              mockupBounds: mockupBounds,
-            },
-            (response) => {
+          // Request a tab capture stream ID for the active tab
+          chrome.tabCapture.getMediaStreamId(
+            { targetTabId: tabId },
+            (streamId) => {
               if (chrome.runtime.lastError) {
                 console.error(
-                  "Failed to start frame recording:",
+                  "Failed to get media stream ID:",
                   chrome.runtime.lastError
                 );
                 sendResponse({
                   ok: false,
-                  error: "Failed to start recording",
+                  error: chrome.runtime.lastError.message,
                 });
-              } else if (response && response.ok) {
-                console.log("Frame-based recording started successfully");
-                sendResponse({ ok: true });
-              } else {
-                console.error("Frame recording failed:", response?.error);
-                sendResponse({
-                  ok: false,
-                  error: response?.error || "Failed to start recording",
-                });
+                return;
               }
+              if (!streamId) {
+                sendResponse({ ok: false, error: "No stream ID returned" });
+                return;
+              }
+
+              // Store recording state in background script
+              globalRecordingState = {
+                isRecording: true,
+                mockupBounds: mockupBounds,
+                tabId: tabId,
+                startTime: Date.now(),
+                videoBlobData: null,
+                stopTime: null,
+              };
+
+              // Send message to offscreen page to start high-FPS tab capture recording
+              chrome.runtime.sendMessage(
+                {
+                  type: "START_TAB_RECORDING",
+                  streamId: streamId,
+                  mockupBounds: mockupBounds,
+                },
+                (response) => {
+                  if (chrome.runtime.lastError) {
+                    console.error(
+                      "Failed to start tab recording:",
+                      chrome.runtime.lastError
+                    );
+                    sendResponse({
+                      ok: false,
+                      error: "Failed to start recording",
+                    });
+                  } else if (response && response.ok) {
+                    console.log("Tab-based recording started successfully");
+                    sendResponse({ ok: true });
+                  } else {
+                    console.error("Tab recording failed:", response?.error);
+                    sendResponse({
+                      ok: false,
+                      error: response?.error || "Failed to start recording",
+                    });
+                  }
+                }
+              );
             }
           );
         } catch (error) {

@@ -11,6 +11,8 @@ let canvas = null;
 let ctx = null;
 let stream = null;
 let tabStream = null; // Add missing tabStream variable
+let videoEl = null;
+let drawLoopCancel = null;
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -21,6 +23,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       startFrameRecording(bounds);
       sendResponse({ ok: true });
       break;
+    case "START_TAB_RECORDING":
+      startTabRecording(message.streamId, bounds)
+        .then(() => sendResponse({ ok: true }))
+        .catch((err) => {
+          console.error("START_TAB_RECORDING error", err);
+          sendResponse({ ok: false, error: err?.message || String(err) });
+        });
+      return true;
     case "TAB_CAPTURE_STREAM":
       startRecordingWithStream(streamData, bounds);
       sendResponse({ ok: true });
@@ -95,6 +105,147 @@ function startFrameRecording(bounds) {
   }, 5 * 60 * 1000); // 5 minutes
 
   console.log("Frame-based recording started successfully");
+}
+
+async function startTabRecording(streamId, bounds) {
+  if (isRecording) {
+    return;
+  }
+
+  mockupBounds = bounds;
+  isRecording = true;
+  recordedChunks = [];
+  recordingStartTime = Date.now();
+  startTimer();
+  updateStatus("Recording... (Tab capture active)");
+  updateRecordButton(true);
+
+  // Acquire the tab media stream using the provided streamId
+  const mediaStream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      mandatory: {
+        chromeMediaSource: "tab",
+        chromeMediaSourceId: streamId,
+      },
+    },
+  });
+  tabStream = mediaStream;
+
+  // Prepare canvas and video elements
+  canvas = document.createElement("canvas");
+  ctx = canvas.getContext("2d", { alpha: false });
+
+  videoEl = document.createElement("video");
+  videoEl.srcObject = mediaStream;
+  videoEl.muted = true;
+  videoEl.playsInline = true;
+
+  await new Promise((resolve) => {
+    videoEl.onloadedmetadata = () => {
+      videoEl.play().then(resolve).catch(resolve);
+    };
+  });
+
+  // Determine crop from mockupBounds.frame if present
+  const frame = mockupBounds && mockupBounds.frame ? mockupBounds.frame : null;
+
+  const targetFps = 60;
+
+  function computeCanvasSize() {
+    const srcW = videoEl.videoWidth;
+    const srcH = videoEl.videoHeight;
+    if (!frame) {
+      canvas.width = srcW;
+      canvas.height = srcH;
+      return {
+        sx: 0,
+        sy: 0,
+        sw: srcW,
+        sh: srcH,
+        dx: 0,
+        dy: 0,
+        dw: srcW,
+        dh: srcH,
+      };
+    }
+    const { x, y, width, height } = frame;
+    canvas.width = width;
+    canvas.height = height;
+    return {
+      sx: x,
+      sy: y,
+      sw: width,
+      sh: height,
+      dx: 0,
+      dy: 0,
+      dw: width,
+      dh: height,
+    };
+  }
+
+  let drawParams = computeCanvasSize();
+
+  const draw = () => {
+    if (!isRecording || !ctx || !canvas || !videoEl) return;
+    ctx.drawImage(
+      videoEl,
+      drawParams.sx,
+      drawParams.sy,
+      drawParams.sw,
+      drawParams.sh,
+      drawParams.dx,
+      drawParams.dy,
+      drawParams.dw,
+      drawParams.dh
+    );
+  };
+
+  // High-FPS draw loop
+  let animationHandle;
+  const loop = () => {
+    draw();
+    animationHandle = setTimeout(loop, Math.floor(1000 / targetFps));
+  };
+  loop();
+  drawLoopCancel = () => clearTimeout(animationHandle);
+
+  // Create stream from canvas and start MediaRecorder
+  stream = canvas.captureStream(targetFps);
+  const mimeType = getSupportedMimeType();
+  if (!mimeType) {
+    updateStatus("Error: No supported video format found");
+    stopRecording();
+    return;
+  }
+
+  try {
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType,
+      videoBitsPerSecond: 25000000,
+    });
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) recordedChunks.push(event.data);
+    };
+    mediaRecorder.onstop = () => {
+      if (recordedChunks.length > 0) {
+        const videoBlob = new Blob(recordedChunks, { type: mimeType });
+        notifyRecordingCompleted(videoBlob, mimeType);
+      } else {
+        updateStatus("No video data recorded");
+      }
+    };
+    mediaRecorder.onerror = (event) => {
+      updateStatus("Recording error: " + event.error?.message);
+      stopRecording();
+    };
+
+    mediaRecorder.start(100);
+  } catch (e) {
+    updateStatus("Error starting recording: " + e.message);
+    stopRecording();
+  }
 }
 
 function startRecordingWithStream(stream, bounds) {
@@ -419,6 +570,12 @@ function stopRecording() {
     clearInterval(frameInterval);
     frameInterval = null;
   }
+  if (drawLoopCancel) {
+    try {
+      drawLoopCancel();
+    } catch (e) {}
+    drawLoopCancel = null;
+  }
 
   // Stop timer
   stopTimer();
@@ -463,6 +620,7 @@ function stopRecording() {
   mockupBounds = null;
   canvas = null;
   ctx = null;
+  videoEl = null;
 }
 
 function downloadVideo(videoBlob) {
