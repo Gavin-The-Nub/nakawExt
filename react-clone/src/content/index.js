@@ -1124,31 +1124,15 @@ function stopRecording() {
 function checkVideoCompletion() {
   // Check recording status from background script
   chrome.runtime.sendMessage({ type: "GET_RECORDING_STATUS" }, (response) => {
-    console.log("Video completion check response:", response);
-
-    if (response && response.isRecording === false) {
-      // Recording stopped, check if video blob data is available
-      if (response.videoBlobData) {
-        console.log("Video blob data found:", response.videoBlobData);
-        // Video is ready, show download option
-        showVideoDownload(response.videoBlobData);
-      } else {
-        console.log("No video blob data yet, continuing to check...");
-        // No video blob yet, show completion message
-        showRecordingStatus(
-          "Recording completed! Video processing...",
-          "success"
-        );
-
-        // Keep checking for video completion (but with a longer delay to avoid spam)
-        setTimeout(checkVideoCompletion, 2000);
-      }
-    } else if (response && response.isRecording === true) {
-      // Still recording, wait a bit more
-      setTimeout(checkVideoCompletion, 1000);
+    if (response && response.isRecording === false && response.videoBlobData) {
+      // Video is ready, show download option
+      showVideoDownload(response.videoBlobData);
+    } else if (response && response.isRecording === false) {
+      // Recording stopped but no video yet, wait a bit more
+      setTimeout(checkVideoCompletion, 500);
     } else {
-      // Error or unknown state
-      showRecordingStatus("Recording status unknown", "error");
+      // Still recording or error
+      showRecordingStatus("Video processing complete!", "success");
     }
   });
 }
@@ -1156,90 +1140,32 @@ function checkVideoCompletion() {
 function showVideoDownload(videoBlobData) {
   showRecordingStatus("Video ready! Click to download.", "success");
 
-  // Create a visible download button
-  const downloadButton = document.createElement("button");
-  downloadButton.textContent = "Download Recording";
-  downloadButton.style.cssText = `
-    position: fixed;
-    top: 100px;
-    right: 100px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    z-index: 2147483649;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    transition: all 0.2s ease;
-  `;
+  // Reconstruct the blob from base64 data
+  const binaryString = atob(videoBlobData.base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  const videoBlob = new Blob([bytes], {
+    type: videoBlobData.type || "video/webm",
+  });
 
-  // Hover effects
-  downloadButton.onmouseenter = () => {
-    downloadButton.style.background = "#45a049";
-    downloadButton.style.transform = "translateY(-2px)";
-    downloadButton.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.4)";
-  };
+  // Create download link
+  const downloadUrl = URL.createObjectURL(videoBlob);
+  const downloadLink = document.createElement("a");
+  downloadLink.href = downloadUrl;
+  downloadLink.download = `simulator-recording-${Date.now()}.webm`;
+  downloadLink.style.display = "none";
 
-  downloadButton.onmouseleave = () => {
-    downloadButton.style.background = "#4CAF50";
-    downloadButton.style.transform = "translateY(0)";
-    downloadButton.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.3)";
-  };
+  // Auto-click the download link
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
 
-  // Click handler
-  downloadButton.onclick = () => {
-    try {
-      // Reconstruct the blob from base64 data
-      const binaryString = atob(videoBlobData.base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const videoBlob = new Blob([bytes], {
-        type: videoBlobData.type || "video/webm",
-      });
-
-      // Create download link
-      const downloadUrl = URL.createObjectURL(videoBlob);
-      const downloadLink = document.createElement("a");
-      downloadLink.href = downloadUrl;
-      downloadLink.download = `simulator-recording-${Date.now()}.webm`;
-      downloadLink.style.display = "none";
-
-      // Trigger download
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-
-      // Clean up the blob URL after a delay
-      setTimeout(() => {
-        URL.revokeObjectURL(downloadUrl);
-      }, 5000);
-
-      // Update status and remove button
-      showRecordingStatus("Download started!", "success");
-      downloadButton.remove();
-    } catch (error) {
-      console.error("Error creating video blob:", error);
-      showRecordingStatus("Error creating video: " + error.message, "error");
-    }
-  };
-
-  // Add button to page
-  document.body.appendChild(downloadButton);
-
-  // Auto-remove button after 30 seconds if not clicked
+  // Clean up the blob URL after a delay
   setTimeout(() => {
-    if (downloadButton.parentNode) {
-      downloadButton.remove();
-      showRecordingStatus(
-        "Download button expired. Recording saved in memory.",
-        "info"
-      );
-    }
-  }, 30000);
+    URL.revokeObjectURL(downloadUrl);
+  }, 5000);
+
+  showRecordingStatus("Download started!", "success");
 }

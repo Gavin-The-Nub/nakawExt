@@ -114,48 +114,56 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
 
-          console.log("Starting recording with mockup bounds:", mockupBounds);
-
           // Create offscreen page for recording if it doesn't exist
           await createOffscreenPage();
 
           // Wait for offscreen page to be ready
           await waitForOffscreenPage();
 
-          // Start recording by sending message to offscreen page
-          try {
-            // Use chrome.tabs.sendMessage to communicate with offscreen page
-            const offscreenResponse = await new Promise((resolve, reject) => {
-              // We need to send the message to the offscreen page specifically
-              // Since we can't use chrome.runtime.sendMessage from background to offscreen,
-              // we'll use a different approach - store the recording state in the background
-              // and let the offscreen page poll for it
+          // Store recording state in background script
+          globalRecordingState = {
+            isRecording: true,
+            mockupBounds: mockupBounds,
+            tabId: tabId,
+            startTime: Date.now(),
+            videoBlobData: null,
+            stopTime: null,
+          };
 
-              // Store recording state in background script
-              globalRecordingState = {
-                isRecording: true,
-                mockupBounds: mockupBounds,
-                tabId: tabId,
-                startTime: Date.now(),
-              };
-
-              console.log(
-                "Recording state stored, offscreen page can now start recording"
-              );
-              resolve({ ok: true });
-            });
-
-            sendResponse({ ok: true });
-          } catch (error) {
-            console.error("Error starting recording:", error);
-            sendResponse({
-              ok: false,
-              error: "Failed to start recording: " + error.message,
-            });
-          }
-        } catch (e) {
-          console.error("START_RECORDING error", e);
-          sendResponse({ ok: false, error: e.message });
+          // Send message to offscreen page to start recording
+          chrome.runtime.sendMessage(
+            {
+              type: "START_FRAME_RECORDING",
+              mockupBounds: mockupBounds,
+            },
+            (response) => {
+              if (chrome.runtime.lastError) {
+                console.error(
+                  "Failed to start frame recording:",
+                  chrome.runtime.lastError
+                );
+                sendResponse({
+                  ok: false,
+                  error: "Failed to start recording",
+                });
+              } else if (response && response.ok) {
+                console.log("Frame-based recording started successfully");
+                sendResponse({ ok: true });
+              } else {
+                console.error("Frame recording failed:", response?.error);
+                sendResponse({
+                  ok: false,
+                  error: response?.error || "Failed to start recording",
+                });
+              }
+            }
+          );
+        } catch (error) {
+          console.error("Error starting recording:", error);
+          sendResponse({
+            ok: false,
+            error: "Failed to start recording: " + error.message,
+          });
         }
       })();
       return true;
@@ -163,14 +171,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "STOP_RECORDING":
       (async () => {
         try {
-          console.log("Stopping recording...");
-
           // Stop recording by updating global state
           if (globalRecordingState) {
             globalRecordingState.isRecording = false;
             globalRecordingState.stopTime = Date.now();
-            console.log("Recording stopped successfully");
-            sendResponse({ ok: true });
+            // Send message to offscreen page to stop recording
+            chrome.runtime.sendMessage(
+              {
+                type: "STOP_RECORDING",
+              },
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  console.error(
+                    "Failed to stop recording:",
+                    chrome.runtime.lastError
+                  );
+                  sendResponse({
+                    ok: false,
+                    error: "Failed to stop recording",
+                  });
+                } else {
+                  console.log("Recording stopped successfully");
+                  sendResponse({ ok: true });
+                }
+              }
+            );
           } else {
             console.log("No active recording to stop");
             sendResponse({ ok: true });
@@ -204,13 +229,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               mockupBounds: globalRecordingState.mockupBounds,
               videoBlobData: globalRecordingState.videoBlobData || null,
             };
-            console.log("GET_RECORDING_STATUS response:", response);
             sendResponse(response);
           } else {
             sendResponse({
               isRecording: false,
               duration: 0,
               chunks: 0,
+              videoBlobData: null,
             });
           }
         } catch (e) {
@@ -250,11 +275,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       })();
       return true;
-
-    case "GET_RECORDING_STATE":
-      // Offscreen page requesting current recording state
-      sendResponse(globalRecordingState);
-      break;
 
     case "CREATE_VIDEO_FROM_FRAMES":
       (async () => {
@@ -945,56 +965,25 @@ async function waitForOffscreenPage() {
 
 // Listen for messages from offscreen page
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Only handle messages from offscreen page
-  if (
-    sender.id === chrome.runtime.id &&
-    sender.origin === chrome.runtime.getURL("")
-  ) {
-    const { type, videoBlob } = message;
-
-    switch (type) {
-      case "OFFSCREEN_RECORDING_COMPLETED":
+  if (message.type === "OFFSCREEN_RECORDING_COMPLETED") {
+    const { videoBlob } = message;
+    if (videoBlob && videoBlob.base64Data) {
+      if (globalRecordingState) {
+        globalRecordingState.videoBlobData = videoBlob;
+        globalRecordingState.isRecording = false;
+        globalRecordingState.stopTime = Date.now();
         console.log(
-          "Offscreen recording completed, video blob received:",
-          videoBlob ? "yes" : "no"
+          "Video blob data stored for retrieval in global state:",
+          globalRecordingState.videoBlobData
         );
-        if (videoBlob) {
-          console.log("Video blob details:", {
-            hasBase64Data: !!videoBlob.base64Data,
-            type: videoBlob.type,
-            size: videoBlob.size,
-          });
-        }
-        // Store the video blob data for later retrieval by content script
-        if (videoBlob && videoBlob.base64Data) {
-          // Store the video blob data in the global recording state
-          if (globalRecordingState) {
-            globalRecordingState.videoBlobData = videoBlob;
-            console.log("Video blob data stored for retrieval");
-          } else {
-            console.warn(
-              "No global recording state available to store video blob data"
-            );
-          }
-        } else {
-          console.warn("Video blob data missing or invalid:", videoBlob);
-        }
-        break;
-
-      case "OFFSCREEN_RECORDING_STOPPED":
-        console.log("Offscreen recording stopped");
-        // Update global recording state
-        if (globalRecordingState) {
-          globalRecordingState.isRecording = false;
-          globalRecordingState.stopTime = Date.now();
-        }
-        break;
-
-      default:
-        console.log("Unknown message from offscreen page:", type);
+      } else {
+        console.warn(
+          "No global recording state available to store video blob data"
+        );
+      }
+    } else {
+      console.warn("Video blob data missing or invalid:", videoBlob);
     }
   }
-
-  // Return false to allow other listeners to handle the message
   return false;
 });

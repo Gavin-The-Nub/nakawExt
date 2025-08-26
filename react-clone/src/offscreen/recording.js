@@ -50,38 +50,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true; // Keep message channel open for async responses
 });
 
-// Start monitoring for recording state changes
-let recordingMonitorInterval = null;
-
-function startRecordingMonitor() {
-  if (recordingMonitorInterval) return;
-
-  recordingMonitorInterval = setInterval(async () => {
-    try {
-      // Check if we should start recording
-      const response = await new Promise((resolve) => {
-        chrome.runtime.sendMessage({ type: "GET_RECORDING_STATE" }, resolve);
-      });
-
-      if (response && response.isRecording && !isRecording) {
-        console.log("Recording state detected, starting frame recording...");
-        startFrameRecording(response.mockupBounds);
-      } else if (response && !response.isRecording && isRecording) {
-        console.log("Recording stopped, stopping frame recording...");
-        stopRecording();
-      }
-    } catch (error) {
-      console.error("Error monitoring recording state:", error);
-    }
-  }, 1000); // Check every second
-}
-
-// Start monitoring when page loads
-document.addEventListener("DOMContentLoaded", () => {
-  startRecordingMonitor();
-  updateStatus("Ready to record - monitoring for recording commands");
-});
-
 function startFrameRecording(bounds) {
   console.log("Starting frame-based recording with bounds:", bounds);
 
@@ -188,36 +156,8 @@ function startRecordingWithStream(stream, bounds) {
       if (recordedChunks.length > 0) {
         const videoBlob = new Blob(recordedChunks, { type: mimeType });
         console.log("Video blob created:", videoBlob.size, "bytes");
-
-        // Store the video blob for retrieval by content script
-        window.recordedVideoBlob = videoBlob;
-
-        // Update status
-        updateStatus("Video recording completed successfully!");
-
-        // Convert blob to base64 string for message passing
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64Data = reader.result.split(",")[1]; // Remove data:video/webm;base64, prefix
-          // Notify background script that recording completed
-          chrome.runtime.sendMessage({
-            type: "OFFSCREEN_RECORDING_COMPLETED",
-            videoBlob: {
-              base64Data: base64Data,
-              type: mimeType,
-              size: videoBlob.size,
-            },
-          });
-        };
-        reader.onerror = (error) => {
-          console.error("Failed to convert blob to base64:", error);
-          // Send message without video data
-          chrome.runtime.sendMessage({
-            type: "OFFSCREEN_RECORDING_COMPLETED",
-            videoBlob: null,
-          });
-        };
-        reader.readAsDataURL(videoBlob);
+        // Use helper to send as base64
+        notifyRecordingCompleted(videoBlob, mimeType);
       } else {
         console.error("No video data recorded");
         updateStatus("No video data recorded");
@@ -284,36 +224,8 @@ function initializeCanvas() {
       if (recordedChunks.length > 0) {
         const videoBlob = new Blob(recordedChunks, { type: mimeType });
         console.log("Video blob created:", videoBlob.size, "bytes");
-
-        // Store the video blob for retrieval by content script
-        window.recordedVideoBlob = videoBlob;
-
-        // Update status
-        updateStatus("Video recording completed successfully!");
-
-        // Convert blob to base64 string for message passing
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64Data = reader.result.split(",")[1]; // Remove data:video/webm;base64, prefix
-          // Notify background script that recording completed
-          chrome.runtime.sendMessage({
-            type: "OFFSCREEN_RECORDING_COMPLETED",
-            videoBlob: {
-              base64Data: base64Data,
-              type: mimeType,
-              size: videoBlob.size,
-            },
-          });
-        };
-        reader.onerror = (error) => {
-          console.error("Failed to convert blob to base64:", error);
-          // Send message without video data
-          chrome.runtime.sendMessage({
-            type: "OFFSCREEN_RECORDING_COMPLETED",
-            videoBlob: null,
-          });
-        };
-        reader.readAsDataURL(videoBlob);
+        // Use helper to send as base64
+        notifyRecordingCompleted(videoBlob, mimeType);
       } else {
         console.error("No video data recorded");
         updateStatus("No video data recorded");
@@ -551,15 +463,6 @@ function stopRecording() {
   mockupBounds = null;
   canvas = null;
   ctx = null;
-
-  // Notify background script that recording has stopped
-  try {
-    chrome.runtime.sendMessage({
-      type: "OFFSCREEN_RECORDING_STOPPED",
-    });
-  } catch (error) {
-    console.error("Failed to notify background script:", error);
-  }
 }
 
 function downloadVideo(videoBlob) {
@@ -589,7 +492,7 @@ function downloadVideo(videoBlob) {
 
   // Notify background script that recording completed
   chrome.runtime.sendMessage({
-    type: "RECORDING_COMPLETED",
+    type: "OFFSCREEN_RECORDING_COMPLETED",
   });
 }
 
@@ -642,6 +545,32 @@ function updateRecordButton(isRecording) {
       btn.classList.remove("recording");
     }
   }
+}
+
+function notifyRecordingCompleted(videoBlob, mimeType) {
+  // Convert blob to base64 string for message passing
+  const reader = new FileReader();
+  reader.onload = () => {
+    const base64Data = reader.result.split(",")[1]; // Remove data:video/webm;base64, prefix
+    // Notify background script that recording completed
+    chrome.runtime.sendMessage({
+      type: "OFFSCREEN_RECORDING_COMPLETED",
+      videoBlob: {
+        base64Data: base64Data,
+        type: mimeType,
+        size: videoBlob.size,
+      },
+    });
+  };
+  reader.onerror = (error) => {
+    console.error("Failed to convert blob to base64:", error);
+    // Send message without video data
+    chrome.runtime.sendMessage({
+      type: "OFFSCREEN_RECORDING_COMPLETED",
+      videoBlob: null,
+    });
+  };
+  reader.readAsDataURL(videoBlob);
 }
 
 // Handle manual button clicks (for testing)
