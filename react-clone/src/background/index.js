@@ -563,16 +563,9 @@ async function showSimulator(tabId, state) {
     const h = isLandscape ? device.viewport.width : device.viewport.height;
 
     // Adjust screen percentages for landscape orientation
-    const adjustedScreenPct = (function () {
-      const pct = isLandscape ? rotateScreenPctCW(device.screenPct) : device.screenPct;
-      try {
-        // Add status bar height in pixels to top inset, converted to percent of h
-        // We can't query DOM here; compute at content side and pass via args below.
-        return pct;
-      } catch (_) {
-        return pct;
-      }
-    })();
+    const adjustedScreenPct = isLandscape
+      ? rotateScreenPctCW(device.screenPct)
+      : device.screenPct;
 
     // Inject the simulator CSS
     await chrome.scripting.insertCSS({
@@ -630,7 +623,6 @@ async function showSimulator(tabId, state) {
           deviceScreenPct: adjustedScreenPct,
           orientation,
           platform: device.platform,
-          // Content script will further adjust for status bar
         },
       ],
     });
@@ -680,12 +672,6 @@ function createSimulatorOverlay({
 
   // Store orientation data for future reference
   mockupContainer.setAttribute("data-orientation", orientation);
-  // Store platform for status/nav bar styling and suppression on macOS
-  if (platform) {
-    try {
-      mockupContainer.setAttribute("data-platform", platform);
-    } catch (_) {}
-  }
 
   // Create mockup image with proper sizing
   const mockupImg = document.createElement("img");

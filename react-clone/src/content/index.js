@@ -310,117 +310,89 @@ function injectToolbar() {
         // Position at bottom for iOS Safari UI
         browserNavBar.style.top = "auto";
         browserNavBar.style.bottom = "0";
-        browserNavBar.style.height = "44px";
         browserNavBar.style.background =
           "linear-gradient(180deg, #f9f9fb 0%, #ececf0 100%)";
-        browserNavBar.style.borderBottom = "0.5px solid rgba(0,0,0,0.18)";
-        browserNavBar.style.display = "flex";
-        browserNavBar.style.alignItems = "center";
-        browserNavBar.style.justifyContent = "space-between";
-        browserNavBar.style.padding = "0 10px";
+        browserNavBar.style.borderTop = "0.5px solid rgba(0,0,0,0.1)";
+        browserNavBar.style.display = "block";
+        browserNavBar.style.padding = "8px 12px 10px";
         browserNavBar.style.fontFamily =
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-        browserNavBar.style.fontSize = "17px";
-        browserNavBar.style.fontWeight = "600";
         browserNavBar.style.color = "#000";
-        // Left section
-        const leftSection = document.createElement("div");
-        leftSection.style.display = "flex";
-        leftSection.style.alignItems = "center";
-        leftSection.style.gap = "8px";
-        leftSection.style.flex = "1";
-        const backBtn = document.createElement("div");
-        backBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M15 18L9 12L15 6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>`;
-        backBtn.style.color = "#007AFF";
-        backBtn.style.cursor = "pointer";
-        backBtn.style.pointerEvents = "auto";
-        backBtn.style.padding = "4px";
-        backBtn.style.borderRadius = "4px";
-        backBtn.style.transition = "background-color 0.2s";
-        backBtn.onmouseenter = () =>
-          (backBtn.style.backgroundColor = "rgba(0, 122, 255, 0.1)");
-        backBtn.onmouseleave = () =>
-          (backBtn.style.backgroundColor = "transparent");
-        const pageTitle = document.createElement("div");
-        pageTitle.style.overflow = "hidden";
-        pageTitle.style.textOverflow = "ellipsis";
-        pageTitle.style.whiteSpace = "nowrap";
-        leftSection.appendChild(backBtn);
-        leftSection.appendChild(pageTitle);
-        // Center section
-        const centerSection = document.createElement("div");
-        centerSection.style.flex = "2";
-        centerSection.style.display = "flex";
-        centerSection.style.alignItems = "center";
-        centerSection.style.justifyContent = "center";
-        const urlBar = document.createElement("div");
-        urlBar.style.background = "rgba(142, 142, 147, 0.12)";
-        urlBar.style.borderRadius = "12px";
-        urlBar.style.padding = "6px 12px";
-        urlBar.style.fontSize = "15px";
-        urlBar.style.color = "#000";
-        urlBar.style.fontWeight = "500";
-        urlBar.style.maxWidth = "240px";
-        urlBar.style.overflow = "hidden";
-        urlBar.style.textOverflow = "ellipsis";
-        urlBar.style.whiteSpace = "nowrap";
-        urlBar.style.border = "1px solid rgba(142, 142, 147, 0.2)";
-        urlBar.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.6)";
-        urlBar.textContent = window.location.hostname || "example.com";
-        centerSection.appendChild(urlBar);
-        // Right section
-        const rightSection = document.createElement("div");
-        rightSection.style.display = "flex";
-        rightSection.style.alignItems = "center";
-        rightSection.style.gap = "10px";
-        rightSection.style.flex = "1";
-        rightSection.style.justifyContent = "flex-end";
-        const shareBtn = document.createElement("div");
-        shareBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M4 12V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V12' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M16 6L12 2L8 6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M12 2V15' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>`;
-        shareBtn.style.color = "#007AFF";
-        shareBtn.style.cursor = "pointer";
-        shareBtn.style.pointerEvents = "auto";
-        shareBtn.style.padding = "4px";
-        shareBtn.style.borderRadius = "4px";
-        shareBtn.style.transition = "background-color 0.2s";
-        shareBtn.onmouseenter = () =>
-          (shareBtn.style.backgroundColor = "rgba(0, 122, 255, 0.1)");
-        shareBtn.onmouseleave = () =>
-          (shareBtn.style.backgroundColor = "transparent");
-        const tabsBtn = document.createElement("div");
-        tabsBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><rect x='3' y='3' width='7' height='9' rx='1' stroke='currentColor' stroke-width='2'/><rect x='10' y='3' width='7' height='9' rx='1' stroke='currentColor' stroke-width='2'/><rect x='17' y='3' width='4' height='9' rx='1' stroke='currentColor' stroke-width='2'/></svg>`;
-        tabsBtn.style.color = "#007AFF";
-        tabsBtn.style.cursor = "pointer";
-        tabsBtn.style.pointerEvents = "auto";
-        tabsBtn.style.padding = "4px";
-        tabsBtn.style.borderRadius = "4px";
-        tabsBtn.style.transition = "background-color 0.2s";
-        tabsBtn.onmouseenter = () =>
-          (tabsBtn.style.backgroundColor = "rgba(0, 122, 255, 0.1)");
-        tabsBtn.onmouseleave = () =>
-          (tabsBtn.style.backgroundColor = "transparent");
-        rightSection.appendChild(shareBtn);
-        rightSection.appendChild(tabsBtn);
-        browserNavBar.appendChild(leftSection);
-        browserNavBar.appendChild(centerSection);
-        browserNavBar.appendChild(rightSection);
+        browserNavBar.style.pointerEvents = "none";
+        browserNavBar.innerHTML = `
+          <div style=\"display:flex;align-items:center;background:#EFF1F5;border-radius:9999px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,0.08);border:1px solid rgba(142,142,147,0.2);pointer-events:auto;\">
+            <span style=\"display:inline-flex;margin-right:10px;color:#6b7280;\">
+              <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 7h16M4 12h16M4 17h16\"/></svg>
+            </span>
+            <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
+              <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
+            </span>
+            <span style=\"flex:1;color:#111827;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${window.location.hostname || "www.webmobilefirst.com"}</span>
+            <button id=\"__mf_nav_refresh__\" style=\"margin-left:8px;padding:6px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
+              <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"1 4 1 10 7 10\"/><path d=\"M3.51 15a9 9 0 1 0 2-9.36L1 10\"/></svg>
+            </button>
+          </div>
+          <div style=\"display:flex;align-items:center;justify-content:space-between;margin-top:10px;pointer-events:auto;\">
+            <div style=\"display:flex;align-items:center;gap:6px;\">
+              <button id=\"__mf_nav_back__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"15 18 9 12 15 6\"/></svg>
+              </button>
+              <button id=\"__mf_nav_forward__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"9 18 15 12 9 6\"/></svg>
+              </button>
+            </div>
+            <div style=\"display:flex;align-items:center;gap:6px;\">
+              <button id=\"__mf_nav_share__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8\"/><polyline points=\"16 6 12 2 8 6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg>
+              </button>
+              <button id=\"__mf_nav_bookmark__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z\"/></svg>
+              </button>
+              <div style=\"position:relative;\">
+                <button id=\"__mf_nav_tabs__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"14\" height=\"14\" rx=\"2\"/><rect x=\"7\" y=\"8\" width=\"14\" height=\"14\" rx=\"2\" opacity=\".6\"/></svg>
+                </button>
+                <span style=\"position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:#2563eb;color:#fff;font-size:12px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-weight:600;\">2</span>
+              </div>
+            </div>
+          </div>
+        `;
+        const _b = browserNavBar.querySelector('#__mf_nav_back__');
+        if (_b) _b.onclick = () => history.back();
+        const _f = browserNavBar.querySelector('#__mf_nav_forward__');
+        if (_f) _f.onclick = () => history.forward();
+        const _r = browserNavBar.querySelector('#__mf_nav_refresh__');
+        if (_r) _r.onclick = () => location.reload();
+        screen.insertBefore(browserNavBar, screen.firstChild);
+        adjustIframeForBars();
+        return;
       } else {
         // Position at top for Android Chrome UI
         const statusBar = document.getElementById("__mf_status_bar__");
         const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
         browserNavBar.style.top = sbh + "px";
         browserNavBar.style.bottom = "auto";
-        // Android Chrome Navigation Bar
-        browserNavBar.style.height = "56px";
         browserNavBar.style.background = "#ffffff";
         browserNavBar.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.1)";
-        browserNavBar.style.display = "flex";
-        browserNavBar.style.alignItems = "center";
-        browserNavBar.style.justifyContent = "space-between";
-        browserNavBar.style.padding = "0 8px";
-        browserNavBar.style.fontFamily = "'Roboto', 'Noto Sans', sans-serif";
-        browserNavBar.style.fontSize = "16px";
+        browserNavBar.style.display = "block";
+        browserNavBar.style.padding = "8px 10px";
+        browserNavBar.style.fontFamily = "'Roboto','Noto Sans',sans-serif";
         browserNavBar.style.color = "#202124";
+        browserNavBar.style.pointerEvents = "none";
+        browserNavBar.innerHTML = `
+          <div style=\"display:flex;align-items:center;background:#f1f3f4;border-radius:9999px;padding:8px 12px;border:1px solid rgba(0,0,0,0.06);pointer-events:auto;\">
+            <span style=\"display:inline-flex;margin-right:8px;color:#5f6368;\">
+              <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#5f6368\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
+            </span>
+            <span style=\"flex:1;color:#202124;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${window.location.hostname || "www.webmobilefirst.com"}</span>
+            <button id=\"__mf_nav_menu__\" style=\"margin-left:8px;padding:8px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
+              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#5f6368\"><path d=\"M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z\"/></svg>
+            </button>
+          </div>
+        `;
+        screen.insertBefore(browserNavBar, screen.firstChild);
+        adjustIframeForBars();
+        return;
         // Left section
         const leftSection = document.createElement("div");
         leftSection.style.display = "flex";
