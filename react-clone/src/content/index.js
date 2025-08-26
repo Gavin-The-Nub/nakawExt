@@ -302,20 +302,22 @@ function injectToolbar() {
       browserNavBar.id = "__mf_browser_nav_bar__";
       const platform = frame.getAttribute("data-platform") || "iOS";
       browserNavBar.style.position = "absolute";
-      browserNavBar.style.top = "0";
       browserNavBar.style.left = "0";
       browserNavBar.style.right = "0";
       browserNavBar.style.zIndex = "10";
       browserNavBar.style.pointerEvents = "none";
       if (platform === "iOS") {
+        // Position at bottom for iOS Safari UI
+        browserNavBar.style.top = "auto";
+        browserNavBar.style.bottom = "0";
         browserNavBar.style.height = "44px";
         browserNavBar.style.background =
-          "linear-gradient(180deg, #f2f2f7 0%, #e5e5ea 100%)";
-        browserNavBar.style.borderBottom = "0.5px solid #c6c6c8";
+          "linear-gradient(180deg, #f9f9fb 0%, #ececf0 100%)";
+        browserNavBar.style.borderBottom = "0.5px solid rgba(0,0,0,0.18)";
         browserNavBar.style.display = "flex";
         browserNavBar.style.alignItems = "center";
         browserNavBar.style.justifyContent = "space-between";
-        browserNavBar.style.padding = "0 8px";
+        browserNavBar.style.padding = "0 10px";
         browserNavBar.style.fontFamily =
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
         browserNavBar.style.fontSize = "17px";
@@ -340,9 +342,6 @@ function injectToolbar() {
         backBtn.onmouseleave = () =>
           (backBtn.style.backgroundColor = "transparent");
         const pageTitle = document.createElement("div");
-        pageTitle.textContent = "Safari";
-        pageTitle.style.fontWeight = "500";
-        pageTitle.style.color = "#000";
         pageTitle.style.overflow = "hidden";
         pageTitle.style.textOverflow = "ellipsis";
         pageTitle.style.whiteSpace = "nowrap";
@@ -356,23 +355,24 @@ function injectToolbar() {
         centerSection.style.justifyContent = "center";
         const urlBar = document.createElement("div");
         urlBar.style.background = "rgba(142, 142, 147, 0.12)";
-        urlBar.style.borderRadius = "10px";
+        urlBar.style.borderRadius = "12px";
         urlBar.style.padding = "6px 12px";
         urlBar.style.fontSize = "15px";
         urlBar.style.color = "#000";
-        urlBar.style.fontWeight = "400";
-        urlBar.style.maxWidth = "200px";
+        urlBar.style.fontWeight = "500";
+        urlBar.style.maxWidth = "240px";
         urlBar.style.overflow = "hidden";
         urlBar.style.textOverflow = "ellipsis";
         urlBar.style.whiteSpace = "nowrap";
         urlBar.style.border = "1px solid rgba(142, 142, 147, 0.2)";
+        urlBar.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.6)";
         urlBar.textContent = window.location.hostname || "example.com";
         centerSection.appendChild(urlBar);
         // Right section
         const rightSection = document.createElement("div");
         rightSection.style.display = "flex";
         rightSection.style.alignItems = "center";
-        rightSection.style.gap = "8px";
+        rightSection.style.gap = "10px";
         rightSection.style.flex = "1";
         rightSection.style.justifyContent = "flex-end";
         const shareBtn = document.createElement("div");
@@ -405,6 +405,11 @@ function injectToolbar() {
         browserNavBar.appendChild(centerSection);
         browserNavBar.appendChild(rightSection);
       } else {
+        // Position at top for Android Chrome UI
+        const statusBar = document.getElementById("__mf_status_bar__");
+        const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
+        browserNavBar.style.top = sbh + "px";
+        browserNavBar.style.bottom = "auto";
         // Android Chrome Navigation Bar
         browserNavBar.style.height = "56px";
         browserNavBar.style.background = "#ffffff";
@@ -415,7 +420,7 @@ function injectToolbar() {
         browserNavBar.style.padding = "0 8px";
         browserNavBar.style.fontFamily = "'Roboto', 'Noto Sans', sans-serif";
         browserNavBar.style.fontSize = "16px";
-        browserNavBar.style.color = "#000";
+        browserNavBar.style.color = "#202124";
         // Left section
         const leftSection = document.createElement("div");
         leftSection.style.display = "flex";
@@ -440,15 +445,15 @@ function injectToolbar() {
         centerSection.style.display = "flex";
         centerSection.style.alignItems = "center";
         centerSection.style.justifyContent = "center";
-        centerSection.style.margin = "0 16px";
+        centerSection.style.margin = "0 12px";
         const urlBar = document.createElement("div");
         urlBar.style.background = "#f1f3f4";
         urlBar.style.borderRadius = "24px";
-        urlBar.style.padding = "8px 16px";
+        urlBar.style.padding = "8px 14px";
         urlBar.style.fontSize = "14px";
         urlBar.style.color = "#5f6368";
         urlBar.style.fontWeight = "400";
-        urlBar.style.maxWidth = "280px";
+        urlBar.style.maxWidth = "320px";
         urlBar.style.overflow = "hidden";
         urlBar.style.textOverflow = "ellipsis";
         urlBar.style.whiteSpace = "nowrap";
@@ -871,6 +876,13 @@ function injectToolbar() {
         // Keep space for status bar
         const statusBar = document.getElementById("__mf_status_bar__");
         const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
+        // iOS had nav at bottom; Android at top
+        const mockupContainer = document.querySelector(
+          "#__mf_simulator_frame__"
+        );
+        const platform =
+          mockupContainer?.getAttribute("data-platform") || "iOS";
+        // When nav is hidden, top inset is just status bar for both
         iframe.style.top = sbh + "px";
         iframe.style.height = `calc(100% - ${sbh}px)`;
         button.classList.remove("selected");
@@ -886,8 +898,11 @@ function injectToolbar() {
         const navBarHeight = platform === "iOS" ? 44 : 56;
         const statusBar = document.getElementById("__mf_status_bar__");
         const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
-        iframe.style.top = navBarHeight + sbh + "px";
-        iframe.style.height = `calc(100% - ${navBarHeight + sbh}px)`;
+        // iOS nav at bottom increases bottom inset; Android at top increases top inset
+        const topInset = platform === "iOS" ? sbh : sbh + navBarHeight;
+        const totalInset = sbh + navBarHeight;
+        iframe.style.top = topInset + "px";
+        iframe.style.height = `calc(100% - ${totalInset}px)`;
         button.classList.add("selected");
       }
     }
@@ -1081,6 +1096,18 @@ function ensureStatusBar() {
     if (!frame || !screen) return;
 
     const platform = frame.getAttribute("data-platform") || "iOS";
+
+    // Do not show status bar on macOS devices; remove if present
+    if (platform === "macOS") {
+      const existing = document.getElementById("__mf_status_bar__");
+      if (existing) existing.remove();
+      if (statusBarTimer) {
+        clearInterval(statusBarTimer);
+        statusBarTimer = null;
+      }
+      adjustIframeForBars();
+      return;
+    }
     let statusBar = document.getElementById("__mf_status_bar__");
     if (!statusBar) {
       statusBar = document.createElement("div");
@@ -1101,9 +1128,9 @@ function ensureStatusBar() {
           : "'Roboto', 'Noto Sans', sans-serif";
       statusBar.style.fontSize = platform === "iOS" ? "24px" : "12px";
       statusBar.style.color = "#000";
-      statusBar.style.height = platform === "iOS" ? "30px" : "30px";
+      statusBar.style.height = platform === "iOS" ? "50px" : "50px";
       statusBar.style.background = platform === "iOS"
-        ? "linear-gradient(180deg, rgba(242,242,247,0.95) 0%, rgba(229,229,234,0.9) 100%)"
+        ? "linear-gradient(180deg, rgb(242, 242, 247) 0%, rgb(229, 229, 234) 100%)"
         : "#ffffff";
       statusBar.style.borderBottom =
         platform === "iOS" ? "0.5px solid rgba(0,0,0,0.15)" : "1px solid rgba(0,0,0,0.08)";
@@ -1117,22 +1144,22 @@ function ensureStatusBar() {
       const right = document.createElement("div");
       right.style.display = "flex";
       right.style.alignItems = "center";
-      right.style.gap = "0px";
+      right.style.gap = "3px";
 
       // Signal icon
       const signal = document.createElement("div");
       signal.innerHTML =
-        '<svg width="18" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="14" width="3" height="8" rx="1"/><rect x="7" y="10" width="3" height="12" rx="1"/><rect x="12" y="6" width="3" height="16" rx="1"/><rect x="17" y="2" width="3" height="20" rx="1"/></svg>';
+        '<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="14" width="3" height="8" rx="1"/><rect x="7" y="10" width="3" height="12" rx="1"/><rect x="12" y="6" width="3" height="16" rx="1"/><rect x="17" y="2" width="3" height="20" rx="1"/></svg>';
 
       // WiFi icon
       const wifi = document.createElement("div");
       wifi.innerHTML =
-        '<svg width="18" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12" y2="20"/></svg>';
+        '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12" y2="20"/></svg>';
 
       // Battery icon
       const battery = document.createElement("div");
       battery.innerHTML =
-        '<svg width="24" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="6" width="18" height="12" rx="2"/><path d="M23 10v4"/></svg>';
+        '<svg width="25" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="6" width="18" height="12" rx="2"/><path d="M23 10v4"/></svg>';
 
       right.appendChild(signal);
       right.appendChild(wifi);
@@ -1146,7 +1173,7 @@ function ensureStatusBar() {
       statusBar.style.padding = platform === "iOS" ? "0 10px" : "0 12px";
       statusBar.style.height = platform === "iOS" ? "20px" : "24px";
       statusBar.style.background = platform === "iOS"
-        ? "linear-gradient(180deg, rgba(242,242,247,0.95) 0%, rgba(229,229,234,0.9) 100%)"
+        ? "linear-gradient(180deg, rgb(242, 242, 247) 0%, rgb(229, 229, 234) 100%)"
         : "#ffffff";
       statusBar.style.borderBottom =
         platform === "iOS" ? "0.5px solid rgba(0,0,0,0.15)" : "1px solid rgba(0,0,0,0.08)";
@@ -1164,6 +1191,21 @@ function ensureStatusBar() {
     // Initial time set
     const timeEl = document.getElementById("__mf_status_time__");
     if (timeEl) timeEl.textContent = getFormattedTime(platform);
+    // Recalculate offsets immediately and again after layout settles
+    adjustIframeForBars();
+    setTimeout(adjustIframeForBars, 0);
+
+    // Watch for window resizes which can affect computed heights
+    window.removeEventListener("resize", adjustIframeForBars);
+    window.addEventListener("resize", adjustIframeForBars);
+
+    // Observe status bar changes to reflow iframe when its size updates
+    const sb = document.getElementById("__mf_status_bar__");
+    if (sb && !sb.__observerHooked) {
+      const mo = new MutationObserver(() => adjustIframeForBars());
+      mo.observe(sb, { attributes: true, attributeFilter: ["style", "class"] });
+      sb.__observerHooked = true;
+    }
   } catch (_) {}
 }
 
@@ -1172,16 +1214,25 @@ function adjustIframeForBars() {
   const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
   const statusBar = document.getElementById("__mf_status_bar__");
   if (!iframe) return;
-  const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
-  const navVisible = browserNavBar && browserNavBar.style.display !== "none";
-  let navBarHeight = 0;
-  if (navVisible) {
-    const mockupContainer = document.querySelector("#__mf_simulator_frame__");
-    const platform = mockupContainer?.getAttribute("data-platform") || "iOS";
-    navBarHeight = platform === "iOS" ? 44 : 56;
+  const sbh = statusBar ? Math.ceil(statusBar.getBoundingClientRect().height) : 0;
+  const navVisible =
+    browserNavBar && browserNavBar.style.display !== "none";
+  const mockupContainer = document.querySelector("#__mf_simulator_frame__");
+  const platform = mockupContainer?.getAttribute("data-platform") || "iOS";
+  // Ensure Android nav bar sits below status bar
+  if (browserNavBar && platform !== "iOS") {
+    browserNavBar.style.top = sbh + "px";
   }
-  iframe.style.top = sbh + navBarHeight + "px";
-  iframe.style.height = `calc(100% - ${sbh + navBarHeight}px)`;
+  const navBarHeight = navVisible ? (platform === "iOS" ? 44 : 56) : 0;
+  if (platform === "iOS") {
+    // Status bar at top, browser nav at bottom
+    iframe.style.top = sbh + "px";
+    iframe.style.height = `calc(100% - ${sbh + navBarHeight}px)`;
+  } else {
+    // Status bar + browser nav both eat top space on Android (nav at top)
+    iframe.style.top = sbh + navBarHeight + "px";
+    iframe.style.height = `calc(100% - ${sbh + navBarHeight}px)`;
+  }
 }
 
 function getFormattedTime(platform) {
