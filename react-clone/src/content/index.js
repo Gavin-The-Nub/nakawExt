@@ -320,41 +320,41 @@ function injectToolbar() {
         browserNavBar.style.color = "#000";
         browserNavBar.style.pointerEvents = "none";
         browserNavBar.innerHTML = `
-          <div style=\"display:flex;align-items:center;background:#EFF1F5;border-radius:9999px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,0.08);border:1px solid rgba(142,142,147,0.2);pointer-events:auto;\">
+          <div style=\"display:flex;justify-content:space-between;align-items:center;background:#EFF1F5;border-radius:10px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,0.08);border:1px solid rgba(142,142,147,0.2);pointer-events:auto;\">
             <span style=\"display:inline-flex;margin-right:10px;color:#6b7280;\">
               <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 7h16M4 12h16M4 17h16\"/></svg>
             </span>
-            <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
-              <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
+            <span style=\"display:flex;align-items:center;\">
+              <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
+                <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
+              </span>
+              <span style=\"flex:1;color:#111827;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${window.location.hostname || "www.webmobilefirst.com"}</span>
             </span>
-            <span style=\"flex:1;color:#111827;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${window.location.hostname || "www.webmobilefirst.com"}</span>
             <button id=\"__mf_nav_refresh__\" style=\"margin-left:8px;padding:6px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
               <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"1 4 1 10 7 10\"/><path d=\"M3.51 15a9 9 0 1 0 2-9.36L1 10\"/></svg>
             </button>
           </div>
-          <div style=\"display:flex;align-items:center;justify-content:space-between;margin-top:10px;pointer-events:auto;\">
-            <div style=\"display:flex;align-items:center;gap:6px;\">
-              <button id=\"__mf_nav_back__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"15 18 9 12 15 6\"/></svg>
-              </button>
-              <button id=\"__mf_nav_forward__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"9 18 15 12 9 6\"/></svg>
-              </button>
-            </div>
-            <div style=\"display:flex;align-items:center;gap:6px;\">
-              <button id=\"__mf_nav_share__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8\"/><polyline points=\"16 6 12 2 8 6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg>
-              </button>
-              <button id=\"__mf_nav_bookmark__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z\"/></svg>
-              </button>
-              <div style=\"position:relative;\">
-                <button id=\"__mf_nav_tabs__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"14\" height=\"14\" rx=\"2\"/><rect x=\"7\" y=\"8\" width=\"14\" height=\"14\" rx=\"2\" opacity=\".6\"/></svg>
+          <div style=\"display:flex;align-items:center;justify-content:center;gap:10%;margin-top:10px;pointer-events:auto;\">
+            <div style=\"display:flex;align-items:center;gap:30px;\">
+                <button id=\"__mf_nav_back__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"15 18 9 12 15 6\"/></svg>
                 </button>
-                <span style=\"position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:#2563eb;color:#fff;font-size:12px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-weight:600;\">2</span>
+                <button id=\"__mf_nav_forward__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"9 18 15 12 9 6\"/></svg>
+                </button>
+                <button id=\"__mf_nav_share__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8\"/><polyline points=\"16 6 12 2 8 6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg>
+                </button>
+                <button id=\"__mf_nav_bookmark__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z\"/></svg>
+                </button>
+                <div style=\"position:relative;\">
+                  <button id=\"__mf_nav_tabs__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                    <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"14\" height=\"14\" rx=\"2\"/><rect x=\"7\" y=\"8\" width=\"14\" height=\"14\" rx=\"2\" opacity=\".6\"/></svg>
+                  </button>
+                  <span style=\"position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:#2563eb;color:#fff;font-size:12px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-weight:600;\">2</span>
+                </div>
               </div>
-            </div>
           </div>
         `;
         const _b = browserNavBar.querySelector('#__mf_nav_back__');
