@@ -74,7 +74,7 @@ export const DEVICES = [
   },
   {
     slug: "gpixel5",
-    name: "gpixel5",
+    name: "Google Pixel 5",
     viewport: { width: 393, height: 851 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -90,7 +90,7 @@ export const DEVICES = [
   },
   {
     slug: "gpixel6",
-    name: "gpixel6",
+    name: "Google Pixel 6 PRO",
     viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -106,7 +106,7 @@ export const DEVICES = [
   },
   {
     slug: "gpixel8",
-    name: "gpixel8",
+    name: "Google pixel 8",
     viewport: { width: 412, height: 916 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -122,7 +122,7 @@ export const DEVICES = [
   },
   {
     slug: "hp30",
-    name: "hp30",
+    name: "Huawei P30 PRO",
     viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -138,7 +138,7 @@ export const DEVICES = [
   },
   {
     slug: "ip11",
-    name: "ip11",
+    name: "Iphone 11",
     viewport: { width: 414, height: 896 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -147,7 +147,7 @@ export const DEVICES = [
   },
   {
     slug: "ip11pro",
-    name: "ip11pro",
+    name: "Iphone 11 Pro",
     viewport: { width: 375, height: 812 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -156,7 +156,7 @@ export const DEVICES = [
   },
   {
     slug: "ip11promax",
-    name: "ip11promax",
+    name: "Iphone 11 pro max",
     viewport: { width: 414, height: 896 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -165,7 +165,7 @@ export const DEVICES = [
   },
   {
     slug: "ip12",
-    name: "ip12",
+    name: "Iphone 12",
     viewport: { width: 390, height: 844 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -174,7 +174,7 @@ export const DEVICES = [
   },
   {
     slug: "ip12max",
-    name: "ip12max",
+    name: "Iphone 12 max",
     viewport: { width: 390, height: 844 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -183,7 +183,7 @@ export const DEVICES = [
   },
   {
     slug: "ip12mini",
-    name: "ip12mini",
+    name: "Iphone 12 mini",
     viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -192,7 +192,7 @@ export const DEVICES = [
   },
   {
     slug: "ip12promax",
-    name: "ip12promax",
+    name: "Iphone 12 pro max",
     viewport: { width: 428, height: 926 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -201,7 +201,7 @@ export const DEVICES = [
   },
   {
     slug: "ip13",
-    name: "ip13",
+    name: "Iphone 13",
     viewport: { width: 390, height: 844 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -210,7 +210,7 @@ export const DEVICES = [
   },
   {
     slug: "ip13mini",
-    name: "ip13mini",
+    name: "Iphone 13 mini",
     viewport: { width: 375, height: 812 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -219,7 +219,7 @@ export const DEVICES = [
   },
   {
     slug: "ip13pro",
-    name: "ip13pro",
+    name: "Iphone 13 pro",
     viewport: { width: 390, height: 844 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -228,7 +228,7 @@ export const DEVICES = [
   },
   {
     slug: "ip13promax",
-    name: "ip13promax",
+    name: "Iphone 13 pro max",
     viewport: { width: 428, height: 926 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -237,7 +237,7 @@ export const DEVICES = [
   },
   {
     slug: "ip14",
-    name: "ip14",
+    name: "Iphone 14",
     viewport: { width: 390, height: 844 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -246,7 +246,7 @@ export const DEVICES = [
   },
   {
     slug: "ip14max",
-    name: "ip14max",
+    name: "Iphone 14 max",
     viewport: { width: 428, height: 926 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -262,7 +262,7 @@ export const DEVICES = [
   },
   {
     slug: "ip14pro",
-    name: "ip14pro",
+    name: "Iphone 14 pro",
     viewport: { width: 390, height: 844 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -271,7 +271,7 @@ export const DEVICES = [
   },
   {
     slug: "ip14promax",
-    name: "ip14promax",
+    name: "Iphone 14 pro max",
     viewport: { width: 428, height: 928 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -287,7 +287,7 @@ export const DEVICES = [
   },
   {
     slug: "ip15",
-    name: "ip15",
+    name: "Iphone 15",
     viewport: { width: 393, height: 852 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -303,7 +303,7 @@ export const DEVICES = [
   },
   {
     slug: "ip15plus",
-    name: "ip15plus",
+    name: "Iphone 15 plus",
     viewport: { width: 430, height: 932 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -319,7 +319,7 @@ export const DEVICES = [
   },
   {
     slug: "ip15pro",
-    name: "ip15pro",
+    name: "Iphone 15 pro",
     viewport: { width: 393, height: 852 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -335,7 +335,7 @@ export const DEVICES = [
   },
   {
     slug: "ip15promax",
-    name: "ip15promax",
+    name: "Iphone 15 pro max",
     viewport: { width: 430, height: 932 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -351,7 +351,7 @@ export const DEVICES = [
   },
   {
     slug: "ip16plus",
-    name: "ip16plus",
+    name: "Iphone 16 plus",
     viewport: { width: 430, height: 932 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -367,7 +367,7 @@ export const DEVICES = [
   },
   {
     slug: "ip16promax",
-    name: "ip16promax",
+    name: "Iphone 16 pro max",
     viewport: { width: 440, height: 956 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -383,7 +383,7 @@ export const DEVICES = [
   },
   {
     slug: "ip5",
-    name: "ip5",
+    name: "Iphone 5",
     viewport: { width: 320, height: 568 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -419,7 +419,7 @@ export const DEVICES = [
   },
   {
     slug: "ipse",
-    name: "ipse",
+    name: "Iphone SE",
     viewport: { width: 320, height: 586 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -428,7 +428,7 @@ export const DEVICES = [
   },
   {
     slug: "ipx",
-    name: "ipx",
+    name: "Iphone X",
     viewport: { width: 375, height: 812 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -444,7 +444,7 @@ export const DEVICES = [
   },
   {
     slug: "ipxr",
-    name: "ipxr",
+    name: "Iphone XR",
     viewport: { width: 414, height: 896 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
@@ -460,7 +460,7 @@ export const DEVICES = [
   },
   {
     slug: "macbookpro",
-    name: "macbookpro",
+    name: "Macbook Pro 2021",
     viewport: { width: 1728, height: 1085 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
@@ -476,7 +476,7 @@ export const DEVICES = [
   },
   {
     slug: "microsoftsurfaceduo",
-    name: "microsoftsurfaceduo",
+    name: "Microsoft Surface Duo",
     viewport: { width: 1114, height: 705 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -485,7 +485,7 @@ export const DEVICES = [
   },
   {
     slug: "nord2",
-    name: "nord2",
+    name: "Oneplus Nord 2",
     viewport: { width: 412, height: 915 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -501,7 +501,7 @@ export const DEVICES = [
   },
   {
     slug: "ofindx3",
-    name: "ofindx3",
+    name: "OPPO Find X3",
     viewport: { width: 360, height: 804 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -516,7 +516,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxya12",
-    name: "sgalaxya12",
+    name: "Samsung Galaxy A12",
     viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -532,7 +532,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxyfold",
-    name: "sgalaxyfold",
+    name: "Samsung Galaxy Fold",
     viewport: { width: 844, height: 1104 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -548,7 +548,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxynote20ultra",
-    name: "sgalaxynote20ultra",
+    name: "Samsung Galaxy Note 20 Ultra",
     viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "special",
@@ -564,7 +564,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxys12ultra",
-    name: "sgalaxys12ultra",
+    name: "Samsung Galaxy S12 Ultra",
     viewport: { width: 412, height: 883 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -580,7 +580,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxys20",
-    name: "sgalaxys20",
+    name: "Samsung Galaxy S20",
     viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -589,7 +589,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxys22",
-    name: "sgalaxys22",
+    name: "Samsung Galaxy S22",
     viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -598,7 +598,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxys22plus",
-    name: "sgalaxys22plus",
+    name: "Samsung Galaxy S22 Plus",
     viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -607,7 +607,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxys22ultra",
-    name: "sgalaxys22ultra",
+    name: "Samsung Galaxy S22 Ultra",
     viewport: { width: 360, height: 772 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -616,7 +616,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxys24",
-    name: "sgalaxys24",
+    name: "Samsung Galaxy S24",
     viewport: { width: 360, height: 780 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -625,7 +625,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxys24ultra",
-    name: "sgalaxys24ultra",
+    name: "Samsung Galaxy S24 Ultra",
     viewport: { width: 384, height: 832 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -634,7 +634,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxytabs7",
-    name: "sgalaxytabs7",
+    name: "Samsung Galaxy Tab S7",
     viewport: { width: 800, height: 1280 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -643,7 +643,7 @@ export const DEVICES = [
   },
   {
     slug: "sgalaxyzflip",
-    name: "sgalaxyzflip",
+    name: "Samsung Galaxy Z Flip",
     viewport: { width: 360, height: 880 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -652,7 +652,7 @@ export const DEVICES = [
   },
   {
     slug: "ssmarttv",
-    name: "ssmarttv",
+    name: "Samsung Smart TV",
     viewport: { width: 1920, height: 1080 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -661,7 +661,7 @@ export const DEVICES = [
   },
   {
     slug: "undefined-medium_upscaled",
-    name: "undefined medium upscaled",
+    name: "Non-Branded Phone",
     viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -670,7 +670,7 @@ export const DEVICES = [
   },
   {
     slug: "x12",
-    name: "x12",
+    name: "Xiaomi 12",
     viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -679,7 +679,7 @@ export const DEVICES = [
   },
   {
     slug: "xm11i",
-    name: "xm11i",
+    name: "Xiaomi 11i",
     viewport: { width: 360, height: 800 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
@@ -689,7 +689,7 @@ export const DEVICES = [
 ];
 
 export const getDeviceBySlug = (slug) => {
-  return assets/devices.find((device) => device.slug === slug) || assets/devices[0];
+  return DEVICES.find((device) => device.slug === slug) || DEVICES[0];
 };
 
-export const getDefaultDevice = () => assets/devices[0];
+export const getDefaultDevice = () => DEVICES[0];

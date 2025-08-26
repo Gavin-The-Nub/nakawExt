@@ -1,5 +1,6 @@
 // Content script for device simulation
 // This script injects a floating toolbar when the simulator is active
+import { DEVICES } from "../shared/devices";
 
 let toolbar = null;
 let deviceSelector = null;
@@ -180,15 +181,16 @@ function injectToolbar() {
         right: 100px;
         background: rgba(0, 0, 0, 0.9);
         color: white;
-        padding: 16px;
+        padding: 20px;
         border-radius: 12px;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-size: 14px;
         z-index: 2147483648;
         backdrop-filter: blur(10px);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        max-width: 300px;
-        min-width: 250px;
+        width: 560px;
+        max-width: 640px;
+        min-width: 520px;
         display: none;
       }
       .device-category {
@@ -204,8 +206,8 @@ function injectToolbar() {
       }
       .device-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
       }
       .device-btn {
         background: rgba(255, 255, 255, 0.1);
@@ -217,9 +219,11 @@ function injectToolbar() {
         cursor: pointer;
         transition: all 0.2s;
         text-align: left;
-        white-space: nowrap;
+        white-space: normal;
         overflow: hidden;
-        text-overflow: ellipsis;
+        text-overflow: clip;
+        line-height: 1.2;
+        min-height: 36px;
       }
       .device-btn:hover {
         background: rgba(255, 255, 255, 0.2);
@@ -899,36 +903,20 @@ function createDeviceSelector() {
   deviceSelector = document.createElement("div");
   deviceSelector.id = "mf-device-selector";
 
-  const devices = [
-    { slug: "ip16", name: "iPhone 16", platform: "iOS" },
-    { slug: "ip15", name: "iPhone 15", platform: "iOS" },
-    { slug: "ip14", name: "iPhone 14", platform: "iOS" },
-    { slug: "ip13", name: "iPhone 13", platform: "iOS" },
-    { slug: "ip12", name: "iPhone 12", platform: "iOS" },
-    { slug: "ip11", name: "iPhone 11", platform: "iOS" },
-    { slug: "ipx", name: "iPhone X", platform: "iOS" },
-    { slug: "ipxr", name: "iPhone XR", platform: "iOS" },
-    { slug: "ipad-pro", name: "iPad Pro", platform: "iOS" },
-    { slug: "ipad-air", name: "iPad Air", platform: "iOS" },
-    { slug: "ipad-mini", name: "iPad Mini", platform: "iOS" },
-    { slug: "applewatch", name: "Apple Watch", platform: "iOS" },
-    { slug: "gpixel8", name: "Google Pixel 8", platform: "Android" },
-    { slug: "gpixel6", name: "Google Pixel 6", platform: "Android" },
-    { slug: "gpixel5", name: "Google Pixel 5", platform: "Android" },
-    { slug: "sgalaxys24", name: "Samsung Galaxy S24", platform: "Android" },
-    { slug: "sgalaxys22", name: "Samsung Galaxy S22", platform: "Android" },
-    { slug: "sgalaxys20", name: "Samsung Galaxy S20", platform: "Android" },
-    { slug: "sgalaxyfold", name: "Samsung Galaxy Fold", platform: "Android" },
-    {
-      slug: "sgalaxyzflip",
-      name: "Samsung Galaxy Z Flip",
-      platform: "Android",
-    },
-    { slug: "hp30", name: "Huawei P30 Pro", platform: "Android" },
-    { slug: "mb-air", name: "MacBook Air", platform: "macOS" },
-    { slug: "apple-imac", name: "Apple iMac", platform: "macOS" },
-    { slug: "dell14", name: "Dell Latitude", platform: "macOS" },
-  ];
+  // Build full device list from shared DEVICES
+  const devices = DEVICES.map((d) => ({
+    slug: d.slug,
+    name: d.name,
+    platform: d.platform,
+  }));
+
+  // Optional: sort devices by platform then name for consistent ordering
+  devices.sort((a, b) => {
+    if (a.platform === b.platform) {
+      return a.name.localeCompare(b.name);
+    }
+    return a.platform.localeCompare(b.platform);
+  });
 
   const categories = {
     iOS: devices.filter((d) => d.platform === "iOS"),
