@@ -735,7 +735,7 @@ function createSimulatorOverlay({
   iframe.style.height = "100%";
   iframe.style.top = "0";
   iframe.style.left = "0";
-  iframe.style.borderRadius = String(preset.radius) + "px";
+  iframe.style.borderRadius = "none";
   iframe.style.zIndex = "2";
   iframe.sandbox =
     "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";

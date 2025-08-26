@@ -825,6 +825,19 @@ function injectToolbar() {
           width: Math.round(screenRect.width * dpr),
           height: Math.round(screenRect.height * dpr),
         },
+        page: {
+          cssWidth:
+            window.innerWidth ||
+            document.documentElement.clientWidth ||
+            document.body.clientWidth ||
+            0,
+          cssHeight:
+            window.innerHeight ||
+            document.documentElement.clientHeight ||
+            document.body.clientHeight ||
+            0,
+          dpr: dpr,
+        },
         orientation: currentOrientation || "portrait",
       };
 

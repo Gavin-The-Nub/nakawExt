@@ -149,6 +149,7 @@ async function startTabRecording(streamId, bounds) {
 
   // Determine crop from mockupBounds.frame if present
   const frame = mockupBounds && mockupBounds.frame ? mockupBounds.frame : null;
+  const page = mockupBounds && mockupBounds.page ? mockupBounds.page : null;
 
   const targetFps = 60;
 
@@ -169,18 +170,31 @@ async function startTabRecording(streamId, bounds) {
         dh: srcH,
       };
     }
-    const { x, y, width, height } = frame;
-    canvas.width = width;
-    canvas.height = height;
+    // Map frame coords (already in device pixels) to stream resolution
+    let fx = frame.x,
+      fy = frame.y,
+      fw = frame.width,
+      fh = frame.height;
+    // If page metrics exist, adjust in case capture/video resolution differs
+    if (page && page.cssWidth && page.cssHeight) {
+      const scaleX = srcW / Math.round(page.cssWidth * (page.dpr || 1));
+      const scaleY = srcH / Math.round(page.cssHeight * (page.dpr || 1));
+      fx = Math.round(fx * scaleX);
+      fy = Math.round(fy * scaleY);
+      fw = Math.round(fw * scaleX);
+      fh = Math.round(fh * scaleY);
+    }
+    canvas.width = fw;
+    canvas.height = fh;
     return {
-      sx: x,
-      sy: y,
-      sw: width,
-      sh: height,
+      sx: fx,
+      sy: fy,
+      sw: fw,
+      sh: fh,
       dx: 0,
       dy: 0,
-      dw: width,
-      dh: height,
+      dw: fw,
+      dh: fh,
     };
   }
 
@@ -492,7 +506,26 @@ function cropAndDrawFrame(img) {
   }
 
   const bounds = mockupBounds.frame;
-  const { x, y, width, height } = bounds;
+  let { x, y, width, height } = bounds;
+  const page = mockupBounds.page || null;
+
+  // If we know the page css size and DPR, remap to image pixel space
+  if (page && page.cssWidth && page.cssHeight && page.dpr) {
+    // The captured frame (img) resolution corresponds to the tab capture resolution.
+    // Estimate ratios between what content sent and the actual image dimensions.
+    const imgW = img.naturalWidth || img.width;
+    const imgH = img.naturalHeight || img.height;
+    const expectedPxW = Math.round(page.cssWidth * page.dpr);
+    const expectedPxH = Math.round(page.cssHeight * page.dpr);
+    if (expectedPxW > 0 && expectedPxH > 0 && imgW > 0 && imgH > 0) {
+      const scaleX = imgW / expectedPxW;
+      const scaleY = imgH / expectedPxH;
+      x = Math.round(x * scaleX);
+      y = Math.round(y * scaleY);
+      width = Math.round(width * scaleX);
+      height = Math.round(height * scaleY);
+    }
+  }
 
   console.log("Cropping frame to mockup area:", { x, y, width, height });
   console.log("Canvas dimensions:", {
