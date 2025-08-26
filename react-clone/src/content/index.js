@@ -138,6 +138,15 @@ function injectToolbar() {
       .mf-toolbar-btn.selected {
         background: #2196f3;
       }
+      .mf-toolbar-btn.recording {
+        background: #f44336;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
       .mf-toolbar-btn svg {
         width: 28px;
         height: 28px;
@@ -218,6 +227,24 @@ function injectToolbar() {
       .device-btn.selected {
         background: #007AFF;
       }
+      
+      .recording-status {
+        position: fixed;
+        top: 60px;
+        right: 100px;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        z-index: 2147483649;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        max-width: 300px;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
     </style>
     <button class="mf-toolbar-btn" id="mf-btn-close" title="Close Simulator">
       <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
@@ -239,6 +266,7 @@ function injectToolbar() {
     <button class="mf-toolbar-btn" id="mf-btn-browser-nav" title="Toggle Browser Navigation">
       <svg viewBox="0 0 24 24"><path d="M3 7H21V9H3V7ZM3 11H21V13H3V11ZM3 15H21V17H3V15Z" stroke="currentColor" stroke-width="1.5"/></svg>
     </button>
+    <div id="mf-recording-status" class="recording-status" style="display: none;"></div>
   `;
 
   // Ensure we append to body and it's properly attached
@@ -255,6 +283,216 @@ function injectToolbar() {
 
   // Create device selector
   createDeviceSelector();
+
+  // Inject browser navigation bar if not present
+  setTimeout(() => {
+    const overlay = document.getElementById("__mf_simulator_overlay__");
+    const frame = document.getElementById("__mf_simulator_frame__");
+    const screen = document.getElementById("__mf_simulator_screen__");
+    let browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+    if (overlay && frame && screen && !browserNavBar) {
+      browserNavBar = document.createElement("div");
+      browserNavBar.id = "__mf_browser_nav_bar__";
+      const platform = frame.getAttribute("data-platform") || "iOS";
+      browserNavBar.style.position = "absolute";
+      browserNavBar.style.top = "0";
+      browserNavBar.style.left = "0";
+      browserNavBar.style.right = "0";
+      browserNavBar.style.zIndex = "10";
+      browserNavBar.style.pointerEvents = "none";
+      if (platform === "iOS") {
+        browserNavBar.style.height = "44px";
+        browserNavBar.style.background =
+          "linear-gradient(180deg, #f2f2f7 0%, #e5e5ea 100%)";
+        browserNavBar.style.borderBottom = "0.5px solid #c6c6c8";
+        browserNavBar.style.display = "flex";
+        browserNavBar.style.alignItems = "center";
+        browserNavBar.style.justifyContent = "space-between";
+        browserNavBar.style.padding = "0 8px";
+        browserNavBar.style.fontFamily =
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        browserNavBar.style.fontSize = "17px";
+        browserNavBar.style.fontWeight = "600";
+        browserNavBar.style.color = "#000";
+        // Left section
+        const leftSection = document.createElement("div");
+        leftSection.style.display = "flex";
+        leftSection.style.alignItems = "center";
+        leftSection.style.gap = "8px";
+        leftSection.style.flex = "1";
+        const backBtn = document.createElement("div");
+        backBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M15 18L9 12L15 6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>`;
+        backBtn.style.color = "#007AFF";
+        backBtn.style.cursor = "pointer";
+        backBtn.style.pointerEvents = "auto";
+        backBtn.style.padding = "4px";
+        backBtn.style.borderRadius = "4px";
+        backBtn.style.transition = "background-color 0.2s";
+        backBtn.onmouseenter = () =>
+          (backBtn.style.backgroundColor = "rgba(0, 122, 255, 0.1)");
+        backBtn.onmouseleave = () =>
+          (backBtn.style.backgroundColor = "transparent");
+        const pageTitle = document.createElement("div");
+        pageTitle.textContent = "Safari";
+        pageTitle.style.fontWeight = "500";
+        pageTitle.style.color = "#000";
+        pageTitle.style.overflow = "hidden";
+        pageTitle.style.textOverflow = "ellipsis";
+        pageTitle.style.whiteSpace = "nowrap";
+        leftSection.appendChild(backBtn);
+        leftSection.appendChild(pageTitle);
+        // Center section
+        const centerSection = document.createElement("div");
+        centerSection.style.flex = "2";
+        centerSection.style.display = "flex";
+        centerSection.style.alignItems = "center";
+        centerSection.style.justifyContent = "center";
+        const urlBar = document.createElement("div");
+        urlBar.style.background = "rgba(142, 142, 147, 0.12)";
+        urlBar.style.borderRadius = "10px";
+        urlBar.style.padding = "6px 12px";
+        urlBar.style.fontSize = "15px";
+        urlBar.style.color = "#000";
+        urlBar.style.fontWeight = "400";
+        urlBar.style.maxWidth = "200px";
+        urlBar.style.overflow = "hidden";
+        urlBar.style.textOverflow = "ellipsis";
+        urlBar.style.whiteSpace = "nowrap";
+        urlBar.style.border = "1px solid rgba(142, 142, 147, 0.2)";
+        urlBar.textContent = window.location.hostname || "example.com";
+        centerSection.appendChild(urlBar);
+        // Right section
+        const rightSection = document.createElement("div");
+        rightSection.style.display = "flex";
+        rightSection.style.alignItems = "center";
+        rightSection.style.gap = "8px";
+        rightSection.style.flex = "1";
+        rightSection.style.justifyContent = "flex-end";
+        const shareBtn = document.createElement("div");
+        shareBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M4 12V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V12' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M16 6L12 2L8 6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M12 2V15' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>`;
+        shareBtn.style.color = "#007AFF";
+        shareBtn.style.cursor = "pointer";
+        shareBtn.style.pointerEvents = "auto";
+        shareBtn.style.padding = "4px";
+        shareBtn.style.borderRadius = "4px";
+        shareBtn.style.transition = "background-color 0.2s";
+        shareBtn.onmouseenter = () =>
+          (shareBtn.style.backgroundColor = "rgba(0, 122, 255, 0.1)");
+        shareBtn.onmouseleave = () =>
+          (shareBtn.style.backgroundColor = "transparent");
+        const tabsBtn = document.createElement("div");
+        tabsBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><rect x='3' y='3' width='7' height='9' rx='1' stroke='currentColor' stroke-width='2'/><rect x='10' y='3' width='7' height='9' rx='1' stroke='currentColor' stroke-width='2'/><rect x='17' y='3' width='4' height='9' rx='1' stroke='currentColor' stroke-width='2'/></svg>`;
+        tabsBtn.style.color = "#007AFF";
+        tabsBtn.style.cursor = "pointer";
+        tabsBtn.style.pointerEvents = "auto";
+        tabsBtn.style.padding = "4px";
+        tabsBtn.style.borderRadius = "4px";
+        tabsBtn.style.transition = "background-color 0.2s";
+        tabsBtn.onmouseenter = () =>
+          (tabsBtn.style.backgroundColor = "rgba(0, 122, 255, 0.1)");
+        tabsBtn.onmouseleave = () =>
+          (tabsBtn.style.backgroundColor = "transparent");
+        rightSection.appendChild(shareBtn);
+        rightSection.appendChild(tabsBtn);
+        browserNavBar.appendChild(leftSection);
+        browserNavBar.appendChild(centerSection);
+        browserNavBar.appendChild(rightSection);
+      } else {
+        // Android Chrome Navigation Bar
+        browserNavBar.style.height = "56px";
+        browserNavBar.style.background = "#ffffff";
+        browserNavBar.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.1)";
+        browserNavBar.style.display = "flex";
+        browserNavBar.style.alignItems = "center";
+        browserNavBar.style.justifyContent = "space-between";
+        browserNavBar.style.padding = "0 8px";
+        browserNavBar.style.fontFamily = "'Roboto', 'Noto Sans', sans-serif";
+        browserNavBar.style.fontSize = "16px";
+        browserNavBar.style.color = "#000";
+        // Left section
+        const leftSection = document.createElement("div");
+        leftSection.style.display = "flex";
+        leftSection.style.alignItems = "center";
+        leftSection.style.gap = "8px";
+        const backBtn = document.createElement("div");
+        backBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z' fill='currentColor'/></svg>`;
+        backBtn.style.color = "#5f6368";
+        backBtn.style.cursor = "pointer";
+        backBtn.style.pointerEvents = "auto";
+        backBtn.style.padding = "8px";
+        backBtn.style.borderRadius = "50%";
+        backBtn.style.transition = "background-color 0.2s";
+        backBtn.onmouseenter = () =>
+          (backBtn.style.backgroundColor = "rgba(95, 99, 104, 0.1)");
+        backBtn.onmouseleave = () =>
+          (backBtn.style.backgroundColor = "transparent");
+        leftSection.appendChild(backBtn);
+        // Center section
+        const centerSection = document.createElement("div");
+        centerSection.style.flex = "1";
+        centerSection.style.display = "flex";
+        centerSection.style.alignItems = "center";
+        centerSection.style.justifyContent = "center";
+        centerSection.style.margin = "0 16px";
+        const urlBar = document.createElement("div");
+        urlBar.style.background = "#f1f3f4";
+        urlBar.style.borderRadius = "24px";
+        urlBar.style.padding = "8px 16px";
+        urlBar.style.fontSize = "14px";
+        urlBar.style.color = "#5f6368";
+        urlBar.style.fontWeight = "400";
+        urlBar.style.maxWidth = "280px";
+        urlBar.style.overflow = "hidden";
+        urlBar.style.textOverflow = "ellipsis";
+        urlBar.style.whiteSpace = "nowrap";
+        urlBar.style.display = "flex";
+        urlBar.style.alignItems = "center";
+        urlBar.style.gap = "8px";
+        const lockIcon = document.createElement("div");
+        lockIcon.innerHTML = `<svg width='16' height='16' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z' fill='#34a853'/></svg>`;
+        const urlText = document.createElement("span");
+        urlText.textContent = window.location.hostname || "example.com";
+        urlBar.appendChild(lockIcon);
+        urlBar.appendChild(urlText);
+        centerSection.appendChild(urlBar);
+        // Right section
+        const rightSection = document.createElement("div");
+        rightSection.style.display = "flex";
+        rightSection.style.alignItems = "center";
+        rightSection.style.gap = "8px";
+        const moreBtn = document.createElement("div");
+        moreBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M12 8C13.1 8 14 7.1 14 6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6C10 7.1 10.9 8 12 8ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10ZM12 16C10.9 16 10 16.9 10 18C10 19.1 10.9 20 12 20C13.1 20 14 16.9 14 18C14 19.1 13.1 16 12 16Z' fill='currentColor'/></svg>`;
+        moreBtn.style.color = "#5f6368";
+        moreBtn.style.cursor = "pointer";
+        moreBtn.style.pointerEvents = "auto";
+        moreBtn.style.padding = "8px";
+        moreBtn.style.borderRadius = "50%";
+        moreBtn.style.transition = "background-color 0.2s";
+        moreBtn.onmouseenter = () =>
+          (moreBtn.style.backgroundColor = "rgba(95, 99, 104, 0.1)");
+        moreBtn.onmouseleave = () =>
+          (moreBtn.style.backgroundColor = "transparent");
+        const tabsBtn = document.createElement("div");
+        tabsBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19Z' fill='currentColor'/><path d='M7 7H17V9H7V7ZM7 11H17V13H7V11ZM7 15H13V17H7V15Z' fill='currentColor'/></svg>`;
+        tabsBtn.style.color = "#5f6368";
+        tabsBtn.style.cursor = "pointer";
+        tabsBtn.style.pointerEvents = "auto";
+        tabsBtn.style.padding = "8px";
+        tabsBtn.style.borderRadius = "50%";
+        tabsBtn.style.transition = "background-color 0.2s";
+        tabsBtn.onmouseenter = () =>
+          (tabsBtn.style.backgroundColor = "rgba(95, 99, 104, 0.1)");
+        tabsBtn.onmouseleave = () =>
+          (tabsBtn.style.backgroundColor = "transparent");
+        rightSection.appendChild(moreBtn);
+        rightSection.appendChild(tabsBtn);
+        browserNavBar.appendChild(leftSection);
+        browserNavBar.appendChild(centerSection);
+        browserNavBar.appendChild(rightSection);
+      }
+      screen.insertBefore(browserNavBar, screen.firstChild);
+    }
+  }, 100);
 
   // Button event handlers
   document.getElementById("mf-btn-close").onclick = () => {
@@ -274,7 +512,8 @@ function injectToolbar() {
       // Get current orientation from frame attribute (fallback to tracked state)
       const frame = document.getElementById("__mf_simulator_frame__");
       const frameOrientation = frame?.getAttribute("data-orientation");
-      const isCurrentlyLandscape = (frameOrientation || currentOrientation) === "landscape";
+      const isCurrentlyLandscape =
+        (frameOrientation || currentOrientation) === "landscape";
 
       // Find the mockup container and do a brief visual rotation
       const mockupContainer = document.querySelector("#__mf_simulator_frame__");
@@ -534,8 +773,64 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-record").onclick = () => {
-    // Record action (placeholder)
-    alert("Record functionality coming soon!");
+    const recordBtn = document.getElementById("mf-btn-record");
+    const isCurrentlyRecording = recordBtn.classList.contains("recording");
+
+    if (isCurrentlyRecording) {
+      console.log("Stopping recording...");
+      stopRecording();
+      recordBtn.classList.remove("recording");
+      recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
+      recordBtn.title = "Record";
+      showRecordingStatus(
+        "Recording completed! Check downloads folder.",
+        "success"
+      );
+    } else {
+      console.log("Starting recording...");
+      recordBtn.classList.add("recording");
+      recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`;
+      recordBtn.title = "Stop Recording";
+
+      const frameEl = document.getElementById("__mf_simulator_frame__");
+      const screenEl = document.getElementById("__mf_simulator_screen__");
+
+      if (!frameEl || !screenEl) {
+        showRecordingStatus(
+          "Simulator elements not found. Please ensure the simulator is active.",
+          "error"
+        );
+        recordBtn.classList.remove("recording");
+        recordBtn.classList.remove("recording");
+        recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
+        recordBtn.title = "Record";
+        return;
+      }
+
+      // Get simulator bounds for offscreen recording
+      const frameRect = frameEl.getBoundingClientRect();
+      const screenRect = screenEl.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      const mockupBounds = {
+        frame: {
+          x: Math.round(frameRect.left * dpr),
+          y: Math.round(frameRect.top * dpr),
+          width: Math.round(frameRect.width * dpr),
+          height: Math.round(frameRect.height * dpr),
+        },
+        screen: {
+          x: Math.round(screenRect.left * dpr),
+          y: Math.round(screenRect.top * dpr),
+          width: Math.round(screenRect.width * dpr),
+          height: Math.round(screenRect.height * dpr),
+        },
+        orientation: currentOrientation || "portrait",
+      };
+
+      // Start offscreen recording
+      startOffscreenRecording(mockupBounds);
+    }
   };
 
   document.getElementById("mf-btn-browser-nav").onclick = () => {
@@ -736,4 +1031,215 @@ function removeToolbar() {
   }
   // Reset orientation state
   currentOrientation = "portrait";
+}
+
+function showRecordingStatus(message, type = "info") {
+  const statusDiv = document.getElementById("mf-recording-status");
+  if (statusDiv) {
+    statusDiv.textContent = message;
+    statusDiv.className = "recording-status";
+    if (type === "success") {
+      statusDiv.style.color = "#4CAF50";
+    } else if (type === "error") {
+      statusDiv.style.color = "#F44336";
+    } else {
+      statusDiv.style.color = "#2196F3";
+    }
+    statusDiv.style.display = "block";
+    setTimeout(() => {
+      statusDiv.style.display = "none";
+    }, 3000); // Hide after 3 seconds
+  }
+}
+
+// Offscreen recording functionality
+let isRecording = false;
+let recordingStartTime = null;
+
+function startOffscreenRecording(mockupBounds) {
+  if (isRecording) return;
+
+  console.log("Starting offscreen recording with bounds:", mockupBounds);
+
+  // Send message to background script to start recording
+  chrome.runtime.sendMessage(
+    {
+      type: "START_RECORDING",
+      mockupBounds: mockupBounds,
+    },
+    (response) => {
+      if (response && response.ok) {
+        console.log("Offscreen recording started successfully");
+        isRecording = true;
+        recordingStartTime = Date.now();
+        showRecordingStatus("Recording started...", "info");
+      } else {
+        console.error("Failed to start offscreen recording:", response?.error);
+        showRecordingStatus(
+          "Failed to start recording: " + (response?.error || "unknown error"),
+          "error"
+        );
+
+        // Reset button state on failure
+        const recordBtn = document.getElementById("mf-btn-record");
+        if (recordBtn) {
+          recordBtn.classList.remove("recording");
+          recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
+          recordBtn.title = "Record";
+        }
+      }
+    }
+  );
+}
+
+function stopRecording() {
+  if (!isRecording) return;
+
+  console.log("Stopping offscreen recording...");
+
+  // Send message to background script to stop recording
+  chrome.runtime.sendMessage({ type: "STOP_RECORDING" }, (response) => {
+    if (response && response.ok) {
+      console.log("Offscreen recording stopped successfully");
+      isRecording = false;
+
+      // Wait a moment for video processing, then show download option
+      setTimeout(() => {
+        showRecordingStatus("Processing video...", "info");
+
+        // Check for video completion
+        checkVideoCompletion();
+      }, 1000);
+    } else {
+      console.error("Failed to stop offscreen recording:", response?.error);
+      showRecordingStatus(
+        "Failed to stop recording: " + (response?.error || "unknown error"),
+        "error"
+      );
+      isRecording = false;
+    }
+  });
+}
+
+function checkVideoCompletion() {
+  // Check recording status from background script
+  chrome.runtime.sendMessage({ type: "GET_RECORDING_STATUS" }, (response) => {
+    console.log("Video completion check response:", response);
+
+    if (response && response.isRecording === false) {
+      // Recording stopped, check if video blob data is available
+      if (response.videoBlobData) {
+        console.log("Video blob data found:", response.videoBlobData);
+        // Video is ready, show download option
+        showVideoDownload(response.videoBlobData);
+      } else {
+        console.log("No video blob data yet, continuing to check...");
+        // No video blob yet, show completion message
+        showRecordingStatus(
+          "Recording completed! Video processing...",
+          "success"
+        );
+
+        // Keep checking for video completion (but with a longer delay to avoid spam)
+        setTimeout(checkVideoCompletion, 2000);
+      }
+    } else if (response && response.isRecording === true) {
+      // Still recording, wait a bit more
+      setTimeout(checkVideoCompletion, 1000);
+    } else {
+      // Error or unknown state
+      showRecordingStatus("Recording status unknown", "error");
+    }
+  });
+}
+
+function showVideoDownload(videoBlobData) {
+  showRecordingStatus("Video ready! Click to download.", "success");
+
+  // Create a visible download button
+  const downloadButton = document.createElement("button");
+  downloadButton.textContent = "Download Recording";
+  downloadButton.style.cssText = `
+    position: fixed;
+    top: 100px;
+    right: 100px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    z-index: 2147483649;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+  `;
+
+  // Hover effects
+  downloadButton.onmouseenter = () => {
+    downloadButton.style.background = "#45a049";
+    downloadButton.style.transform = "translateY(-2px)";
+    downloadButton.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.4)";
+  };
+
+  downloadButton.onmouseleave = () => {
+    downloadButton.style.background = "#4CAF50";
+    downloadButton.style.transform = "translateY(0)";
+    downloadButton.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.3)";
+  };
+
+  // Click handler
+  downloadButton.onclick = () => {
+    try {
+      // Reconstruct the blob from base64 data
+      const binaryString = atob(videoBlobData.base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const videoBlob = new Blob([bytes], {
+        type: videoBlobData.type || "video/webm",
+      });
+
+      // Create download link
+      const downloadUrl = URL.createObjectURL(videoBlob);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = downloadUrl;
+      downloadLink.download = `simulator-recording-${Date.now()}.webm`;
+      downloadLink.style.display = "none";
+
+      // Trigger download
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+
+      // Clean up the blob URL after a delay
+      setTimeout(() => {
+        URL.revokeObjectURL(downloadUrl);
+      }, 5000);
+
+      // Update status and remove button
+      showRecordingStatus("Download started!", "success");
+      downloadButton.remove();
+    } catch (error) {
+      console.error("Error creating video blob:", error);
+      showRecordingStatus("Error creating video: " + error.message, "error");
+    }
+  };
+
+  // Add button to page
+  document.body.appendChild(downloadButton);
+
+  // Auto-remove button after 30 seconds if not clicked
+  setTimeout(() => {
+    if (downloadButton.parentNode) {
+      downloadButton.remove();
+      showRecordingStatus(
+        "Download button expired. Recording saved in memory.",
+        "info"
+      );
+    }
+  }, 30000);
 }

@@ -3,6 +3,9 @@ import { DEVICES, getDeviceBySlug } from "../shared/devices.js";
 // Store tab states with orientation information
 const tabStates = new Map();
 
+// Global recording state for offscreen communication
+let globalRecordingState = null;
+
 // Initialize extension
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Mobile Device Simulator Extension installed");
@@ -104,12 +107,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
 
-          // Get the mockup bounds from the content script
-          const mockupBounds = await getMockupBounds(tabId);
+          // Get the mockup bounds from the message
+          const mockupBounds = message.mockupBounds;
           if (!mockupBounds) {
-            sendResponse({ ok: false, error: "Mockup not found" });
+            sendResponse({ ok: false, error: "Mockup bounds not provided" });
             return;
           }
+
+          console.log("Starting recording with mockup bounds:", mockupBounds);
 
           // Create offscreen page for recording if it doesn't exist
           await createOffscreenPage();
@@ -117,47 +122,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Wait for offscreen page to be ready
           await waitForOffscreenPage();
 
-                     // Start recording using captureVisibleTab approach
-           try {
-             console.log("Starting recording with captureVisibleTab...");
-             
-             // Request activeTab permission first
-             try {
-               const hasPermission = await chrome.permissions.contains({ permissions: ['activeTab'] });
-               if (!hasPermission) {
-                 console.log("Requesting activeTab permission...");
-                 const granted = await chrome.permissions.request({ permissions: ['activeTab'] });
-                 if (!granted) {
-                   sendResponse({ ok: false, error: "Permission denied - please click the record button again" });
-                   return;
-                 }
-               }
-             } catch (permError) {
-               console.log("Permission request failed:", permError);
-               sendResponse({ ok: false, error: "Permission request failed" });
-               return;
-             }
-             
-             // Send message to offscreen page to start frame-based recording
-             chrome.runtime.sendMessage({
-               type: "START_FRAME_RECORDING",
-               mockupBounds: mockupBounds
-             }, (response) => {
-               if (chrome.runtime.lastError) {
-                 console.error("Failed to start frame recording:", chrome.runtime.lastError);
-                 sendResponse({ ok: false, error: "Failed to start recording" });
-               } else if (response && response.ok) {
-                 console.log("Frame-based recording started successfully");
-                 sendResponse({ ok: true });
-               } else {
-                 console.error("Frame recording failed:", response?.error);
-                 sendResponse({ ok: false, error: response?.error || "Failed to start recording" });
-               }
-             });
-           } catch (error) {
-             console.error("Error starting recording:", error);
-             sendResponse({ ok: false, error: "Failed to start recording: " + error.message });
-           }
+          // Start recording by sending message to offscreen page
+          try {
+            // Use chrome.tabs.sendMessage to communicate with offscreen page
+            const offscreenResponse = await new Promise((resolve, reject) => {
+              // We need to send the message to the offscreen page specifically
+              // Since we can't use chrome.runtime.sendMessage from background to offscreen,
+              // we'll use a different approach - store the recording state in the background
+              // and let the offscreen page poll for it
+
+              // Store recording state in background script
+              globalRecordingState = {
+                isRecording: true,
+                mockupBounds: mockupBounds,
+                tabId: tabId,
+                startTime: Date.now(),
+              };
+
+              console.log(
+                "Recording state stored, offscreen page can now start recording"
+              );
+              resolve({ ok: true });
+            });
+
+            sendResponse({ ok: true });
+          } catch (error) {
+            console.error("Error starting recording:", error);
+            sendResponse({
+              ok: false,
+              error: "Failed to start recording: " + error.message,
+            });
+          }
         } catch (e) {
           console.error("START_RECORDING error", e);
           sendResponse({ ok: false, error: e.message });
@@ -168,18 +163,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "STOP_RECORDING":
       (async () => {
         try {
-          // Stop recording in the offscreen page
-          chrome.runtime.sendMessage({
-            type: "STOP_RECORDING"
-          }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.error("Failed to stop recording:", chrome.runtime.lastError);
-              sendResponse({ ok: false, error: "Failed to stop recording" });
-            } else {
-              console.log("Recording stopped successfully");
-              sendResponse({ ok: true });
-            }
-          });
+          console.log("Stopping recording...");
+
+          // Stop recording by updating global state
+          if (globalRecordingState) {
+            globalRecordingState.isRecording = false;
+            globalRecordingState.stopTime = Date.now();
+            console.log("Recording stopped successfully");
+            sendResponse({ ok: true });
+          } else {
+            console.log("No active recording to stop");
+            sendResponse({ ok: true });
+          }
         } catch (e) {
           console.error("STOP_RECORDING error", e);
           sendResponse({ ok: false, error: e.message });
@@ -190,12 +185,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "GET_RECORDING_STATUS":
       (async () => {
         try {
-          // Get recording status from offscreen page
-          chrome.runtime.sendMessage({
-            type: "GET_RECORDING_STATUS"
-          }, (response) => {
+          // Get recording status from global state
+          if (globalRecordingState) {
+            const duration = globalRecordingState.stopTime
+              ? Math.floor(
+                  (globalRecordingState.stopTime -
+                    globalRecordingState.startTime) /
+                    1000
+                )
+              : Math.floor(
+                  (Date.now() - globalRecordingState.startTime) / 1000
+                );
+
+            const response = {
+              isRecording: globalRecordingState.isRecording,
+              duration: duration,
+              chunks: 0, // Will be updated by offscreen page
+              mockupBounds: globalRecordingState.mockupBounds,
+              videoBlobData: globalRecordingState.videoBlobData || null,
+            };
+            console.log("GET_RECORDING_STATUS response:", response);
             sendResponse(response);
-          });
+          } else {
+            sendResponse({
+              isRecording: false,
+              duration: 0,
+              chunks: 0,
+            });
+          }
         } catch (e) {
           console.error("GET_RECORDING_STATUS error", e);
           sendResponse({ ok: false, error: e.message });
@@ -203,21 +220,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })();
       return true;
 
-
-
     case "CAPTURE_FRAME":
       (async () => {
         try {
           console.log("CAPTURE_FRAME received");
-          
+
           // Capture the current visible tab
           chrome.tabs.captureVisibleTab(null, { format: "png" }, (dataUrl) => {
             if (chrome.runtime.lastError) {
               console.error("Frame capture error:", chrome.runtime.lastError);
-              sendResponse({ ok: false, error: chrome.runtime.lastError.message });
+              sendResponse({
+                ok: false,
+                error: chrome.runtime.lastError.message,
+              });
               return;
             }
-            
+
             if (dataUrl) {
               console.log("Frame captured successfully");
               sendResponse({ ok: true, dataUrl: dataUrl });
@@ -226,7 +244,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               sendResponse({ ok: false, error: "No frame data received" });
             }
           });
-          
         } catch (e) {
           console.error("CAPTURE_FRAME error", e);
           sendResponse({ ok: false, error: e.message });
@@ -234,41 +251,56 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })();
       return true;
 
+    case "GET_RECORDING_STATE":
+      // Offscreen page requesting current recording state
+      sendResponse(globalRecordingState);
+      break;
+
     case "CREATE_VIDEO_FROM_FRAMES":
       (async () => {
         try {
           console.log("CREATE_VIDEO_FROM_FRAMES received");
           const { frames, width, height } = message;
-          
+
           if (!frames || frames.length === 0) {
             sendResponse({ ok: false, error: "No frames provided" });
             return;
           }
-          
-          console.log(`Creating video from ${frames.length} frames, dimensions: ${width}x${height}`);
-          
+
+          console.log(
+            `Creating video from ${frames.length} frames, dimensions: ${width}x${height}`
+          );
+
           // Create offscreen page for video creation
           await createOffscreenPage();
-          
+
           // Send frames to offscreen page for video creation
-          chrome.runtime.sendMessage({
-            type: "CREATE_VIDEO_FROM_FRAMES",
-            frames: frames,
-            width: width,
-            height: height
-          }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.error("Failed to send frames to offscreen page:", chrome.runtime.lastError);
-              sendResponse({ ok: false, error: "Failed to create video" });
-            } else if (response && response.ok && response.videoBlob) {
-              console.log("Video created successfully in offscreen page");
-              sendResponse({ ok: true, videoBlob: response.videoBlob });
-            } else {
-              console.error("Video creation failed in offscreen page:", response);
-              sendResponse({ ok: false, error: "Video creation failed" });
+          chrome.runtime.sendMessage(
+            {
+              type: "CREATE_VIDEO_FROM_FRAMES",
+              frames: frames,
+              width: width,
+              height: height,
+            },
+            (response) => {
+              if (chrome.runtime.lastError) {
+                console.error(
+                  "Failed to send frames to offscreen page:",
+                  chrome.runtime.lastError
+                );
+                sendResponse({ ok: false, error: "Failed to create video" });
+              } else if (response && response.ok && response.videoBlob) {
+                console.log("Video created successfully in offscreen page");
+                sendResponse({ ok: true, videoBlob: response.videoBlob });
+              } else {
+                console.error(
+                  "Video creation failed in offscreen page:",
+                  response
+                );
+                sendResponse({ ok: false, error: "Video creation failed" });
+              }
             }
-          });
-          
+          );
         } catch (e) {
           console.error("CREATE_VIDEO_FROM_FRAMES error", e);
           sendResponse({ ok: false, error: e.message });
@@ -342,7 +374,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 function activateSimulatorForTab(tabId, deviceSlug = null) {
   const device = deviceSlug ? getDeviceBySlug(deviceSlug) : getDefaultDevice();
   const tabState = getTabState(tabId);
-  
+
   tabState.isActive = true;
   tabState.device = device;
   tabState.orientation = "portrait"; // Reset to portrait when activating
@@ -377,15 +409,15 @@ function deactivateSimulatorForTab(tabId) {
 function setDeviceForTab(tabId, deviceSlug) {
   const device = getDeviceBySlug(deviceSlug);
   const tabState = getTabState(tabId);
-  
+
   if (tabState && tabState.isActive) {
     tabState.device = device;
     tabState.orientation = "portrait"; // Reset orientation when changing device
     tabStates.set(tabId, tabState);
-    
+
     applyDeviceToTab(tabId, device);
     showSimulator(tabId, tabState);
-    
+
     console.log("Device changed to:", device.name);
   }
 }
@@ -394,12 +426,13 @@ function toggleOrientationForTab(tabId) {
   const tabState = getTabState(tabId);
   if (tabState && tabState.isActive) {
     // Toggle between portrait and landscape
-    tabState.orientation = tabState.orientation === "portrait" ? "landscape" : "portrait";
+    tabState.orientation =
+      tabState.orientation === "portrait" ? "landscape" : "portrait";
     tabStates.set(tabId, tabState);
-    
+
     // Recreate simulator with new orientation
     showSimulator(tabId, tabState);
-    
+
     // Notify content script about orientation change
     try {
       chrome.tabs.sendMessage(tabId, {
@@ -407,9 +440,12 @@ function toggleOrientationForTab(tabId) {
         orientation: tabState.orientation,
       });
     } catch (error) {
-      console.log("Content script not ready for orientation change message:", tabId);
+      console.log(
+        "Content script not ready for orientation change message:",
+        tabId
+      );
     }
-    
+
     console.log("Orientation changed to:", tabState.orientation);
   }
 }
@@ -477,14 +513,16 @@ async function showSimulator(tabId, state) {
   try {
     const device = state.device;
     const orientation = state.orientation || "portrait";
-    
+
     // Calculate dimensions based on orientation
     const isLandscape = orientation === "landscape";
     const w = isLandscape ? device.viewport.height : device.viewport.width;
     const h = isLandscape ? device.viewport.width : device.viewport.height;
-    
+
     // Adjust screen percentages for landscape orientation
-    const adjustedScreenPct = isLandscape ? rotateScreenPctCW(device.screenPct) : device.screenPct;
+    const adjustedScreenPct = isLandscape
+      ? rotateScreenPctCW(device.screenPct)
+      : device.screenPct;
 
     // Inject the simulator CSS
     await chrome.scripting.insertCSS({
@@ -588,7 +626,7 @@ function createSimulatorOverlay({
   mockupContainer.style.transition = "transform 220ms ease";
   mockupContainer.style.transformOrigin = "50% 50%";
   mockupContainer.style.willChange = "transform";
-  
+
   // Store orientation data for future reference
   mockupContainer.setAttribute("data-orientation", orientation);
 
@@ -600,7 +638,7 @@ function createSimulatorOverlay({
   mockupImg.style.height = String(h) + "px";
   mockupImg.style.display = "block";
   mockupImg.style.position = "absolute";
-  
+
   // Apply rotation for landscape orientation (like in basic_clone)
   if (orientation === "landscape") {
     mockupImg.style.width = String(h) + "px";
@@ -613,7 +651,7 @@ function createSimulatorOverlay({
     mockupImg.style.top = "0";
     mockupImg.style.left = "0";
   }
-  
+
   mockupImg.style.zIndex = "5";
   mockupImg.style.pointerEvents = "none";
 
@@ -843,31 +881,21 @@ function getDefaultDevice() {
   return DEVICES[0];
 }
 
-// Helper function to get mockup bounds from content script
-async function getMockupBounds(tabId) {
-  try {
-    const response = await chrome.tabs.sendMessage(tabId, {
-      type: "GET_MOCKUP_BOUNDS"
-    });
-    return response;
-  } catch (error) {
-    console.error("Failed to get mockup bounds:", error);
-    return null;
-  }
-}
-
 // Helper function to create offscreen page for recording
 async function createOffscreenPage() {
   try {
     // Create new offscreen page
     await chrome.offscreen.createDocument({
-      url: chrome.runtime.getURL('offscreen/recording.html'),
-      reasons: ['DISPLAY_MEDIA'],
-      justification: 'Recording mockup screen'
+      url: chrome.runtime.getURL("offscreen/recording.html"),
+      reasons: ["DISPLAY_MEDIA"],
+      justification: "Recording mockup screen",
     });
   } catch (error) {
     // If page already exists, that's fine
-    if (error.message.includes('already exists') || error.message.includes('Only a single offscreen document may be created')) {
+    if (
+      error.message.includes("already exists") ||
+      error.message.includes("Only a single offscreen document may be created")
+    ) {
       return;
     }
     console.error("Failed to create offscreen page:", error);
@@ -880,7 +908,7 @@ async function waitForOffscreenPage() {
   return new Promise((resolve) => {
     let attempts = 0;
     const maxAttempts = 100; // 10 seconds max wait
-    
+
     function checkReady() {
       attempts++;
       try {
@@ -889,7 +917,9 @@ async function waitForOffscreenPage() {
             if (attempts < maxAttempts) {
               setTimeout(checkReady, 100);
             } else {
-              console.log("Offscreen page not ready after max attempts, proceeding anyway");
+              console.log(
+                "Offscreen page not ready after max attempts, proceeding anyway"
+              );
               resolve();
             }
           } else {
@@ -901,29 +931,70 @@ async function waitForOffscreenPage() {
         if (attempts < maxAttempts) {
           setTimeout(checkReady, 100);
         } else {
-          console.log("Offscreen page check failed after max attempts, proceeding anyway");
+          console.log(
+            "Offscreen page check failed after max attempts, proceeding anyway"
+          );
           resolve();
         }
       }
     }
-    
+
     checkReady();
   });
 }
 
 // Listen for messages from offscreen page
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (sender.id === chrome.runtime.id && sender.origin === chrome.runtime.getURL('')) {
-    // Message from offscreen page
-    const { type } = message;
-    
+  // Only handle messages from offscreen page
+  if (
+    sender.id === chrome.runtime.id &&
+    sender.origin === chrome.runtime.getURL("")
+  ) {
+    const { type, videoBlob } = message;
+
     switch (type) {
-      case "RECORDING_STARTED":
-        console.log("Recording started");
+      case "OFFSCREEN_RECORDING_COMPLETED":
+        console.log(
+          "Offscreen recording completed, video blob received:",
+          videoBlob ? "yes" : "no"
+        );
+        if (videoBlob) {
+          console.log("Video blob details:", {
+            hasBase64Data: !!videoBlob.base64Data,
+            type: videoBlob.type,
+            size: videoBlob.size,
+          });
+        }
+        // Store the video blob data for later retrieval by content script
+        if (videoBlob && videoBlob.base64Data) {
+          // Store the video blob data in the global recording state
+          if (globalRecordingState) {
+            globalRecordingState.videoBlobData = videoBlob;
+            console.log("Video blob data stored for retrieval");
+          } else {
+            console.warn(
+              "No global recording state available to store video blob data"
+            );
+          }
+        } else {
+          console.warn("Video blob data missing or invalid:", videoBlob);
+        }
         break;
-      case "RECORDING_COMPLETED":
-        console.log("Recording completed");
+
+      case "OFFSCREEN_RECORDING_STOPPED":
+        console.log("Offscreen recording stopped");
+        // Update global recording state
+        if (globalRecordingState) {
+          globalRecordingState.isRecording = false;
+          globalRecordingState.stopTime = Date.now();
+        }
         break;
+
+      default:
+        console.log("Unknown message from offscreen page:", type);
     }
   }
+
+  // Return false to allow other listeners to handle the message
+  return false;
 });
