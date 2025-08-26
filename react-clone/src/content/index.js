@@ -6,6 +6,7 @@ let toolbar = null;
 let deviceSelector = null;
 let devicePanel = null;
 let currentOrientation = "portrait"; // Track current orientation
+let statusBarTimer = null; // interval for updating status bar time
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -294,6 +295,8 @@ function injectToolbar() {
     const frame = document.getElementById("__mf_simulator_frame__");
     const screen = document.getElementById("__mf_simulator_screen__");
     let browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+    // Always ensure status bar exists before nav bar sizing
+    ensureStatusBar();
     if (overlay && frame && screen && !browserNavBar) {
       browserNavBar = document.createElement("div");
       browserNavBar.id = "__mf_browser_nav_bar__";
@@ -495,6 +498,9 @@ function injectToolbar() {
         browserNavBar.appendChild(rightSection);
       }
       screen.insertBefore(browserNavBar, screen.firstChild);
+
+      // Position iframe below status bar and (optionally) nav bar
+      adjustIframeForBars();
     }
   }, 100);
 
@@ -862,8 +868,11 @@ function injectToolbar() {
       if (isVisible) {
         // Hide the navigation bar
         browserNavBar.style.display = "none";
-        iframe.style.top = "0px";
-        iframe.style.height = "100%";
+        // Keep space for status bar
+        const statusBar = document.getElementById("__mf_status_bar__");
+        const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
+        iframe.style.top = sbh + "px";
+        iframe.style.height = `calc(100% - ${sbh}px)`;
         button.classList.remove("selected");
       } else {
         // Show the navigation bar
@@ -875,8 +884,10 @@ function injectToolbar() {
         const platform =
           mockupContainer?.getAttribute("data-platform") || "iOS";
         const navBarHeight = platform === "iOS" ? 44 : 56;
-        iframe.style.top = navBarHeight + "px";
-        iframe.style.height = `calc(100% - ${navBarHeight}px)`;
+        const statusBar = document.getElementById("__mf_status_bar__");
+        const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
+        iframe.style.top = navBarHeight + sbh + "px";
+        iframe.style.height = `calc(100% - ${navBarHeight + sbh}px)`;
         button.classList.add("selected");
       }
     }
@@ -896,6 +907,8 @@ function injectToolbar() {
         button.classList.add("selected");
       }
     }
+    // After everything mounts, ensure status bar layout is applied
+    adjustIframeForBars();
   }, 100);
 }
 
@@ -1030,6 +1043,13 @@ function removeToolbar() {
     deviceSelector.remove();
     deviceSelector = null;
   }
+  // Remove status bar and timer
+  const statusBar = document.getElementById("__mf_status_bar__");
+  if (statusBar) statusBar.remove();
+  if (statusBarTimer) {
+    clearInterval(statusBarTimer);
+    statusBarTimer = null;
+  }
   // Reset orientation state
   currentOrientation = "portrait";
 }
@@ -1051,6 +1071,127 @@ function showRecordingStatus(message, type = "info") {
       statusDiv.style.display = "none";
     }, 3000); // Hide after 3 seconds
   }
+}
+
+// Status bar helpers
+function ensureStatusBar() {
+  try {
+    const frame = document.getElementById("__mf_simulator_frame__");
+    const screen = document.getElementById("__mf_simulator_screen__");
+    if (!frame || !screen) return;
+
+    const platform = frame.getAttribute("data-platform") || "iOS";
+    let statusBar = document.getElementById("__mf_status_bar__");
+    if (!statusBar) {
+      statusBar = document.createElement("div");
+      statusBar.id = "__mf_status_bar__";
+      statusBar.style.position = "absolute";
+      statusBar.style.top = "0";
+      statusBar.style.left = "0";
+      statusBar.style.right = "0";
+      statusBar.style.display = "flex";
+      statusBar.style.alignItems = "center";
+      statusBar.style.justifyContent = "space-between";
+      statusBar.style.padding = platform === "iOS" ? "10px 24px" : "10px 12px";
+      statusBar.style.zIndex = "9";
+      statusBar.style.pointerEvents = "none";
+      statusBar.style.fontFamily =
+        platform === "iOS"
+          ? "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          : "'Roboto', 'Noto Sans', sans-serif";
+      statusBar.style.fontSize = platform === "iOS" ? "24px" : "12px";
+      statusBar.style.color = "#000";
+      statusBar.style.height = platform === "iOS" ? "30px" : "30px";
+      statusBar.style.background = platform === "iOS"
+        ? "linear-gradient(180deg, rgba(242,242,247,0.95) 0%, rgba(229,229,234,0.9) 100%)"
+        : "#ffffff";
+      statusBar.style.borderBottom =
+        platform === "iOS" ? "0.5px solid rgba(0,0,0,0.15)" : "1px solid rgba(0,0,0,0.08)";
+
+      const left = document.createElement("div");
+      left.id = "__mf_status_time__";
+      left.textContent = getFormattedTime(platform);
+      left.style.fontWeight = platform === "iOS" ? "600" : "500";
+      left.style.fontSize = platform === "iOS" ? "15px" : "12px";
+
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.alignItems = "center";
+      right.style.gap = "0px";
+
+      // Signal icon
+      const signal = document.createElement("div");
+      signal.innerHTML =
+        '<svg width="18" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="14" width="3" height="8" rx="1"/><rect x="7" y="10" width="3" height="12" rx="1"/><rect x="12" y="6" width="3" height="16" rx="1"/><rect x="17" y="2" width="3" height="20" rx="1"/></svg>';
+
+      // WiFi icon
+      const wifi = document.createElement("div");
+      wifi.innerHTML =
+        '<svg width="18" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12" y2="20"/></svg>';
+
+      // Battery icon
+      const battery = document.createElement("div");
+      battery.innerHTML =
+        '<svg width="24" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="6" width="18" height="12" rx="2"/><path d="M23 10v4"/></svg>';
+
+      right.appendChild(signal);
+      right.appendChild(wifi);
+      right.appendChild(battery);
+      statusBar.appendChild(left);
+      statusBar.appendChild(right);
+      screen.insertBefore(statusBar, screen.firstChild);
+    } else {
+      // Update styling if platform changed
+      const platform = frame.getAttribute("data-platform") || "iOS";
+      statusBar.style.padding = platform === "iOS" ? "0 10px" : "0 12px";
+      statusBar.style.height = platform === "iOS" ? "20px" : "24px";
+      statusBar.style.background = platform === "iOS"
+        ? "linear-gradient(180deg, rgba(242,242,247,0.95) 0%, rgba(229,229,234,0.9) 100%)"
+        : "#ffffff";
+      statusBar.style.borderBottom =
+        platform === "iOS" ? "0.5px solid rgba(0,0,0,0.15)" : "1px solid rgba(0,0,0,0.08)";
+    }
+
+    // Start/refresh timer for time updates
+    if (statusBarTimer) clearInterval(statusBarTimer);
+    statusBarTimer = setInterval(() => {
+      const frame = document.getElementById("__mf_simulator_frame__");
+      const platform = frame?.getAttribute("data-platform") || "iOS";
+      const timeEl = document.getElementById("__mf_status_time__");
+      if (timeEl) timeEl.textContent = getFormattedTime(platform);
+    }, 30 * 1000); // refresh every 30s
+
+    // Initial time set
+    const timeEl = document.getElementById("__mf_status_time__");
+    if (timeEl) timeEl.textContent = getFormattedTime(platform);
+  } catch (_) {}
+}
+
+function adjustIframeForBars() {
+  const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
+  const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+  const statusBar = document.getElementById("__mf_status_bar__");
+  if (!iframe) return;
+  const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
+  const navVisible = browserNavBar && browserNavBar.style.display !== "none";
+  let navBarHeight = 0;
+  if (navVisible) {
+    const mockupContainer = document.querySelector("#__mf_simulator_frame__");
+    const platform = mockupContainer?.getAttribute("data-platform") || "iOS";
+    navBarHeight = platform === "iOS" ? 44 : 56;
+  }
+  iframe.style.top = sbh + navBarHeight + "px";
+  iframe.style.height = `calc(100% - ${sbh + navBarHeight}px)`;
+}
+
+function getFormattedTime(platform) {
+  const d = new Date();
+  // iOS typically shows h:mm, Android often shows h:mm as well
+  const opts = { hour: "numeric", minute: "2-digit" };
+  let str = d.toLocaleTimeString([], opts);
+  // Remove AM/PM if any
+  str = str.replace(/\s?[AP]M$/i, "");
+  return str;
 }
 
 // Offscreen recording functionality
