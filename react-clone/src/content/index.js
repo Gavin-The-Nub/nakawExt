@@ -1092,7 +1092,7 @@ function ensureStatusBar() {
       statusBar.style.display = "flex";
       statusBar.style.alignItems = "center";
       statusBar.style.justifyContent = "space-between";
-      statusBar.style.padding = platform === "iOS" ? "10px 24px" : "10px 12px";
+      statusBar.style.padding = platform === "iOS" ? "10px 30px" : "10px 12px";
       statusBar.style.zIndex = "9";
       statusBar.style.pointerEvents = "none";
       statusBar.style.fontFamily =
@@ -1186,12 +1186,12 @@ function adjustIframeForBars() {
 
 function getFormattedTime(platform) {
   const d = new Date();
-  // iOS typically shows h:mm, Android often shows h:mm as well
-  const opts = { hour: "numeric", minute: "2-digit" };
-  let str = d.toLocaleTimeString([], opts);
-  // Remove AM/PM if any
-  str = str.replace(/\s?[AP]M$/i, "");
-  return str;
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  const suffix = hours >= 12 ? "pm" : "am";
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  return `${hours}:${minutes} ${suffix}`;
 }
 
 // Offscreen recording functionality
