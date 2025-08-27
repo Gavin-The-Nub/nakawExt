@@ -1274,11 +1274,6 @@ function ensureStatusBar() {
       statusBar.appendChild(left);
       statusBar.appendChild(right);
       screen.insertBefore(statusBar, screen.firstChild);
-      // Apply dynamic theme color after creating the bar
-      try {
-        updateStatusBarThemeColor();
-        attachIframeThemeWatchers();
-      } catch (_) {}
     } else {
       // Update styling if platform changed
       const platform = frame.getAttribute("data-platform") || "iOS";
@@ -1304,9 +1299,6 @@ function ensureStatusBar() {
         platform === "iOS"
           ? "0.5px solid rgba(0,0,0,0.15)"
           : "1px solid rgba(0,0,0,0.08)";
-      try {
-        updateStatusBarThemeColor();
-      } catch (_) {}
     }
 
     // Start/refresh timer for time updates
@@ -1337,162 +1329,6 @@ function ensureStatusBar() {
       sb.__observerHooked = true;
     }
   } catch (_) {}
-}
-
-// Determine status bar background based on current website (inside iframe)
-function updateStatusBarThemeColor() {
-  try {
-    const statusBar = document.getElementById("__mf_status_bar__");
-    if (!statusBar) return;
-    const frame = document.getElementById("__mf_simulator_frame__");
-    const platform = frame?.getAttribute("data-platform") || "iOS";
-    // Default backgrounds if nothing detected
-    const defaultBg =
-      platform === "iOS"
-        ? "linear-gradient(180deg, rgb(242, 242, 247) 0%, rgb(229, 229, 234) 100%)"
-        : "#ffffff";
-
-    const detected = detectSiteThemeColor();
-    if (!detected) {
-      statusBar.style.background = defaultBg;
-      setStatusBarForegroundColor("#000000");
-      return;
-    }
-    statusBar.style.background = detected;
-    const fg = getContrastingTextColor(detected);
-    setStatusBarForegroundColor(fg);
-  } catch (_) {}
-}
-
-// Tries meta[name="theme-color"], then a small domain map
-function detectSiteThemeColor() {
-  try {
-    const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
-    const win = iframe?.contentWindow;
-    const doc = iframe?.contentDocument || win?.document;
-    // 1) meta theme-color
-    const meta = doc?.querySelector('meta[name="theme-color"]');
-    const metaColor = meta?.getAttribute("content")?.trim();
-    if (metaColor) return normalizeColor(metaColor);
-    // 2) domain map
-    const host = win?.location?.hostname || window.location.hostname;
-    const domainMap = {
-      "twitter.com": "#000000",
-      "x.com": "#000000",
-      "youtube.com": "#ffffff",
-      "m.youtube.com": "#ffffff",
-      "facebook.com": "#1877f2",
-      "instagram.com": "#000000",
-      "github.com": "#0d1117",
-      "google.com": "#ffffff",
-      "news.ycombinator.com": "#ff6600",
-    };
-    if (host) {
-      const entry = Object.entries(domainMap).find(([d]) => host.endsWith(d));
-      if (entry) return entry[1];
-    }
-  } catch (_) {}
-  return null;
-}
-
-function setStatusBarForegroundColor(colorHex) {
-  try {
-    const statusBar = document.getElementById("__mf_status_bar__");
-    if (!statusBar) return;
-    statusBar.style.color = colorHex;
-    // Update inner SVG icon fills to match foreground for readability
-    statusBar
-      .querySelectorAll("svg path, svg rect, svg circle, svg polygon")
-      .forEach((el) => {
-        try {
-          el.setAttribute("fill", colorHex);
-        } catch (_) {}
-        try {
-          el.setAttribute("stroke", colorHex);
-        } catch (_) {}
-      });
-  } catch (_) {}
-}
-
-// Attach watchers to iframe to react to navigation or meta changes
-function attachIframeThemeWatchers() {
-  try {
-    const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
-    if (!iframe) return;
-    const win = iframe.contentWindow;
-    const doc = iframe.contentDocument || win?.document;
-    if (!win || !doc) return;
-
-    // Avoid double-hook
-    if (iframe.__mfThemeWatchersHooked) return;
-    iframe.__mfThemeWatchersHooked = true;
-
-    const onMaybeChange = () => {
-      try {
-        updateStatusBarThemeColor();
-      } catch (_) {}
-    };
-
-    win.addEventListener("hashchange", onMaybeChange, { passive: true });
-    win.addEventListener("popstate", onMaybeChange, { passive: true });
-    win.addEventListener("load", onMaybeChange, { passive: true });
-    win.addEventListener("pageshow", onMaybeChange, { passive: true });
-
-    // Observe head for meta changes
-    const mo = new MutationObserver(onMaybeChange);
-    mo.observe(doc.head || doc.documentElement, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-    });
-  } catch (_) {}
-}
-
-// Utilities: color normalization and contrast
-function normalizeColor(color) {
-  const c = color.trim().toLowerCase();
-  // Already rgb/rgba or hsl; return as-is
-  if (c.startsWith("rgb(") || c.startsWith("rgba(") || c.startsWith("hsl("))
-    return color;
-  // Hex forms
-  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) return c;
-  // Named colors minimal map
-  const names = { black: "#000000", white: "#ffffff" };
-  return names[c] || c;
-}
-
-function getContrastingTextColor(bg) {
-  // Extract rgb from hex or rgb()
-  let r = 255,
-    g = 255,
-    b = 255;
-  try {
-    if (bg.startsWith("#")) {
-      const hex = bg.replace("#", "");
-      const v =
-        hex.length === 3
-          ? hex
-              .split("")
-              .map((x) => x + x)
-              .join("")
-          : hex;
-      r = parseInt(v.slice(0, 2), 16);
-      g = parseInt(v.slice(2, 4), 16);
-      b = parseInt(v.slice(4, 6), 16);
-    } else if (bg.startsWith("rgb")) {
-      const nums = bg
-        .replace(/rgba?\(|\)/g, "")
-        .split(",")
-        .map((x) => parseFloat(x.trim()));
-      r = nums[0] ?? 255;
-      g = nums[1] ?? 255;
-      b = nums[2] ?? 255;
-    }
-  } catch (_) {}
-  // Luminance formula
-  const luminance =
-    0.2126 * (r / 255) + 0.7152 * (g / 255) + 0.0722 * (b / 255);
-  return luminance > 0.6 ? "#000000" : "#ffffff";
 }
 
 function adjustIframeForBars() {
