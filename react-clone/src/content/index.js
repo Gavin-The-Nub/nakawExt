@@ -20,12 +20,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       setTimeout(() => {
         const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
         const button = document.getElementById("mf-btn-browser-nav");
+        const statusBarBtn = document.getElementById("mf-btn-status-bar");
         if (browserNavBar && button) {
           // In landscape mode, navigation bar is hidden by default
           if (orientation === "landscape") {
             button.classList.remove("selected");
           } else {
             button.classList.add("selected");
+          }
+        }
+        // Status bar is visible by default unless platform is macOS
+        const statusBar = document.getElementById("__mf_status_bar__");
+        if (statusBarBtn) {
+          if (statusBar && statusBar.style.display !== "none") {
+            statusBarBtn.classList.add("selected");
+          } else {
+            statusBarBtn.classList.remove("selected");
           }
         }
       }, 100); // Small delay to ensure elements are created
@@ -67,11 +77,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             "__mf_browser_nav_bar__"
           );
           const button = document.getElementById("mf-btn-browser-nav");
+          const statusBarBtn = document.getElementById("mf-btn-status-bar");
           if (browserNavBar && button) {
             if (currentOrientation === "landscape") {
               button.classList.remove("selected");
             } else {
               button.classList.add("selected");
+            }
+          }
+          // Sync status bar button
+          const statusBar = document.getElementById("__mf_status_bar__");
+          if (statusBarBtn) {
+            if (statusBar && statusBar.style.display !== "none") {
+              statusBarBtn.classList.add("selected");
+            } else {
+              statusBarBtn.classList.remove("selected");
             }
           }
         }, 150); // Additional delay to ensure browser nav bar is created
@@ -85,11 +105,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       setTimeout(() => {
         const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
         const button = document.getElementById("mf-btn-browser-nav");
+        const statusBarBtn = document.getElementById("mf-btn-status-bar");
         if (browserNavBar && button) {
           if (orientation === "landscape") {
             button.classList.remove("selected");
           } else {
             button.classList.add("selected");
+          }
+        }
+        // Sync status bar button
+        const statusBar = document.getElementById("__mf_status_bar__");
+        if (statusBarBtn) {
+          if (statusBar && statusBar.style.display !== "none") {
+            statusBarBtn.classList.add("selected");
+          } else {
+            statusBarBtn.classList.remove("selected");
           }
         }
       }, 100);
@@ -284,6 +314,9 @@ function injectToolbar() {
     </button>
     <button class="mf-toolbar-btn" id="mf-btn-browser-nav" title="Toggle Browser Navigation">
       <svg viewBox="0 0 24 24"><path d="M3 7H21V9H3V7ZM3 11H21V13H3V11ZM3 15H21V17H3V15Z" stroke="currentColor" stroke-width="1.5"/></svg>
+    </button>
+    <button class="mf-toolbar-btn" id="mf-btn-status-bar" title="Toggle Status Bar">
+      <svg viewBox="0 0 24 24"><path d="M1 4H23V8H1V4Z M1 10H23V14H1V10Z M1 16H23V20H1V16Z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
     </button>
     <div id="mf-recording-status" class="recording-status" style="display: none;"></div>
   `;
@@ -577,6 +610,45 @@ function injectToolbar() {
     }
   };
 
+  document.getElementById("mf-btn-status-bar").onclick = () => {
+    // Toggle status bar visibility and reflow
+    const statusBar = document.getElementById("__mf_status_bar__");
+    const button = document.getElementById("mf-btn-status-bar");
+    const frame = document.getElementById("__mf_simulator_frame__");
+
+    if (!frame) return;
+
+    const platform = frame.getAttribute("data-platform") || "iOS";
+
+    if (platform === "macOS") {
+      // No status bar for macOS; ensure selected is off
+      if (button) button.classList.remove("selected");
+      return;
+    }
+
+    // Ensure status bar exists if toggling on
+    if (!statusBar) {
+      ensureStatusBar();
+    }
+
+    const sb = document.getElementById("__mf_status_bar__");
+    if (!sb) {
+      if (button) button.classList.remove("selected");
+      return;
+    }
+
+    const isVisible = sb.style.display !== "none";
+    if (isVisible) {
+      sb.style.display = "none";
+      if (button) button.classList.remove("selected");
+    } else {
+      sb.style.display = "flex";
+      if (button) button.classList.add("selected");
+    }
+
+    adjustIframeForBars();
+  };
+
   document.getElementById("mf-btn-browser-nav").onclick = () => {
     // Toggle browser navigation bar visibility and let shared layout handle positioning
     const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
@@ -606,11 +678,21 @@ function injectToolbar() {
   setTimeout(() => {
     const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
     const button = document.getElementById("mf-btn-browser-nav");
+    const statusBarBtn = document.getElementById("mf-btn-status-bar");
     if (browserNavBar && button) {
       if (currentOrientation === "landscape") {
         button.classList.remove("selected");
       } else {
         button.classList.add("selected");
+      }
+    }
+    // Initialize status bar button state
+    const statusBar = document.getElementById("__mf_status_bar__");
+    if (statusBarBtn) {
+      if (statusBar && statusBar.style.display !== "none") {
+        statusBarBtn.classList.add("selected");
+      } else {
+        statusBarBtn.classList.remove("selected");
       }
     }
     // After everything mounts, ensure status bar layout is applied
