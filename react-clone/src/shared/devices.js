@@ -23,9 +23,9 @@ export const DEVICES = [
     platform: "macOS",
     mockup: "assets/devices/macbook-air.png",
     screenPct: {
-      top: 8.0,
+      top: 5.0,
       right: 10,
-      bottom: 8.0,
+      bottom: 5.0,
       left: 10,
       radius: 1.0,
       scale: 0.8,
@@ -39,8 +39,8 @@ export const DEVICES = [
     platform: "macOS",
     mockup: "assets/devices/apple-imac.png",
     screenPct: {
-      top: 3,
-      right: 8.5,
+      top: 2.8,
+      right: 1,
       bottom: 35,
       left: 1,
       radius: 0,
@@ -471,7 +471,7 @@ export const DEVICES = [
       bottom: 8,
       left: 8,
       radius: 1,
-      scale: 0.6,
+      scale: 0.5,
     },
   },
   {
