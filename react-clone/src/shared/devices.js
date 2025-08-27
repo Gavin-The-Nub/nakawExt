@@ -54,7 +54,14 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/applewatch.png",
-    screenPct: { top: 22, right: 10, bottom: 22, left: 10, radius: 3, scale: 1.2 },
+    screenPct: {
+      top: 22,
+      right: 10,
+      bottom: 22,
+      left: 10,
+      radius: 3,
+      scale: 1.2,
+    },
   },
   {
     slug: "dell14",
@@ -209,6 +216,7 @@ export const DEVICES = [
     platform: "iOS",
     mockup: "assets/devices/ip13.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
+    statusBarPadding: [0, 20, 0, 20],
   },
   {
     slug: "ip13mini",
