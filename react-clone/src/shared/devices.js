@@ -461,7 +461,7 @@ export const DEVICES = [
   {
     slug: "macbookpro",
     name: "Macbook Pro 2021",
-    viewport: { width: 1728, height: 1055 },
+    viewport: { width: 1528, height: 1055 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/macbookpro.png",
@@ -471,7 +471,7 @@ export const DEVICES = [
       bottom: 8,
       left: 8,
       radius: 1,
-      scale: 0.5,
+      scale: 0.6,
     },
   },
   {
