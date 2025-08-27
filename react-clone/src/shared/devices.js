@@ -18,7 +18,7 @@ export const DEVICES = [
   {
     slug: "mb-air",
     name: "MacBook Air",
-    viewport: { width: 1280, height: 800 },
+    viewport: { width: 1280, height: 750 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/macbook-air.png",
@@ -34,7 +34,7 @@ export const DEVICES = [
   {
     slug: "apple-imac",
     name: `Apple iMac 24"`,
-    viewport: { width: 2048, height: 1152 },
+    viewport: { width: 1280, height: 1152 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/apple-imac.png",
@@ -44,7 +44,7 @@ export const DEVICES = [
       bottom: 35,
       left: 1,
       radius: 0,
-      scale: 0.5,
+      scale: 0.6,
     },
   },
   {
@@ -59,7 +59,7 @@ export const DEVICES = [
   {
     slug: "dell14",
     name: "Dell Latitude",
-    viewport: { width: 1440, height: 809 },
+    viewport: { width: 1440, height: 1000 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/dell14.png",
@@ -461,7 +461,7 @@ export const DEVICES = [
   {
     slug: "macbookpro",
     name: "Macbook Pro 2021",
-    viewport: { width: 1728, height: 1085 },
+    viewport: { width: 1728, height: 1055 },
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/macbookpro.png",
