@@ -758,6 +758,14 @@ function injectToolbar() {
       browserSlider.value = "100";
     }
 
+    // Disable browser navigation controls on macOS
+    const browserDisabled = platform === "macOS";
+    if (browserToggle) {
+      browserToggle.style.opacity = browserDisabled ? "0.5" : "1";
+      browserToggle.style.pointerEvents = browserDisabled ? "none" : "auto";
+    }
+    if (browserSlider) browserSlider.disabled = browserDisabled;
+
     // Scrollbar UI visibility (default hidden). We use iframe data attribute for truth.
     let scrollbarVisible = false;
     try {
@@ -2160,6 +2168,13 @@ function injectBrowserNavigationBar() {
   const browserNavBar = document.createElement("div");
   browserNavBar.id = "__mf_browser_nav_bar__";
   const platform = frame.getAttribute("data-platform") || "iOS";
+
+  // Do not render browser navigation on macOS devices
+  if (platform === "macOS") {
+    // Ensure layout updates if an existing bar was removed
+    try { adjustIframeForBars(); } catch (_) {}
+    return;
+  }
 
   browserNavBar.style.position = "absolute";
   browserNavBar.style.left = "0";
