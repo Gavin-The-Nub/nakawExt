@@ -670,8 +670,9 @@ function createSimulatorOverlay({
   mockupContainer.style.transformOrigin = "50% 50%";
   mockupContainer.style.willChange = "transform";
 
-  // Store orientation data for future reference
+  // Store orientation and platform data for future reference
   mockupContainer.setAttribute("data-orientation", orientation);
+  mockupContainer.setAttribute("data-platform", platform);
 
   // Create mockup image with proper sizing
   const mockupImg = document.createElement("img");
