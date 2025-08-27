@@ -441,14 +441,22 @@ function injectToolbar() {
             canvas.width = cw;
             canvas.height = ch;
             const ctx = canvas.getContext("2d");
+            // Improve quality and avoid edge artifacts
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.clearRect(0, 0, cw, ch);
 
             // Draw only the screen area (cropped from the full tab image)
             const sxScreen = Math.round(screenRect.left * dpr);
             const syScreen = Math.round(screenRect.top * dpr);
             const sw = Math.round(screenRect.width * dpr);
             const sh = Math.round(screenRect.height * dpr);
-            const dx = Math.round((screenRect.left - frameRect.left) * dpr);
-            const dy = Math.round((screenRect.top - frameRect.top) * dpr);
+            // Inset the destination by 1 device pixel to avoid tiny white corners
+            const inset = Math.max(1, Math.round(1.6 * dpr));
+            const dx = Math.round((screenRect.left - frameRect.left) * dpr) + inset;
+            const dy = Math.round((screenRect.top - frameRect.top) * dpr) + inset;
+            const dw = Math.max(0, sw - inset * 2);
+            const dh = Math.max(0, sh - inset * 2);
             ctx.drawImage(
               fullTabImg,
               sxScreen,
@@ -457,8 +465,8 @@ function injectToolbar() {
               sh,
               dx,
               dy,
-              sw,
-              sh
+              dw,
+              dh
             );
 
             // Load the device image as a safe same-origin blob to avoid canvas tainting
