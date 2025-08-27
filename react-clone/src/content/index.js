@@ -49,6 +49,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           toolbar = null; // Reset toolbar reference
           injectToolbar();
         }
+        // Recreate browser navigation bar for new device platform
+        setTimeout(() => {
+          const existingNavBar = document.getElementById("__mf_browser_nav_bar__");
+          if (existingNavBar) {
+            existingNavBar.remove();
+          }
+          // Re-inject browser navigation bar with new platform
+          injectBrowserNavigationBar();
+        }, 100); // Delay to ensure overlay recreation is complete
+        
         // Update browser navigation toggle button state after device change
         setTimeout(() => {
           const browserNavBar = document.getElementById(
@@ -62,7 +72,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               button.classList.add("selected");
             }
           }
-        }, 50); // Additional delay to ensure browser nav bar is created
+        }, 150); // Additional delay to ensure browser nav bar is created
       }, 100); // Small delay to ensure overlay recreation is complete
       break;
 
@@ -391,190 +401,7 @@ function injectToolbar() {
     // Always ensure status bar exists before nav bar sizing
     ensureStatusBar();
     if (overlay && frame && screen && !browserNavBar) {
-      browserNavBar = document.createElement("div");
-      browserNavBar.id = "__mf_browser_nav_bar__";
-      const platform = frame.getAttribute("data-platform") || "iOS";
-      browserNavBar.style.position = "absolute";
-      browserNavBar.style.left = "0";
-      browserNavBar.style.right = "0";
-      browserNavBar.style.zIndex = "10";
-      browserNavBar.style.pointerEvents = "none";
-      if (platform === "iOS") {
-        // Position at bottom for iOS Safari UI
-        browserNavBar.style.top = "auto";
-        browserNavBar.style.bottom = "0";
-        browserNavBar.style.background =
-          "linear-gradient(180deg, #f9f9fb 0%, #ececf0 100%)";
-        browserNavBar.style.borderTop = "0.5px solid rgba(0,0,0,0.1)";
-        browserNavBar.style.display = "block";
-        browserNavBar.style.padding = "8px 12px 10px";
-        browserNavBar.style.fontFamily =
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-        browserNavBar.style.color = "#000";
-        browserNavBar.style.pointerEvents = "none";
-        browserNavBar.innerHTML = `
-          <div style=\"display:flex;justify-content:space-between;align-items:center;background:#EFF1F5;border-radius:10px;padding:10px 14px;margin: 0px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.08);border:1px solid rgba(142,142,147,0.2);pointer-events:auto;\">
-            <span style=\"display:inline-flex;margin-right:10px;color:#6b7280;\">
-              <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 7h16M4 12h16M4 17h16\"/></svg>
-            </span>
-            <span style=\"display:flex;align-items:center;\">
-              <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
-                <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
-              </span>
-              <span style=\"flex:1;color:#111827;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
-                window.location.hostname || "www.webmobilefirst.com"
-              }</span>
-            </span>
-            <button id=\"__mf_nav_refresh__\" style=\"margin-left:8px;padding:6px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
-              <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"1 4 1 10 7 10\"/><path d=\"M3.51 15a9 9 0 1 0 2-9.36L1 10\"/></svg>
-            </button>
-          </div>
-          <div style=\"display:flex;align-items:center;justify-content:center;gap:10%;margin-top:10px;pointer-events:auto;\">
-            <div style=\"display:flex;align-items:center;gap:30px;\">
-                <button id=\"__mf_nav_back__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"15 18 9 12 15 6\"/></svg>
-                </button>
-                <button id=\"__mf_nav_forward__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"9 18 15 12 9 6\"/></svg>
-                </button>
-                <button id=\"__mf_nav_share__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8\"/><polyline points=\"16 6 12 2 8 6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg>
-                </button>
-                <button id=\"__mf_nav_bookmark__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                  <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z\"/></svg>
-                </button>
-                <div style=\"position:relative;\">
-                  <button id=\"__mf_nav_tabs__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                    <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"14\" height=\"14\" rx=\"2\"/><rect x=\"7\" y=\"8\" width=\"14\" height=\"14\" rx=\"2\" opacity=\".6\"/></svg>
-                  </button>
-                  <span style=\"position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:#2563eb;color:#fff;font-size:12px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-weight:600;\">2</span>
-                </div>
-              </div>
-          </div>
-        `;
-        const _b = browserNavBar.querySelector("#__mf_nav_back__");
-        if (_b) _b.onclick = () => history.back();
-        const _f = browserNavBar.querySelector("#__mf_nav_forward__");
-        if (_f) _f.onclick = () => history.forward();
-        const _r = browserNavBar.querySelector("#__mf_nav_refresh__");
-        if (_r) _r.onclick = () => location.reload();
-        screen.insertBefore(browserNavBar, screen.firstChild);
-        adjustIframeForBars();
-        return;
-      } else {
-        // Position at top for Android Chrome UI
-        const statusBar = document.getElementById("__mf_status_bar__");
-        const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
-        browserNavBar.style.top = sbh + "px";
-        browserNavBar.style.bottom = "auto";
-        browserNavBar.style.background = "#ffffff";
-        browserNavBar.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.1)";
-        browserNavBar.style.display = "block";
-        browserNavBar.style.padding = "8px 10px";
-        browserNavBar.style.fontFamily = "'Roboto','Noto Sans',sans-serif";
-        browserNavBar.style.color = "#202124";
-        browserNavBar.style.pointerEvents = "none";
-        browserNavBar.innerHTML = `
-          <div style=\"display:flex;align-items:center;background:#f1f3f4;border-radius:9999px;padding:8px 12px;border:1px solid rgba(0,0,0,0.06);pointer-events:auto;\">
-            <span style=\"display:inline-flex;margin-right:8px;color:#5f6368;\">
-              <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#5f6368\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
-            </span>
-            <span style=\"flex:1;color:#202124;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
-              window.location.hostname || "www.webmobilefirst.com"
-            }</span>
-            <button id=\"__mf_nav_menu__\" style=\"margin-left:8px;padding:8px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
-              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#5f6368\"><path d=\"M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z\"/></svg>
-            </button>
-          </div>
-        `;
-        screen.insertBefore(browserNavBar, screen.firstChild);
-        adjustIframeForBars();
-        return;
-        // Left section
-        const leftSection = document.createElement("div");
-        leftSection.style.display = "flex";
-        leftSection.style.alignItems = "center";
-        leftSection.style.gap = "8px";
-        const backBtn = document.createElement("div");
-        backBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z' fill='currentColor'/></svg>`;
-        backBtn.style.color = "#5f6368";
-        backBtn.style.cursor = "pointer";
-        backBtn.style.pointerEvents = "auto";
-        backBtn.style.padding = "8px";
-        backBtn.style.borderRadius = "50%";
-        backBtn.style.transition = "background-color 0.2s";
-        backBtn.onmouseenter = () =>
-          (backBtn.style.backgroundColor = "rgba(95, 99, 104, 0.1)");
-        backBtn.onmouseleave = () =>
-          (backBtn.style.backgroundColor = "transparent");
-        leftSection.appendChild(backBtn);
-        // Center section
-        const centerSection = document.createElement("div");
-        centerSection.style.flex = "1";
-        centerSection.style.display = "flex";
-        centerSection.style.alignItems = "center";
-        centerSection.style.justifyContent = "center";
-        centerSection.style.margin = "0 12px";
-        const urlBar = document.createElement("div");
-        urlBar.style.background = "#f1f3f4";
-        urlBar.style.borderRadius = "24px";
-        urlBar.style.padding = "8px 14px";
-        urlBar.style.fontSize = "14px";
-        urlBar.style.color = "#5f6368";
-        urlBar.style.fontWeight = "400";
-        urlBar.style.maxWidth = "320px";
-        urlBar.style.overflow = "hidden";
-        urlBar.style.textOverflow = "ellipsis";
-        urlBar.style.whiteSpace = "nowrap";
-        urlBar.style.display = "flex";
-        urlBar.style.alignItems = "center";
-        urlBar.style.gap = "8px";
-        const lockIcon = document.createElement("div");
-        lockIcon.innerHTML = `<svg width='16' height='16' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z' fill='#34a853'/></svg>`;
-        const urlText = document.createElement("span");
-        urlText.textContent = window.location.hostname || "example.com";
-        urlBar.appendChild(lockIcon);
-        urlBar.appendChild(urlText);
-        centerSection.appendChild(urlBar);
-        // Right section
-        const rightSection = document.createElement("div");
-        rightSection.style.display = "flex";
-        rightSection.style.alignItems = "center";
-        rightSection.style.gap = "8px";
-        const moreBtn = document.createElement("div");
-        moreBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M12 8C13.1 8 14 7.1 14 6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6C10 7.1 10.9 8 12 8ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10ZM12 16C10.9 16 10 16.9 10 18C10 19.1 10.9 20 12 20C13.1 20 14 16.9 14 18C14 19.1 13.1 16 12 16Z' fill='currentColor'/></svg>`;
-        moreBtn.style.color = "#5f6368";
-        moreBtn.style.cursor = "pointer";
-        moreBtn.style.pointerEvents = "auto";
-        moreBtn.style.padding = "8px";
-        moreBtn.style.borderRadius = "50%";
-        moreBtn.style.transition = "background-color 0.2s";
-        moreBtn.onmouseenter = () =>
-          (moreBtn.style.backgroundColor = "rgba(95, 99, 104, 0.1)");
-        moreBtn.onmouseleave = () =>
-          (moreBtn.style.backgroundColor = "transparent");
-        const tabsBtn = document.createElement("div");
-        tabsBtn.innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19Z' fill='currentColor'/><path d='M7 7H17V9H7V7ZM7 11H17V13H7V11ZM7 15H13V17H7V15Z' fill='currentColor'/></svg>`;
-        tabsBtn.style.color = "#5f6368";
-        tabsBtn.style.cursor = "pointer";
-        tabsBtn.style.pointerEvents = "auto";
-        tabsBtn.style.padding = "8px";
-        tabsBtn.style.borderRadius = "50%";
-        tabsBtn.style.transition = "background-color 0.2s";
-        tabsBtn.onmouseenter = () =>
-          (tabsBtn.style.backgroundColor = "rgba(95, 99, 104, 0.1)");
-        tabsBtn.onmouseleave = () =>
-          (tabsBtn.style.backgroundColor = "transparent");
-        rightSection.appendChild(moreBtn);
-        rightSection.appendChild(tabsBtn);
-        browserNavBar.appendChild(leftSection);
-        browserNavBar.appendChild(centerSection);
-        browserNavBar.appendChild(rightSection);
-      }
-      screen.insertBefore(browserNavBar, screen.firstChild);
-
-      // Position iframe below status bar and (optionally) nav bar
-      adjustIframeForBars();
+      injectBrowserNavigationBar();
     }
   }, 100);
 
@@ -1601,4 +1428,278 @@ function injectRecordingBorder() {
 function removeRecordingBorder() {
   const border = document.getElementById("mf-recording-border");
   if (border) border.remove();
+}
+
+function injectBrowserNavigationBar() {
+  const frame = document.getElementById("__mf_simulator_frame__");
+  const screen = document.getElementById("__mf_simulator_screen__");
+  
+  if (!frame || !screen) return;
+  
+  // Remove existing navigation bar if present
+  const existingNavBar = document.getElementById("__mf_browser_nav_bar__");
+  if (existingNavBar) {
+    existingNavBar.remove();
+  }
+  
+  const browserNavBar = document.createElement("div");
+  browserNavBar.id = "__mf_browser_nav_bar__";
+  const platform = frame.getAttribute("data-platform") || "iOS";
+  
+  browserNavBar.style.position = "absolute";
+  browserNavBar.style.left = "0";
+  browserNavBar.style.right = "0";
+  browserNavBar.style.zIndex = "10";
+  browserNavBar.style.pointerEvents = "none";
+  
+  if (platform === "iOS") {
+    // Position at bottom for iOS Safari UI
+    browserNavBar.style.top = "auto";
+    browserNavBar.style.bottom = "0";
+    browserNavBar.style.background =
+      "linear-gradient(180deg, #f9f9fb 0%, #ececf0 100%)";
+    browserNavBar.style.borderTop = "0.5px solid rgba(0,0,0,0.1)";
+    browserNavBar.style.display = "block";
+    browserNavBar.style.padding = "8px 12px 10px";
+    browserNavBar.style.fontFamily =
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    browserNavBar.style.color = "#000";
+    browserNavBar.style.pointerEvents = "none";
+    browserNavBar.innerHTML = `
+      <div style=\"display:flex;justify-content:space-between;align-items:center;background:#EFF1F5;border-radius:10px;padding:10px 14px;margin: 0px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.08);border:1px solid rgba(142,142,147,0.2);pointer-events:auto;\">
+        <span style=\"display:inline-flex;margin-right:10px;color:#6b7280;\">
+          <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 7h16M4 12h16M4 17h16\"/></svg>
+        </span>
+        <span style=\"display:flex;align-items:center;\">
+          <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
+            <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
+          </span>
+          <span style=\"flex:1;color:#111827;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
+            window.location.hostname || "www.webmobilefirst.com"
+          }</span>
+        </span>
+        <button id=\"__mf_nav_refresh__\" style=\"margin-left:8px;padding:6px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
+          <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"1 4 1 10 7 10\"/><path d=\"M3.51 15a9 9 0 1 0 2-9.36L1 10\"/></svg>
+        </button>
+      </div>
+      <div style=\"display:flex;align-items:center;justify-content:center;gap:10%;margin-top:10px;pointer-events:auto;\">
+        <div style=\"display:flex;align-items:center;gap:30px;\">
+            <button id=\"__mf_nav_back__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"15 18 9 12 15 6\"/></svg>
+            </button>
+            <button id=\"__mf_nav_forward__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"9 18 15 12 9 6\"/></svg>
+            </button>
+            <button id=\"__mf_nav_share__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8\"/><polyline points=\"16 6 12 2 8 6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg>
+            </button>
+            <button id=\"__mf_nav_bookmark__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z\"/></svg>
+            </button>
+            <div style=\"position:relative;\">
+              <button id=\"__mf_nav_tabs__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"14\" height=\"14\" rx=\"2\"/><rect x=\"7\" y=\"8\" width=\"14\" height=\"14\" rx=\"2\" opacity=\".6\"/></svg>
+              </button>
+              <span style=\"position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:#2563eb;color:#fff;font-size:12px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-weight:600;\">2</span>
+            </div>
+          </div>
+      </div>
+    `;
+    
+    // Add event listeners for iOS navigation
+    const _b = browserNavBar.querySelector('#__mf_nav_back__');
+    if (_b) _b.onclick = () => history.back();
+    const _f = browserNavBar.querySelector('#__mf_nav_forward__');
+    if (_f) _f.onclick = () => history.forward();
+    const _r = browserNavBar.querySelector('#__mf_nav_refresh__');
+    if (_r) _r.onclick = () => location.reload();
+    
+  } else {
+    // Position at top for Android Chrome UI
+    const statusBar = document.getElementById("__mf_status_bar__");
+    const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
+    browserNavBar.style.top = sbh + "px";
+    browserNavBar.style.bottom = "auto";
+    browserNavBar.style.background = "#ffffff";
+    browserNavBar.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.1)";
+    browserNavBar.style.display = "block";
+    browserNavBar.style.padding = "8px 10px";
+    browserNavBar.style.fontFamily = "'Roboto','Noto Sans',sans-serif";
+    browserNavBar.style.color = "#202124";
+    browserNavBar.style.pointerEvents = "none";
+    browserNavBar.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:4%;margin-top:10px;pointer-events:auto;">
+        <svg data-v-472967bd="" width="20" height="19" viewBox="0 0 20 19" fill="black" xmlns="http://www.w3.org/2000/svg" class="home"><path data-v-472967bd="" d="M16.1398 6.35722C15.5274 6.35722 15.0309 6.85367 15.0309 7.46607V17.5001C15.0309 18.1125 15.5274 18.6089 16.1398 18.6089C16.7522 18.6089 17.2486 18.1125 17.2486 17.5001V7.46607C17.2486 6.85367 16.7522 6.35722 16.1398 6.35722Z"></path><path data-v-472967bd="" d="M17.2487 17.5063C17.2487 16.8973 16.755 16.4036 16.146 16.4036L3.81309 16.4036C3.20411 16.4036 2.71043 16.8973 2.71043 17.5063C2.71043 18.1153 3.20411 18.6089 3.81309 18.6089H16.146C16.755 18.6089 17.2487 18.1153 17.2487 17.5063Z"></path><path data-v-472967bd="" d="M10.6215 0.454741C10.2122 0.0434338 9.54515 0.0399337 9.13156 0.446924L0.880601 8.56614C0.467008 8.97313 0.463528 9.63649 0.872829 10.0478C1.28213 10.4591 1.94922 10.4626 2.36281 10.0556L10.6138 1.9364C11.0274 1.52941 11.0308 0.866048 10.6215 0.454741Z"></path><path data-v-472967bd="" d="M3.81921 6.35722C3.20681 6.35722 2.71036 6.85367 2.71036 7.46607V17.5001C2.71036 18.1125 3.20681 18.6089 3.81921 18.6089C4.43161 18.6089 4.92806 18.1125 4.92806 17.5001V7.46607C4.92806 6.85367 4.43161 6.35722 3.81921 6.35722Z"></path><path data-v-472967bd="" d="M9.15675 0.425978C9.54745 0.0333643 10.1842 0.0300235 10.579 0.418516L18.898 8.60472C19.2928 8.99321 19.2962 9.62642 18.9055 10.019C18.5148 10.4117 17.878 10.415 17.4832 10.0265L9.16417 1.8403C8.76937 1.4518 8.76605 0.818592 9.15675 0.425978Z"></path></svg>
+        <div style=\"display:flex;align-items:center;background:#f1f3f4;border-radius:10px;padding:8px 12px;border:1px solid rgba(0,0,0,0.06);pointer-events:auto;\">
+          <span style=\"display:inline-flex;margin-right:8px;color:#5f6368;\">
+            <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#5f6368\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
+          </span>
+          <span style=\"flex:1;color:#202124;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
+            window.location.hostname || "www.webmobilefirst.com"
+          }</span>
+        </div>
+        <svg data-v-472967bd="" width="18" height="19" viewBox="0 0 18 19" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M7.533 8.34082L9.024 7.02832V12.6983H10.536V5.26432H9.066L6.6405 7.31182L7.533 8.34082Z"></path><path data-v-472967bd="" fill-rule="evenodd" clip-rule="evenodd" d="M0 5.2123C0 2.45087 2.23858 0.212296 5 0.212296H13C15.7614 0.212296 18 2.45087 18 5.2123V13.1117C18 15.8732 15.7614 18.1117 13 18.1117H5C2.23858 18.1117 0 15.8732 0 13.1117V5.2123ZM5 2.2123H13C14.6569 2.2123 16 3.55544 16 5.2123V13.1117C16 14.7686 14.6569 16.1117 13 16.1117H5C3.34315 16.1117 2 14.7686 2 13.1117V5.2123C2 3.55544 3.34315 2.2123 5 2.2123Z"></path></svg>
+        <svg data-v-472967bd="" width="4" height="17" viewBox="0 0 4 17" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M-0.000244141 2.1667C-0.000244141 3.24918 0.882209 4.1267 1.97077 4.1267C3.05933 4.1267 3.94178 3.24918 3.94178 2.1667C3.94178 1.08422 3.05933 0.206696 1.97077 0.206696C0.882209 0.206696 -0.000244141 1.08422 -0.000244141 2.1667Z"></path><path data-v-472967bd="" d="M-0.000244141 14.1573C-0.000244141 15.2398 0.882209 16.1173 1.97077 16.1173C3.05933 16.1173 3.94178 15.2398 3.94178 14.1573C3.94178 13.0748 3.05933 12.1973 1.97077 12.1973C0.882209 12.1973 -0.000244141 13.0748 -0.000244141 14.1573Z"></path><path data-v-472967bd="" d="M-0.000244141 8.16202C-0.000244141 9.2445 0.882209 10.122 1.97077 10.122C3.05933 10.122 3.94178 9.2445 3.94178 8.16202C3.94178 7.07954 3.05933 6.20201 1.97077 6.20201C0.882209 6.20201 -0.000244141 7.07954 -0.000244141 8.16202Z"></path></svg>
+      </div>
+    `;
+    
+    // Add event listener for Android menu button
+    const menuBtn = browserNavBar.querySelector('#__mf_nav_menu__');
+    if (menuBtn) {
+      menuBtn.onclick = () => {
+        // Toggle browser navigation bar visibility
+        const isVisible = browserNavBar.style.display !== "none";
+        if (isVisible) {
+          browserNavBar.style.display = "none";
+          const button = document.getElementById("mf-btn-browser-nav");
+          if (button) button.classList.remove("selected");
+        } else {
+          browserNavBar.style.display = "block";
+          const button = document.getElementById("mf-btn-browser-nav");
+          if (button) button.classList.add("selected");
+        }
+        adjustIframeForBars();
+      };
+    }
+  }
+  
+  screen.insertBefore(browserNavBar, screen.firstChild);
+  adjustIframeForBars();
+}
+
+function injectBrowserNavigationBar() {
+  const frame = document.getElementById("__mf_simulator_frame__");
+  const screen = document.getElementById("__mf_simulator_screen__");
+  
+  if (!frame || !screen) return;
+  
+  // Remove existing navigation bar if present
+  const existingNavBar = document.getElementById("__mf_browser_nav_bar__");
+  if (existingNavBar) {
+    existingNavBar.remove();
+  }
+  
+  const browserNavBar = document.createElement("div");
+  browserNavBar.id = "__mf_browser_nav_bar__";
+  const platform = frame.getAttribute("data-platform") || "iOS";
+  
+  browserNavBar.style.position = "absolute";
+  browserNavBar.style.left = "0";
+  browserNavBar.style.right = "0";
+  browserNavBar.style.zIndex = "10";
+  browserNavBar.style.pointerEvents = "none";
+  
+  if (platform === "iOS") {
+    // Position at bottom for iOS Safari UI
+    browserNavBar.style.top = "auto";
+    browserNavBar.style.bottom = "0";
+    browserNavBar.style.background =
+      "linear-gradient(180deg, #f9f9fb 0%, #ececf0 100%)";
+    browserNavBar.style.borderTop = "0.5px solid rgba(0,0,0,0.1)";
+    browserNavBar.style.display = "block";
+    browserNavBar.style.padding = "8px 12px 10px";
+    browserNavBar.style.fontFamily =
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    browserNavBar.style.color = "#000";
+    browserNavBar.style.pointerEvents = "none";
+    browserNavBar.innerHTML = `
+      <div style=\"display:flex;justify-content:space-between;align-items:center;background:#EFF1F5;border-radius:10px;padding:10px 14px;margin: 0px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.08);border:1px solid rgba(142,142,147,0.2);pointer-events:auto;\">
+        <span style=\"display:inline-flex;margin-right:10px;color:#6b7280;\">
+          <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 7h16M4 12h16M4 17h16\"/></svg>
+        </span>
+        <span style=\"display:flex;align-items:center;\">
+          <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
+            <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
+          </span>
+          <span style=\"flex:1;color:#111827;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
+            window.location.hostname || "www.webmobilefirst.com"
+          }</span>
+        </span>
+        <button id=\"__mf_nav_refresh__\" style=\"margin-left:8px;padding:6px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
+          <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"1 4 1 10 7 10\"/><path d=\"M3.51 15a9 9 0 1 0 2-9.36L1 10\"/></svg>
+        </button>
+      </div>
+      <div style=\"display:flex;align-items:center;justify-content:center;gap:10%;margin-top:10px;pointer-events:auto;\">
+        <div style=\"display:flex;align-items:center;gap:30px;\">
+            <button id=\"__mf_nav_back__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"15 18 9 12 15 6\"/></svg>
+            </button>
+            <button id=\"__mf_nav_forward__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"9 18 15 12 9 6\"/></svg>
+            </button>
+            <button id=\"__mf_nav_share__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8\"/><polyline points=\"16 6 12 2 8 6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg>
+            </button>
+            <button id=\"__mf_nav_bookmark__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z\"/></svg>
+            </button>
+            <div style=\"position:relative;\">
+              <button id=\"__mf_nav_tabs__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
+                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"14\" height=\"14\" rx=\"2\"/><rect x=\"7\" y=\"8\" width=\"14\" height=\"14\" rx=\"2\" opacity=\".6\"/></svg>
+              </button>
+              <span style=\"position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:#2563eb;color:#fff;font-size:12px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-weight:600;\">2</span>
+            </div>
+          </div>
+      </div>
+    `;
+    
+    // Add event listeners for iOS navigation
+    const _b = browserNavBar.querySelector('#__mf_nav_back__');
+    if (_b) _b.onclick = () => history.back();
+    const _f = browserNavBar.querySelector('#__mf_nav_forward__');
+    if (_f) _f.onclick = () => history.forward();
+    const _r = browserNavBar.querySelector('#__mf_nav_refresh__');
+    if (_r) _r.onclick = () => location.reload();
+    
+  } else {
+    // Position at top for Android Chrome UI
+    const statusBar = document.getElementById("__mf_status_bar__");
+    const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
+    browserNavBar.style.top = sbh + "px";
+    browserNavBar.style.bottom = "auto";
+    browserNavBar.style.background = "#ffffff";
+    browserNavBar.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.1)";
+    browserNavBar.style.display = "block";
+    browserNavBar.style.padding = "8px 10px";
+    browserNavBar.style.fontFamily = "'Roboto','Noto Sans',sans-serif";
+    browserNavBar.style.color = "#202124";
+    browserNavBar.style.pointerEvents = "none";
+    browserNavBar.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;gap:4%;margin-top:10px;pointer-events:auto;">
+        <svg data-v-472967bd="" width="20" height="19" viewBox="0 0 20 19" fill="black" xmlns="http://www.w3.org/2000/svg" class="home"><path data-v-472967bd="" d="M16.1398 6.35722C15.5274 6.35722 15.0309 6.85367 15.0309 7.46607V17.5001C15.0309 18.1125 15.5274 18.6089 16.1398 18.6089C16.7522 18.6089 17.2486 18.1125 17.2486 17.5001V7.46607C17.2486 6.85367 16.7522 6.35722 16.1398 6.35722Z"></path><path data-v-472967bd="" d="M17.2487 17.5063C17.2487 16.8973 16.755 16.4036 16.146 16.4036L3.81309 16.4036C3.20411 16.4036 2.71043 16.8973 2.71043 17.5063C2.71043 18.1153 3.20411 18.6089 3.81309 18.6089H16.146C16.755 18.6089 17.2487 18.1153 17.2487 17.5063Z"></path><path data-v-472967bd="" d="M10.6215 0.454741C10.2122 0.0434338 9.54515 0.0399337 9.13156 0.446924L0.880601 8.56614C0.467008 8.97313 0.463528 9.63649 0.872829 10.0478C1.28213 10.4591 1.94922 10.4626 2.36281 10.0556L10.6138 1.9364C11.0274 1.52941 11.0308 0.866048 10.6215 0.454741Z"></path><path data-v-472967bd="" d="M3.81921 6.35722C3.20681 6.35722 2.71036 6.85367 2.71036 7.46607V17.5001C2.71036 18.1125 3.20681 18.6089 3.81921 18.6089C4.43161 18.6089 4.92806 18.1125 4.92806 17.5001V7.46607C4.92806 6.85367 4.43161 6.35722 3.81921 6.35722Z"></path><path data-v-472967bd="" d="M9.15675 0.425978C9.54745 0.0333643 10.1842 0.0300235 10.579 0.418516L18.898 8.60472C19.2928 8.99321 19.2962 9.62642 18.9055 10.019C18.5148 10.4117 17.878 10.415 17.4832 10.0265L9.16417 1.8403C8.76937 1.4518 8.76605 0.818592 9.15675 0.425978Z"></path></svg>
+        <div style=\"display:flex;align-items:center;background:#f1f3f4;border-radius:10px;padding:8px 12px;border:1px solid rgba(0,0,0,0.06);pointer-events:auto;\">
+          <span style=\"display:inline-flex;margin-right:8px;color:#5f6368;\">
+            <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#5f6368\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
+          </span>
+          <span style=\"flex:1;color:#202124;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
+            window.location.hostname || "www.webmobilefirst.com"
+          }</span>
+        </div>
+        <svg data-v-472967bd="" width="18" height="19" viewBox="0 0 18 19" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M7.533 8.34082L9.024 7.02832V12.6983H10.536V5.26432H9.066L6.6405 7.31182L7.533 8.34082Z"></path><path data-v-472967bd="" fill-rule="evenodd" clip-rule="evenodd" d="M0 5.2123C0 2.45087 2.23858 0.212296 5 0.212296H13C15.7614 0.212296 18 2.45087 18 5.2123V13.1117C18 15.8732 15.7614 18.1117 13 18.1117H5C2.23858 18.1117 0 15.8732 0 13.1117V5.2123ZM5 2.2123H13C14.6569 2.2123 16 3.55544 16 5.2123V13.1117C16 14.7686 14.6569 16.1117 13 16.1117H5C3.34315 16.1117 2 14.7686 2 13.1117V5.2123C2 3.55544 3.34315 2.2123 5 2.2123Z"></path></svg>
+        <svg data-v-472967bd="" width="4" height="17" viewBox="0 0 4 17" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M-0.000244141 2.1667C-0.000244141 3.24918 0.882209 4.1267 1.97077 4.1267C3.05933 4.1267 3.94178 3.24918 3.94178 2.1667C3.94178 1.08422 3.05933 0.206696 1.97077 0.206696C0.882209 0.206696 -0.000244141 1.08422 -0.000244141 2.1667Z"></path><path data-v-472967bd="" d="M-0.000244141 14.1573C-0.000244141 15.2398 0.882209 16.1173 1.97077 16.1173C3.05933 16.1173 3.94178 15.2398 3.94178 14.1573C3.94178 13.0748 3.05933 12.1973 1.97077 12.1973C0.882209 12.1973 -0.000244141 13.0748 -0.000244141 14.1573Z"></path><path data-v-472967bd="" d="M-0.000244141 8.16202C-0.000244141 9.2445 0.882209 10.122 1.97077 10.122C3.05933 10.122 3.94178 9.2445 3.94178 8.16202C3.94178 7.07954 3.05933 6.20201 1.97077 6.20201C0.882209 6.20201 -0.000244141 7.07954 -0.000244141 8.16202Z"></path></svg>
+      </div>
+    `;
+    
+    // Add event listener for Android menu button
+    const menuBtn = browserNavBar.querySelector('#__mf_nav_menu__');
+    if (menuBtn) {
+      menuBtn.onclick = () => {
+        // Toggle browser navigation bar visibility
+        const isVisible = browserNavBar.style.display !== "none";
+        if (isVisible) {
+          browserNavBar.style.display = "none";
+          const button = document.getElementById("mf-btn-browser-nav");
+          if (button) button.classList.remove("selected");
+        } else {
+          browserNavBar.style.display = "block";
+          const button = document.getElementById("mf-btn-browser-nav");
+          if (button) button.classList.add("selected");
+        }
+        adjustIframeForBars();
+      };
+    }
+  }
+  
+  screen.insertBefore(browserNavBar, screen.firstChild);
+  adjustIframeForBars();
 }
