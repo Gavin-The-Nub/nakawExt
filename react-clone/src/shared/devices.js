@@ -199,7 +199,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip12promax.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.7 },
   },
   {
     slug: "ip13",
@@ -235,7 +235,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip13promax.png",
-    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.75 },
   },
   {
     slug: "ip14",
@@ -284,7 +284,7 @@ export const DEVICES = [
       bottom: 2,
       left: 5,
       radius: 3,
-      scale: 0.8,
+      scale: 0.75,
     },
   },
   {
@@ -348,7 +348,7 @@ export const DEVICES = [
       bottom: 1.5,
       left: 4,
       radius: 5,
-      scale: 0.8,
+      scale: 0.75,
     },
   },
   {
@@ -380,7 +380,7 @@ export const DEVICES = [
       bottom: 1.8,
       left: 4,
       radius: 6.5,
-      scale: 0.8,
+      scale: 0.75,
     },
   },
   {
