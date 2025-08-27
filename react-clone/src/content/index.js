@@ -993,23 +993,23 @@ function startOffscreenRecording(mockupBounds) {
         document.documentElement.style.border = "10px solid #ff0000";
         document.documentElement.style.boxSizing = "border-box";
 
-        // Method 2: Create a visible red border overlay
+        // Method 2: Create a visible red border overlay with highest z-index
         const recordingBorder = document.createElement("div");
         recordingBorder.id = "recording-border-overlay";
         recordingBorder.style.cssText = `
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          border: 10px solid #ff0000;
-          pointer-events: none;
-          z-index: 999999;
-          box-sizing: border-box;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          border: 10px solid #ff0000 !important;
+          pointer-events: none !important;
+          z-index: 2147483647 !important;
+          box-sizing: border-box !important;
         `;
         document.body.appendChild(recordingBorder);
 
-        // Button remains enabled so user can stop recording
+        // Note: We're not adding border to body to avoid double borders
       } else {
         console.error("Failed to start offscreen recording:", response?.error);
         showRecordingStatus(
@@ -1034,6 +1034,12 @@ function startOffscreenRecording(mockupBounds) {
         );
         if (recordingBorder) {
           recordingBorder.remove();
+        }
+
+        // Remove ultra border if it exists
+        const ultraBorder = document.getElementById("ultra-recording-border");
+        if (ultraBorder) {
+          ultraBorder.remove();
         }
 
         enableRecordButton(); // Re-enable button on failure
@@ -1064,6 +1070,12 @@ function stopRecording() {
         recordingBorder.remove();
       }
 
+      // Remove ultra border element
+      const ultraBorder = document.getElementById("ultra-recording-border");
+      if (ultraBorder) {
+        ultraBorder.remove();
+      }
+
       // Disable record button after stopping to prevent new recordings
       disableRecordButton();
 
@@ -1091,6 +1103,12 @@ function stopRecording() {
       );
       if (recordingBorder) {
         recordingBorder.remove();
+      }
+
+      // Remove ultra border if it exists
+      const ultraBorder = document.getElementById("ultra-recording-border");
+      if (ultraBorder) {
+        ultraBorder.remove();
       }
 
       // Re-enable button if stopping failed
@@ -1492,9 +1510,9 @@ function showDownloadModal(videoBlobData) {
   fileInfo.innerHTML = `
     <div style="margin-bottom: 8px; font-weight: 600; color: #333;">File Information:</div>
     <div style="color: #666; font-size: 14px;">
-      <div>Type: ${fileType}</div>
+      <div>Type: Video</div>
       <div>Size: ~${fileSize} KB</div>
-      <div>Format: ${fileExtension.toUpperCase()}</div>
+      <div>Format: webm</div>
     </div>
   `;
   rightColumn.appendChild(fileInfo);
@@ -1509,11 +1527,10 @@ function showDownloadModal(videoBlobData) {
 
   const videoPreview = document.createElement("video");
   videoPreview.style.cssText = `
-    width: 350px;
-    height: 250px;
-    border-radius: 12px;
-    border: 1px solid #e9ecef;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    
+    height: 400px;
+   
+   
     background: #000;
     cursor: pointer;
     object-fit: cover;
