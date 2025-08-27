@@ -663,6 +663,9 @@ function injectToolbar() {
       } else {
         // Use block to match initial creation and avoid flex-induced layout shifts
         browserNavBar.style.display = "block";
+        browserNavBar.setAttribute("data-auto-hidden", "false");
+        browserNavBar.style.transform = "translateY(0)";
+        browserNavBar.style.opacity = "1";
         if (button) button.classList.add("selected");
       }
 
@@ -698,6 +701,52 @@ function injectToolbar() {
     // After everything mounts, ensure status bar layout is applied
     adjustIframeForBars();
   }, 100);
+}
+
+// Attach scroll listeners to auto-hide/show browser nav bar depending on iframe scroll position
+function attachBrowserNavAutoHide() {
+  try {
+    const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
+    const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+    if (!iframe || !browserNavBar) return;
+
+    // Access the iframe's contentWindow for scroll events
+    const win = iframe.contentWindow;
+    const doc = iframe.contentDocument || win?.document;
+    if (!win || !doc) return;
+
+    // Debounced handler for scroll position
+    let lastState = null; // null | "top" | "scrolled"
+    const onScroll = () => {
+      // If nav is manually hidden, do nothing
+      if (browserNavBar.style.display === "none") return;
+
+      const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop || 0;
+      const atTop = scrollTop <= 0;
+
+      if (atTop && lastState !== "top") {
+        browserNavBar.setAttribute("data-auto-hidden", "false");
+        adjustIframeForBars();
+        lastState = "top";
+      } else if (!atTop && lastState !== "scrolled") {
+        browserNavBar.setAttribute("data-auto-hidden", "true");
+        adjustIframeForBars();
+        lastState = "scrolled";
+      }
+    };
+
+    // Attach listeners once
+    if (!browserNavBar.__autoHideHooked) {
+      win.addEventListener("scroll", onScroll, { passive: true });
+      // Also run on load and on resize (content changes)
+      win.addEventListener("load", onScroll, { passive: true });
+      win.addEventListener("resize", onScroll, { passive: true });
+      browserNavBar.__autoHideHooked = true;
+    }
+
+    // Initialize state based on current scroll
+    onScroll();
+  } catch (_) {}
 }
 
 function createDeviceSelector() {
@@ -1003,7 +1052,13 @@ function adjustIframeForBars() {
   if (browserNavBar && platform !== "iOS") {
     browserNavBar.style.top = sbh + "px";
   }
-  const navBarHeight = navVisible ? (platform === "iOS" ? 44 : 56) : 0;
+  // If auto-hidden, do not reserve space for the nav bar
+  let navBarHeight = 0;
+  if (navVisible) {
+    const autoHidden =
+      browserNavBar.getAttribute("data-auto-hidden") === "true";
+    navBarHeight = autoHidden ? 0 : platform === "iOS" ? 44 : 56;
+  }
   if (platform === "iOS") {
     // Status bar at top, browser nav at bottom
     iframe.style.top = sbh + "px";
@@ -1012,6 +1067,24 @@ function adjustIframeForBars() {
     // Status bar + browser nav both eat top space on Android (nav at top)
     iframe.style.top = sbh + navBarHeight + "px";
     iframe.style.height = `calc(100% - ${sbh + navBarHeight}px)`;
+  }
+
+  // Update slide transform based on auto-hide state and platform
+  if (browserNavBar && navVisible) {
+    const autoHidden = browserNavBar.getAttribute("data-auto-hidden") === "true";
+    if (autoHidden) {
+      if (platform === "iOS") {
+        // slide down out of view from bottom
+        browserNavBar.style.transform = "translateY(100%)";
+      } else {
+        // slide up out of view from top
+        browserNavBar.style.transform = "translateY(-100%)";
+      }
+      browserNavBar.style.opacity = "0";
+    } else {
+      browserNavBar.style.transform = "translateY(0)";
+      browserNavBar.style.opacity = "1";
+    }
   }
 }
 
@@ -1851,6 +1924,9 @@ function injectBrowserNavigationBar() {
   browserNavBar.style.right = "0";
   browserNavBar.style.zIndex = "10";
   browserNavBar.style.pointerEvents = "none";
+  // Enable smooth slide animations for auto-hide/show
+  browserNavBar.style.transition = "transform 200ms ease, opacity 200ms ease";
+  browserNavBar.setAttribute("data-auto-hidden", "false");
 
   if (platform === "iOS") {
     // Position at bottom for iOS Safari UI
@@ -1964,4 +2040,6 @@ function injectBrowserNavigationBar() {
 
   screen.insertBefore(browserNavBar, screen.firstChild);
   adjustIframeForBars();
+  // Attach auto-hide based on iframe scroll
+  attachBrowserNavAutoHide();
 }
