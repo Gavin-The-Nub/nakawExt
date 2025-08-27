@@ -151,7 +151,7 @@ async function startTabRecording(streamId, bounds) {
   const frame = mockupBounds && mockupBounds.frame ? mockupBounds.frame : null;
   const page = mockupBounds && mockupBounds.page ? mockupBounds.page : null;
 
-  const targetFps = 60;
+  const targetFps = 15;
 
   function computeCanvasSize() {
     const srcW = videoEl.videoWidth;
@@ -336,7 +336,7 @@ function startRecordingWithStream(stream, bounds) {
     };
 
     // Start recording with high frame rate
-    mediaRecorder.start(50); // Collect data every 50ms for 60 FPS recording
+    mediaRecorder.start(100); // Collect data every 100ms for 15 FPS recording
     console.log("MediaRecorder started with MIME type:", mimeType);
 
     console.log("Tab capture recording started successfully");
@@ -359,7 +359,7 @@ function initializeCanvas() {
   drawTestPattern();
 
   // Create stream from canvas
-  stream = canvas.captureStream(60); // 60 FPS for ultra-smooth recording
+  stream = canvas.captureStream(15); // 15 FPS for faster processing
 
   // Create MediaRecorder with canvas stream
   const mimeType = getSupportedMimeType();
@@ -404,7 +404,7 @@ function initializeCanvas() {
     };
 
     // Start recording
-    mediaRecorder.start(50); // Collect data every 50ms for 60 FPS
+    mediaRecorder.start(100); // Collect data every 100ms for 15 FPS
     console.log("MediaRecorder started with MIME type:", mimeType);
   } catch (error) {
     console.error("Error starting MediaRecorder:", error);
@@ -419,7 +419,7 @@ function startFrameCapture() {
     if (isRecording) {
       captureFrame();
     }
-  }, 16); // ~60 FPS (1000ms / 60 = 16.67ms)
+  }, 67); // ~15 FPS (1000ms / 15 = 66.67ms)
 }
 
 function captureFrame() {

@@ -144,6 +144,12 @@ function injectToolbar() {
         background: #f44336;
         animation: pulse 2s infinite;
       }
+      
+      .mf-toolbar-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #ccc !important;
+      }
       @keyframes pulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.05); }
@@ -249,6 +255,93 @@ function injectToolbar() {
         max-width: 300px;
         pointer-events: none;
         transition: opacity 0.3s ease;
+      }
+      
+      .recording-status.processing {
+        min-width: 250px;
+      }
+      
+      .progress-bar {
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+      
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4CAF50, #45a049);
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.3s ease;
+        animation: progress-animation 2s ease-in-out infinite;
+      }
+      
+      @keyframes progress-animation {
+        0% { width: 0%; }
+        50% { width: 100%; }
+        100% { width: 0%; }
+      }
+      .recording-border-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        pointer-events: none;
+        z-index: 2147483647;
+        border: 10px solid red;
+        box-sizing: border-box;
+      }
+      .mf-modal-backdrop {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 2147483648;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .mf-modal {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        padding: 32px 28px 24px 28px;
+        min-width: 320px;
+        max-width: 90vw;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        z-index: 2147483649;
+        position: relative;
+      }
+      .mf-modal h2 {
+        margin-top: 0;
+        font-size: 1.3rem;
+        color: #222;
+      }
+      .mf-modal p {
+        color: #444;
+        margin-bottom: 24px;
+      }
+      .mf-modal .mf-modal-btn {
+        background: #2196f3;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 24px;
+        font-size: 1rem;
+        margin: 0 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .mf-modal .mf-modal-btn:hover {
+        background: #1769aa;
+      }
+      .mf-modal .mf-modal-btn.cancel {
+        background: #eee;
+        color: #333;
+      }
+      .mf-modal .mf-modal-btn.cancel:hover {
+        background: #ccc;
       }
     </style>
     <button class="mf-toolbar-btn" id="mf-btn-close" title="Close Simulator">
@@ -359,11 +452,11 @@ function injectToolbar() {
               </div>
           </div>
         `;
-        const _b = browserNavBar.querySelector('#__mf_nav_back__');
+        const _b = browserNavBar.querySelector("#__mf_nav_back__");
         if (_b) _b.onclick = () => history.back();
-        const _f = browserNavBar.querySelector('#__mf_nav_forward__');
+        const _f = browserNavBar.querySelector("#__mf_nav_forward__");
         if (_f) _f.onclick = () => history.forward();
-        const _r = browserNavBar.querySelector('#__mf_nav_refresh__');
+        const _r = browserNavBar.querySelector("#__mf_nav_refresh__");
         if (_r) _r.onclick = () => location.reload();
         screen.insertBefore(browserNavBar, screen.firstChild);
         adjustIframeForBars();
@@ -386,7 +479,9 @@ function injectToolbar() {
             <span style=\"display:inline-flex;margin-right:8px;color:#5f6368;\">
               <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#5f6368\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
             </span>
-            <span style=\"flex:1;color:#202124;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${window.location.hostname || "www.webmobilefirst.com"}</span>
+            <span style=\"flex:1;color:#202124;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
+              window.location.hostname || "www.webmobilefirst.com"
+            }</span>
             <button id=\"__mf_nav_menu__\" style=\"margin-left:8px;padding:8px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
               <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"#5f6368\"><path d=\"M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z\"/></svg>
             </button>
@@ -764,6 +859,20 @@ function injectToolbar() {
   document.getElementById("mf-btn-record").onclick = () => {
     const recordBtn = document.getElementById("mf-btn-record");
     const isCurrentlyRecording = recordBtn.classList.contains("recording");
+    const isProcessing = document
+      .getElementById("mf-recording-status")
+      ?.classList.contains("processing");
+
+    // Prevent recording if video is being processed
+    if (isProcessing) {
+      showRecordingStatus(
+        "Please wait for current video to finish processing...",
+        "info",
+        false,
+        false
+      );
+      return;
+    }
 
     if (isCurrentlyRecording) {
       console.log("Stopping recording...");
@@ -773,7 +882,9 @@ function injectToolbar() {
       recordBtn.title = "Record";
       showRecordingStatus(
         "Recording completed! Check downloads folder.",
-        "success"
+        "success",
+        false,
+        false
       );
     } else {
       console.log("Starting recording...");
@@ -787,12 +898,17 @@ function injectToolbar() {
       if (!frameEl || !screenEl) {
         showRecordingStatus(
           "Simulator elements not found. Please ensure the simulator is active.",
-          "error"
+          "error",
+          false,
+          false
         );
         recordBtn.classList.remove("recording");
         recordBtn.classList.remove("recording");
         recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
         recordBtn.title = "Record";
+
+        // Re-enable recording button on error
+        setRecordingButtonState(true);
         return;
       }
 
@@ -1043,10 +1159,36 @@ function removeToolbar() {
   currentOrientation = "portrait";
 }
 
-function showRecordingStatus(message, type = "info") {
+function showRecordingStatus(
+  message,
+  type = "info",
+  showProgress = false,
+  persistent = false
+) {
   const statusDiv = document.getElementById("mf-recording-status");
   if (statusDiv) {
-    statusDiv.textContent = message;
+    // Clear previous content
+    statusDiv.innerHTML = "";
+
+    // Create message text
+    const messageText = document.createElement("div");
+    messageText.textContent = message;
+    statusDiv.appendChild(messageText);
+
+    // Add progress bar if requested
+    if (showProgress) {
+      const progressBar = document.createElement("div");
+      progressBar.className = "progress-bar";
+      const progressFill = document.createElement("div");
+      progressFill.className = "progress-fill";
+      progressBar.appendChild(progressFill);
+      statusDiv.appendChild(progressBar);
+      statusDiv.classList.add("processing");
+    } else {
+      statusDiv.classList.remove("processing");
+    }
+
+    // Set styling based on type
     statusDiv.className = "recording-status";
     if (type === "success") {
       statusDiv.style.color = "#4CAF50";
@@ -1055,10 +1197,35 @@ function showRecordingStatus(message, type = "info") {
     } else {
       statusDiv.style.color = "#2196F3";
     }
+
     statusDiv.style.display = "block";
-    setTimeout(() => {
-      statusDiv.style.display = "none";
-    }, 3000); // Hide after 3 seconds
+
+    // Only auto-hide if not persistent
+    if (!persistent) {
+      setTimeout(() => {
+        statusDiv.style.display = "none";
+      }, 3000); // Hide after 3 seconds
+    }
+  }
+}
+
+function clearRecordingStatus() {
+  const statusDiv = document.getElementById("mf-recording-status");
+  if (statusDiv) {
+    statusDiv.style.display = "none";
+    statusDiv.classList.remove("processing");
+  }
+}
+
+function setRecordingButtonState(enabled) {
+  const recordBtn = document.getElementById("mf-btn-record");
+  if (recordBtn) {
+    recordBtn.disabled = !enabled;
+    if (!enabled) {
+      recordBtn.title = "Please wait for video processing...";
+    } else {
+      recordBtn.title = "Record";
+    }
   }
 }
 
@@ -1103,11 +1270,14 @@ function ensureStatusBar() {
       statusBar.style.fontSize = platform === "iOS" ? "24px" : "12px";
       statusBar.style.color = "#000";
       statusBar.style.height = platform === "iOS" ? "50px" : "50px";
-      statusBar.style.background = platform === "iOS"
-        ? "linear-gradient(180deg, rgb(242, 242, 247) 0%, rgb(229, 229, 234) 100%)"
-        : "#ffffff";
+      statusBar.style.background =
+        platform === "iOS"
+          ? "linear-gradient(180deg, rgb(242, 242, 247) 0%, rgb(229, 229, 234) 100%)"
+          : "#ffffff";
       statusBar.style.borderBottom =
-        platform === "iOS" ? "0.5px solid rgba(0,0,0,0.15)" : "1px solid rgba(0,0,0,0.08)";
+        platform === "iOS"
+          ? "0.5px solid rgba(0,0,0,0.15)"
+          : "1px solid rgba(0,0,0,0.08)";
 
       const left = document.createElement("div");
       left.id = "__mf_status_time__";
@@ -1122,15 +1292,18 @@ function ensureStatusBar() {
 
       // Signal icon
       const signal = document.createElement("div");
-      signal.innerHTML = '<svg data-v-1bbbc0b8="" height="12" viewBox="0 0 13 8" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-1bbbc0b8="" d="M0.502889 7.99997H1.6763C1.97687 7.99997 2.17918 7.7861 2.17918 7.46818V5.41038C2.17918 5.09246 1.97687 4.88436 1.6763 4.88436H0.502889C0.202307 4.88436 -4.76837e-06 5.09246 -4.76837e-06 5.41038V7.46818C-4.76837e-06 7.7861 0.202307 7.99997 0.502889 7.99997ZM3.93064 7.99997H5.09826C5.39884 7.99997 5.60693 7.7861 5.60693 7.46818V3.98263C5.60693 3.67049 5.39884 3.45084 5.09826 3.45084H3.93064C3.63005 3.45084 3.42196 3.67049 3.42196 3.98263V7.46818C3.42196 7.7861 3.63005 7.99997 3.93064 7.99997ZM7.35259 7.99997H8.52023C8.8208 7.99997 9.0289 7.7861 9.0289 7.46818V2.33523C9.0289 2.01731 8.8208 1.80344 8.52023 1.80344H7.35259C7.05201 1.80344 6.84392 2.01731 6.84392 2.33523V7.46818C6.84392 7.7861 7.05201 7.99997 7.35259 7.99997ZM10.7745 7.99997H11.9537C12.2543 7.99997 12.4508 7.7861 12.4508 7.46818V0.531763C12.4508 0.21385 12.2543 -3.05176e-05 11.9537 -3.05176e-05H10.7745C10.474 -3.05176e-05 10.2717 0.21385 10.2717 0.531763V7.46818C10.2717 7.7861 10.474 7.99997 10.7745 7.99997Z" fill-opacity="0.9"></path></svg>';
+      signal.innerHTML =
+        '<svg data-v-1bbbc0b8="" height="12" viewBox="0 0 13 8" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-1bbbc0b8="" d="M0.502889 7.99997H1.6763C1.97687 7.99997 2.17918 7.7861 2.17918 7.46818V5.41038C2.17918 5.09246 1.97687 4.88436 1.6763 4.88436H0.502889C0.202307 4.88436 -4.76837e-06 5.09246 -4.76837e-06 5.41038V7.46818C-4.76837e-06 7.7861 0.202307 7.99997 0.502889 7.99997ZM3.93064 7.99997H5.09826C5.39884 7.99997 5.60693 7.7861 5.60693 7.46818V3.98263C5.60693 3.67049 5.39884 3.45084 5.09826 3.45084H3.93064C3.63005 3.45084 3.42196 3.67049 3.42196 3.98263V7.46818C3.42196 7.7861 3.63005 7.99997 3.93064 7.99997ZM7.35259 7.99997H8.52023C8.8208 7.99997 9.0289 7.7861 9.0289 7.46818V2.33523C9.0289 2.01731 8.8208 1.80344 8.52023 1.80344H7.35259C7.05201 1.80344 6.84392 2.01731 6.84392 2.33523V7.46818C6.84392 7.7861 7.05201 7.99997 7.35259 7.99997ZM10.7745 7.99997H11.9537C12.2543 7.99997 12.4508 7.7861 12.4508 7.46818V0.531763C12.4508 0.21385 12.2543 -3.05176e-05 11.9537 -3.05176e-05H10.7745C10.474 -3.05176e-05 10.2717 0.21385 10.2717 0.531763V7.46818C10.2717 7.7861 10.474 7.99997 10.7745 7.99997Z" fill-opacity="0.9"></path></svg>';
 
       // WiFi icon
       const wifi = document.createElement("div");
-      wifi.innerHTML = '<svg data-v-1bbbc0b8="" height="12" viewBox="0 0 12 8" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-1bbbc0b8="" d="M0.749444 3.40244C0.840905 3.49999 0.987249 3.49999 1.0848 3.39633C2.26164 2.14634 3.80432 1.4939 5.52994 1.4939C7.26774 1.4939 8.81652 2.15244 9.99334 3.40244C10.0787 3.4939 10.219 3.48781 10.3165 3.39024L10.9994 2.71341C11.0848 2.62195 11.0787 2.5122 11.0116 2.42683C9.88969 1.03659 7.77383 -2.38419e-07 5.52994 -2.38419e-07C3.29212 -2.38419e-07 1.17628 1.03659 0.0482247 2.42683C-0.0188486 2.5122 -0.0188485 2.62195 0.0665169 2.71341L0.749444 3.40244Z" fill-opacity="0.9"></path><path data-v-1bbbc0b8="" d="M2.73115 5.39635C2.83481 5.5061 2.97506 5.48781 3.07871 5.37805C3.63969 4.74391 4.56652 4.28049 5.52994 4.28658C6.50555 4.28049 7.42628 4.76219 8.00555 5.39635C8.09701 5.5 8.22506 5.4939 8.33482 5.39024L9.09701 4.64025C9.17628 4.56097 9.18238 4.44513 9.11531 4.35366C8.3836 3.46952 7.04824 2.78658 5.52994 2.78658C4.01165 2.78658 2.67628 3.46952 1.95066 4.35366C1.8775 4.44513 1.8775 4.54879 1.96896 4.64025L2.73115 5.39635Z" fill-opacity="0.9"></path><path data-v-1bbbc0b8="" d="M5.52995 8C5.64579 8 5.73726 7.95122 5.93238 7.7622L7.1092 6.63415C7.18238 6.56097 7.20068 6.43903 7.13361 6.35366C6.81043 5.93903 6.21896 5.57927 5.52995 5.57927C4.81653 5.57927 4.22506 5.95732 3.90799 6.39024C3.8592 6.46342 3.8836 6.56097 3.96286 6.63415L5.1275 7.7622C5.32262 7.94512 5.42018 8 5.52995 8Z" fill-opacity="0.9"></path></svg>';
+      wifi.innerHTML =
+        '<svg data-v-1bbbc0b8="" height="12" viewBox="0 0 12 8" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-1bbbc0b8="" d="M0.749444 3.40244C0.840905 3.49999 0.987249 3.49999 1.0848 3.39633C2.26164 2.14634 3.80432 1.4939 5.52994 1.4939C7.26774 1.4939 8.81652 2.15244 9.99334 3.40244C10.0787 3.4939 10.219 3.48781 10.3165 3.39024L10.9994 2.71341C11.0848 2.62195 11.0787 2.5122 11.0116 2.42683C9.88969 1.03659 7.77383 -2.38419e-07 5.52994 -2.38419e-07C3.29212 -2.38419e-07 1.17628 1.03659 0.0482247 2.42683C-0.0188486 2.5122 -0.0188485 2.62195 0.0665169 2.71341L0.749444 3.40244Z" fill-opacity="0.9"></path><path data-v-1bbbc0b8="" d="M2.73115 5.39635C2.83481 5.5061 2.97506 5.48781 3.07871 5.37805C3.63969 4.74391 4.56652 4.28049 5.52994 4.28658C6.50555 4.28049 7.42628 4.76219 8.00555 5.39635C8.09701 5.5 8.22506 5.4939 8.33482 5.39024L9.09701 4.64025C9.17628 4.56097 9.18238 4.44513 9.11531 4.35366C8.3836 3.46952 7.04824 2.78658 5.52994 2.78658C4.01165 2.78658 2.67628 3.46952 1.95066 4.35366C1.8775 4.44513 1.8775 4.54879 1.96896 4.64025L2.73115 5.39635Z" fill-opacity="0.9"></path><path data-v-1bbbc0b8="" d="M5.52995 8C5.64579 8 5.73726 7.95122 5.93238 7.7622L7.1092 6.63415C7.18238 6.56097 7.20068 6.43903 7.13361 6.35366C6.81043 5.93903 6.21896 5.57927 5.52995 5.57927C4.81653 5.57927 4.22506 5.95732 3.90799 6.39024C3.8592 6.46342 3.8836 6.56097 3.96286 6.63415L5.1275 7.7622C5.32262 7.94512 5.42018 8 5.52995 8Z" fill-opacity="0.9"></path></svg>';
 
       // Battery icon
       const battery = document.createElement("div");
-      battery.innerHTML = '<svg data-v-1bbbc0b8="" height="12" viewBox="0 0 17 8" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-1bbbc0b8="" d="M12.2637 0C13.2122 0 14.0878 0.0810872 14.7129 0.706055C15.3301 1.32366 15.4033 2.19868 15.4033 3.13965V4.86035C15.4033 5.80118 15.33 6.67591 14.7129 7.30078C14.0878 7.9184 13.2122 8 12.2637 8H3.13965C2.19117 8 1.31637 7.9184 0.691406 7.30078C0.0738704 6.67589 1.6728e-05 5.80135 0 4.86035V3.13965C0 2.19852 0.0737872 1.32367 0.691406 0.706055C1.31637 0.0811107 2.19854 0 3.13965 0H12.2637ZM2.85156 0.868164C2.2915 0.868164 1.6399 0.93144 1.28418 1.30176C0.92867 1.68001 0.868164 2.34187 0.868164 2.9248V5.10742C0.868171 5.6825 0.92862 6.35231 1.28418 6.72266C1.6399 7.09297 2.29125 7.16406 2.84375 7.16406H12.5693C13.1218 7.16406 13.7732 7.09297 14.1289 6.72266C14.4845 6.35231 14.5449 5.6825 14.5449 5.10742V2.9248C14.5449 2.34187 14.4844 1.68001 14.1289 1.30176C13.7732 0.931444 13.1218 0.868165 12.5693 0.868164H2.85156Z" fill-opacity="0.3"></path><path data-v-1bbbc0b8="" d="M15.8472 5.54381C16.3177 5.5144 16.9502 4.9115 16.9502 3.99978C16.9502 3.08806 16.3177 2.48516 15.8472 2.45575V5.54381Z" fill-opacity="0.3"></path><rect data-v-1bbbc0b8="" x="1.3" y="1.3" width="12.81" height="5.43" rx="1.1" fill-opacity="0.9" fill=""></rect></svg>';
+      battery.innerHTML =
+        '<svg data-v-1bbbc0b8="" height="12" viewBox="0 0 17 8" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-1bbbc0b8="" d="M12.2637 0C13.2122 0 14.0878 0.0810872 14.7129 0.706055C15.3301 1.32366 15.4033 2.19868 15.4033 3.13965V4.86035C15.4033 5.80118 15.33 6.67591 14.7129 7.30078C14.0878 7.9184 13.2122 8 12.2637 8H3.13965C2.19117 8 1.31637 7.9184 0.691406 7.30078C0.0738704 6.67589 1.6728e-05 5.80135 0 4.86035V3.13965C0 2.19852 0.0737872 1.32367 0.691406 0.706055C1.31637 0.0811107 2.19854 0 3.13965 0H12.2637ZM2.85156 0.868164C2.2915 0.868164 1.6399 0.93144 1.28418 1.30176C0.92867 1.68001 0.868164 2.34187 0.868164 2.9248V5.10742C0.868171 5.6825 0.92862 6.35231 1.28418 6.72266C1.6399 7.09297 2.29125 7.16406 2.84375 7.16406H12.5693C13.1218 7.16406 13.7732 7.09297 14.1289 6.72266C14.4845 6.35231 14.5449 5.6825 14.5449 5.10742V2.9248C14.5449 2.34187 14.4844 1.68001 14.1289 1.30176C13.7732 0.931444 13.1218 0.868165 12.5693 0.868164H2.85156Z" fill-opacity="0.3"></path><path data-v-1bbbc0b8="" d="M15.8472 5.54381C16.3177 5.5144 16.9502 4.9115 16.9502 3.99978C16.9502 3.08806 16.3177 2.48516 15.8472 2.45575V5.54381Z" fill-opacity="0.3"></path><rect data-v-1bbbc0b8="" x="1.3" y="1.3" width="12.81" height="5.43" rx="1.1" fill-opacity="0.9" fill=""></rect></svg>';
 
       right.appendChild(signal);
       right.appendChild(wifi);
@@ -1143,11 +1316,14 @@ function ensureStatusBar() {
       const platform = frame.getAttribute("data-platform") || "iOS";
       statusBar.style.padding = platform === "iOS" ? "0 10px" : "0 12px";
       statusBar.style.height = platform === "iOS" ? "20px" : "24px";
-      statusBar.style.background = platform === "iOS"
-        ? "linear-gradient(180deg, rgb(242, 242, 247) 0%, rgb(229, 229, 234) 100%)"
-        : "#ffffff";
+      statusBar.style.background =
+        platform === "iOS"
+          ? "linear-gradient(180deg, rgb(242, 242, 247) 0%, rgb(229, 229, 234) 100%)"
+          : "#ffffff";
       statusBar.style.borderBottom =
-        platform === "iOS" ? "0.5px solid rgba(0,0,0,0.15)" : "1px solid rgba(0,0,0,0.08)";
+        platform === "iOS"
+          ? "0.5px solid rgba(0,0,0,0.15)"
+          : "1px solid rgba(0,0,0,0.08)";
     }
 
     // Start/refresh timer for time updates
@@ -1185,9 +1361,10 @@ function adjustIframeForBars() {
   const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
   const statusBar = document.getElementById("__mf_status_bar__");
   if (!iframe) return;
-  const sbh = statusBar ? Math.ceil(statusBar.getBoundingClientRect().height) : 0;
-  const navVisible =
-    browserNavBar && browserNavBar.style.display !== "none";
+  const sbh = statusBar
+    ? Math.ceil(statusBar.getBoundingClientRect().height)
+    : 0;
+  const navVisible = browserNavBar && browserNavBar.style.display !== "none";
   const mockupContainer = document.querySelector("#__mf_simulator_frame__");
   const platform = mockupContainer?.getAttribute("data-platform") || "iOS";
   // Ensure Android nav bar sits below status bar
@@ -1236,12 +1413,20 @@ function startOffscreenRecording(mockupBounds) {
         console.log("Offscreen recording started successfully");
         isRecording = true;
         recordingStartTime = Date.now();
-        showRecordingStatus("Recording started...", "info");
+        showRecordingStatus(
+          "Recording started... (15 FPS for faster processing)",
+          "info",
+          false,
+          false
+        );
+        injectRecordingBorder();
       } else {
         console.error("Failed to start offscreen recording:", response?.error);
         showRecordingStatus(
           "Failed to start recording: " + (response?.error || "unknown error"),
-          "error"
+          "error",
+          false,
+          false
         );
 
         // Reset button state on failure
@@ -1251,6 +1436,9 @@ function startOffscreenRecording(mockupBounds) {
           recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
           recordBtn.title = "Record";
         }
+
+        // Re-enable recording button on error
+        setRecordingButtonState(true);
       }
     }
   );
@@ -1267,20 +1455,27 @@ function stopRecording() {
       console.log("Offscreen recording stopped successfully");
       isRecording = false;
 
-      // Wait a moment for video processing, then show download option
-      setTimeout(() => {
-        showRecordingStatus("Processing video...", "info");
+      // Show processing status with progress bar
+      showRecordingStatus("Processing video...", "info", true, true);
 
-        // Check for video completion
-        checkVideoCompletion();
-      }, 1000);
+      // Disable recording button during processing
+      setRecordingButtonState(false);
+
+      // Check for video completion
+      checkVideoCompletion();
+      removeRecordingBorder();
     } else {
       console.error("Failed to stop offscreen recording:", response?.error);
       showRecordingStatus(
         "Failed to stop recording: " + (response?.error || "unknown error"),
-        "error"
+        "error",
+        false,
+        false
       );
       isRecording = false;
+
+      // Re-enable recording button on error
+      setRecordingButtonState(true);
     }
   });
 }
@@ -1295,41 +1490,115 @@ function checkVideoCompletion() {
       // Recording stopped but no video yet, wait a bit more
       setTimeout(checkVideoCompletion, 500);
     } else {
-      // Still recording or error
-      showRecordingStatus("Video processing complete!", "success");
+      // Still recording or error - keep showing progress bar
+      // Don't change the status here, let it continue showing "Processing video..."
     }
   });
+
+  // Add a timeout to prevent infinite processing (max 30 seconds)
+  setTimeout(() => {
+    const statusDiv = document.getElementById("mf-recording-status");
+    if (statusDiv && statusDiv.classList.contains("processing")) {
+      showRecordingStatus(
+        "Video processing timeout. Please try recording again.",
+        "error",
+        false,
+        false
+      );
+      setRecordingButtonState(true);
+    }
+  }, 30000);
 }
 
 function showVideoDownload(videoBlobData) {
-  showRecordingStatus("Video ready! Click to download.", "success");
+  // Hide the progress bar and show final status
+  showRecordingStatus("Video ready!", "success", false, true);
+  setRecordingButtonState(true);
 
-  // Reconstruct the blob from base64 data
-  const binaryString = atob(videoBlobData.base64Data);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+  // Remove any existing modal
+  const oldModal = document.getElementById("mf-modal-backdrop");
+  if (oldModal) oldModal.remove();
+
+  // Create modal backdrop
+  const backdrop = document.createElement("div");
+  backdrop.id = "mf-modal-backdrop";
+  backdrop.className = "mf-modal-backdrop";
+  backdrop.tabIndex = -1;
+
+  // Modal dialog
+  const modal = document.createElement("div");
+  modal.className = "mf-modal";
+  modal.tabIndex = 0;
+  modal.innerHTML = `
+    <h2>Screen Recording Ready</h2>
+    <p>Your screen recording is ready. Would you like to download it?</p>
+    <button class="mf-modal-btn download">Download</button>
+    <button class="mf-modal-btn cancel">Cancel</button>
+  `;
+
+  // Download logic
+  function doDownload() {
+    // Reconstruct the blob from base64 data
+    const binaryString = atob(videoBlobData.base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const videoBlob = new Blob([bytes], {
+      type: videoBlobData.type || "video/webm",
+    });
+    const downloadUrl = URL.createObjectURL(videoBlob);
+    const downloadLink = document.createElement("a");
+    downloadLink.href = downloadUrl;
+    downloadLink.download = `simulator-recording-${Date.now()}.webm`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
+    showRecordingStatus(
+      "Download started! Recording complete.",
+      "success",
+      false,
+      false
+    );
+    removeRecordingBorder();
+    backdrop.remove();
   }
-  const videoBlob = new Blob([bytes], {
-    type: videoBlobData.type || "video/webm",
-  });
+  // Cancel logic
+  function doCancel() {
+    showRecordingStatus(
+      "Recording complete. Download canceled.",
+      "info",
+      false,
+      false
+    );
+    removeRecordingBorder();
+    backdrop.remove();
+  }
+  // Button event listeners
+  modal.querySelector(".download").onclick = doDownload;
+  modal.querySelector(".cancel").onclick = doCancel;
+  // Keyboard accessibility
+  modal.onkeydown = (e) => {
+    if (e.key === "Escape") doCancel();
+    if (e.key === "Enter") doDownload();
+  };
+  // Focus modal for accessibility
+  setTimeout(() => modal.focus(), 0);
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+}
 
-  // Create download link
-  const downloadUrl = URL.createObjectURL(videoBlob);
-  const downloadLink = document.createElement("a");
-  downloadLink.href = downloadUrl;
-  downloadLink.download = `simulator-recording-${Date.now()}.webm`;
-  downloadLink.style.display = "none";
+function injectRecordingBorder() {
+  if (!document.getElementById("mf-recording-border")) {
+    const border = document.createElement("div");
+    border.id = "mf-recording-border";
+    border.className = "recording-border-overlay";
+    document.body.appendChild(border);
+  }
+}
 
-  // Auto-click the download link
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  document.body.removeChild(downloadLink);
-
-  // Clean up the blob URL after a delay
-  setTimeout(() => {
-    URL.revokeObjectURL(downloadUrl);
-  }, 5000);
-
-  showRecordingStatus("Download started!", "success");
+function removeRecordingBorder() {
+  const border = document.getElementById("mf-recording-border");
+  if (border) border.remove();
 }
