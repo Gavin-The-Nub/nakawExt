@@ -475,105 +475,8 @@ function injectToolbar() {
                 return alert("Failed to create screenshot blob.");
               }
 
-              // Build a small floating menu next to the toolbar
-              const menu = document.createElement("div");
-              menu.style.position = "fixed";
-              menu.style.right = "100px"; // slightly left of toolbar
-              menu.style.top = "60px";
-              menu.style.zIndex = "2147483649";
-              menu.style.display = "flex";
-              menu.style.flexDirection = "column";
-              menu.style.gap = "8px";
-              menu.style.padding = "10px";
-              menu.style.borderRadius = "10px";
-              menu.style.boxShadow = "0 8px 24px rgba(0,0,0,0.4)";
-              menu.style.background = "rgba(30,30,30,0.85)";
-              menu.style.color = "white";
-              menu.style.alignItems = "center";
-
-              const downloadBtn = document.createElement("button");
-              downloadBtn.textContent = "Download";
-              downloadBtn.style.padding = "8px 12px";
-              downloadBtn.style.border = "none";
-              downloadBtn.style.borderRadius = "8px";
-              downloadBtn.style.cursor = "pointer";
-              downloadBtn.style.background = "#007AFF";
-              downloadBtn.style.color = "white";
-              downloadBtn.style.fontSize = "14px";
-
-              const copyBtn = document.createElement("button");
-              copyBtn.textContent = "Copy";
-              copyBtn.style.padding = "8px 12px";
-              copyBtn.style.border = "none";
-              copyBtn.style.borderRadius = "8px";
-              copyBtn.style.cursor = "pointer";
-              copyBtn.style.background = "#34C759";
-              copyBtn.style.color = "white";
-              copyBtn.style.fontSize = "14px";
-
-              const closeBtnSmall = document.createElement("button");
-              closeBtnSmall.textContent = "Close";
-              closeBtnSmall.style.padding = "6px 10px";
-              closeBtnSmall.style.border = "none";
-              closeBtnSmall.style.borderRadius = "8px";
-              closeBtnSmall.style.cursor = "pointer";
-              closeBtnSmall.style.background = "#FF3B30";
-              closeBtnSmall.style.color = "white";
-              closeBtnSmall.style.fontSize = "14px";
-
-              // Download behavior
-              downloadBtn.onclick = () => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "mockup-screenshot.png";
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 5000);
-                menu.remove();
-              };
-
-              // Copy behavior (Clipboard API)
-              copyBtn.onclick = async () => {
-                try {
-                  await navigator.clipboard.write([
-                    new ClipboardItem({ "image/png": blob }),
-                  ]);
-                  copyBtn.textContent = "Copied!";
-                  setTimeout(() => {
-                    try {
-                      copyBtn.textContent = "Copy";
-                    } catch (e) {}
-                    menu.remove();
-                  }, 900);
-                } catch (err) {
-                  console.error("Copy failed", err);
-                  alert(
-                    "Copy to clipboard failed: " +
-                      (err && err.message ? err.message : err)
-                  );
-                }
-              };
-
-              closeBtnSmall.onclick = () => menu.remove();
-
-              menu.appendChild(downloadBtn);
-              menu.appendChild(copyBtn);
-              menu.appendChild(closeBtnSmall);
-              document.body.appendChild(menu);
-
-              // Auto-remove menu if user clicks elsewhere
-              const onDocClick = (ev) => {
-                if (
-                  !menu.contains(ev.target) &&
-                  ev.target !== document.getElementById("mf-btn-screenshot")
-                ) {
-                  menu.remove();
-                  document.removeEventListener("mousedown", onDocClick);
-                }
-              };
-              document.addEventListener("mousedown", onDocClick);
+              // Show the screenshot download modal directly
+              showScreenshotDownloadModal(blob);
             }, "image/png");
           } catch (e) {
             console.error("Processing failed", e);
@@ -594,6 +497,12 @@ function injectToolbar() {
 
   document.getElementById("mf-btn-record").onclick = () => {
     const recordBtn = document.getElementById("mf-btn-record");
+
+    // Prevent clicking if button is disabled
+    if (recordBtn.disabled) {
+      return;
+    }
+
     const isCurrentlyRecording = recordBtn.classList.contains("recording");
 
     if (isCurrentlyRecording) {
@@ -603,7 +512,7 @@ function injectToolbar() {
       recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
       recordBtn.title = "Record";
       showRecordingStatus(
-        "Recording completed! Check downloads folder.",
+        "Recording completed! A download modal will appear shortly.",
         "success"
       );
     } else {
@@ -661,7 +570,7 @@ function injectToolbar() {
         orientation: currentOrientation || "portrait",
       };
 
-      // Start offscreen recording
+      // Start offscreen recording (button remains enabled so user can stop it)
       startOffscreenRecording(mockupBounds);
     }
   };
@@ -1078,6 +987,29 @@ function startOffscreenRecording(mockupBounds) {
         isRecording = true;
         recordingStartTime = Date.now();
         showRecordingStatus("Recording started...", "info");
+
+        // Add red border to tab when recording starts
+        // Method 1: Try document element border
+        document.documentElement.style.border = "10px solid #ff0000";
+        document.documentElement.style.boxSizing = "border-box";
+
+        // Method 2: Create a visible red border overlay
+        const recordingBorder = document.createElement("div");
+        recordingBorder.id = "recording-border-overlay";
+        recordingBorder.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border: 10px solid #ff0000;
+          pointer-events: none;
+          z-index: 999999;
+          box-sizing: border-box;
+        `;
+        document.body.appendChild(recordingBorder);
+
+        // Button remains enabled so user can stop recording
       } else {
         console.error("Failed to start offscreen recording:", response?.error);
         showRecordingStatus(
@@ -1085,13 +1017,26 @@ function startOffscreenRecording(mockupBounds) {
           "error"
         );
 
-        // Reset button state on failure
+        // Reset button state on failure and re-enable it
         const recordBtn = document.getElementById("mf-btn-record");
         if (recordBtn) {
           recordBtn.classList.remove("recording");
           recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
           recordBtn.title = "Record";
         }
+
+        // Remove red border if recording failed to start
+        document.documentElement.style.border = "none";
+
+        // Remove the border overlay element if it exists
+        const recordingBorder = document.getElementById(
+          "recording-border-overlay"
+        );
+        if (recordingBorder) {
+          recordingBorder.remove();
+        }
+
+        enableRecordButton(); // Re-enable button on failure
       }
     }
   );
@@ -1108,6 +1053,20 @@ function stopRecording() {
       console.log("Offscreen recording stopped successfully");
       isRecording = false;
 
+      // Remove red border when recording stops
+      document.documentElement.style.border = "none";
+
+      // Remove the border overlay element
+      const recordingBorder = document.getElementById(
+        "recording-border-overlay"
+      );
+      if (recordingBorder) {
+        recordingBorder.remove();
+      }
+
+      // Disable record button after stopping to prevent new recordings
+      disableRecordButton();
+
       // Wait a moment for video processing, then show download option
       setTimeout(() => {
         showRecordingStatus("Processing video...", "info");
@@ -1122,6 +1081,20 @@ function stopRecording() {
         "error"
       );
       isRecording = false;
+
+      // Remove red border if stopping failed
+      document.documentElement.style.border = "none";
+
+      // Remove the border overlay element if it exists
+      const recordingBorder = document.getElementById(
+        "recording-border-overlay"
+      );
+      if (recordingBorder) {
+        recordingBorder.remove();
+      }
+
+      // Re-enable button if stopping failed
+      enableRecordButton();
     }
   });
 }
@@ -1131,21 +1104,429 @@ function checkVideoCompletion() {
   chrome.runtime.sendMessage({ type: "GET_RECORDING_STATUS" }, (response) => {
     if (response && response.isRecording === false && response.videoBlobData) {
       // Video is ready, show download option
-      showVideoDownload(response.videoBlobData);
+      showDownloadModal(response.videoBlobData);
+      // Record button is currently disabled and will be enabled when modal is closed
     } else if (response && response.isRecording === false) {
       // Recording stopped but no video yet, wait a bit more
       setTimeout(checkVideoCompletion, 500);
     } else {
       // Still recording or error
-      showRecordingStatus("Video processing complete!", "success");
+      showRecordingStatus(
+        "Video processing complete! A download modal will appear shortly.",
+        "success"
+      );
     }
   });
 }
 
-function showVideoDownload(videoBlobData) {
-  showRecordingStatus("Video ready! Click to download.", "success");
+// Function to disable record button
+function disableRecordButton() {
+  const recordBtn = document.getElementById("mf-btn-record");
+  if (recordBtn) {
+    recordBtn.disabled = true;
+    recordBtn.style.opacity = "0.5";
+    recordBtn.style.cursor = "not-allowed";
+    recordBtn.title = "Please wait for current recording to finish...";
 
-  // Reconstruct the blob from base64 data
+    // Add visual feedback that button is disabled
+    recordBtn.style.filter = "grayscale(50%)";
+    recordBtn.style.transform = "scale(0.95)";
+  }
+}
+
+// Function to enable record button
+function enableRecordButton() {
+  const recordBtn = document.getElementById("mf-btn-record");
+  if (recordBtn) {
+    recordBtn.disabled = false;
+    recordBtn.style.opacity = "1";
+    recordBtn.style.cursor = "pointer";
+    recordBtn.title = "Record";
+
+    // Restore visual state
+    recordBtn.style.filter = "none";
+    recordBtn.style.transform = "scale(1)";
+  }
+}
+
+// Function to show screenshot download modal
+function showScreenshotDownloadModal(blob) {
+  // Create modal overlay
+  const modalOverlay = document.createElement("div");
+  modalOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  `;
+
+  // Create modal content
+  const modalContent = document.createElement("div");
+  modalContent.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  `;
+
+  // Add success icon
+  const successIcon = document.createElement("div");
+  successIcon.innerHTML = `
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+  `;
+  successIcon.style.marginBottom = "20px";
+  modalContent.appendChild(successIcon);
+
+  // Add title
+  const title = document.createElement("h2");
+  title.textContent = "Screenshot Ready!";
+  title.style.cssText = `
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+  `;
+  modalContent.appendChild(title);
+
+  // Add description
+  const description = document.createElement("p");
+  description.textContent = "Your screenshot is ready for download.";
+  description.style.cssText = `
+    margin: 0 0 15px 0;
+    color: #666;
+    font-size: 16px;
+    line-height: 1.5;
+  `;
+  modalContent.appendChild(description);
+
+  // Add file info
+  const fileInfo = document.createElement("div");
+  fileInfo.style.cssText = `
+    margin: 0 0 25px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    text-align: left;
+  `;
+
+  const fileSize = Math.round(blob.size / 1024); // Convert to KB
+  fileInfo.innerHTML = `
+    <div style="margin-bottom: 8px; font-weight: 600; color: #333;">File Information:</div>
+    <div style="color: #666; font-size: 14px;">
+      <div>Type: PNG Image</div>
+      <div>Size: ${fileSize} KB</div>
+      <div>Format: Portable Network Graphics</div>
+    </div>
+  `;
+  modalContent.appendChild(fileInfo);
+
+  // Add preview (for screenshots)
+  const previewContainer = document.createElement("div");
+  previewContainer.style.cssText = `
+    margin: 0 0 25px 0;
+    text-align: center;
+  `;
+
+  const preview = document.createElement("img");
+  preview.src = URL.createObjectURL(blob);
+  preview.style.cssText = `
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  `;
+
+  previewContainer.appendChild(preview);
+  modalContent.appendChild(previewContainer);
+
+  // Add download button
+  const downloadBtn = document.createElement("button");
+  downloadBtn.textContent = "Download Screenshot";
+  downloadBtn.style.cssText = `
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0 10px 10px 0;
+    transition: all 0.2s ease;
+  `;
+
+  downloadBtn.onmouseenter = () => {
+    downloadBtn.style.background = "#1976D2";
+    downloadBtn.style.transform = "translateY(-1px)";
+  };
+
+  downloadBtn.onmouseleave = () => {
+    downloadBtn.style.background = "#2196F3";
+    downloadBtn.style.transform = "translateY(0)";
+  };
+
+  downloadBtn.onclick = () => {
+    // Create download link
+    const downloadUrl = URL.createObjectURL(blob);
+    const downloadLink = document.createElement("a");
+    downloadLink.href = downloadUrl;
+    downloadLink.download = `mockup-screenshot-${Date.now()}.png`;
+
+    // Trigger download
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    // Clean up the blob URL after a delay
+    setTimeout(() => {
+      URL.revokeObjectURL(downloadUrl);
+    }, 5000);
+
+    // Close modal
+    modalOverlay.remove();
+  };
+
+  modalContent.appendChild(downloadBtn);
+
+  // Add copy button
+  const copyBtn = document.createElement("button");
+  copyBtn.textContent = "Copy to Clipboard";
+  copyBtn.style.cssText = `
+    background: #34C759;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0 10px 10px 0;
+    transition: all 0.2s ease;
+  `;
+
+  copyBtn.onmouseenter = () => {
+    copyBtn.style.background = "#2FB750";
+    copyBtn.style.transform = "translateY(-1px)";
+  };
+
+  copyBtn.onmouseleave = () => {
+    copyBtn.style.background = "#34C759";
+    copyBtn.style.transform = "translateY(0)";
+  };
+
+  copyBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": blob }),
+      ]);
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => {
+        copyBtn.textContent = "Copy to Clipboard";
+      }, 2000);
+    } catch (err) {
+      console.error("Copy failed", err);
+      copyBtn.textContent = "Failed";
+      setTimeout(() => {
+        copyBtn.textContent = "Copy to Clipboard";
+      }, 2000);
+    }
+  };
+
+  modalContent.appendChild(copyBtn);
+
+  // Add close button
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Close";
+  closeBtn.style.cssText = `
+    background: #f5f5f5;
+    color: #666;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  `;
+
+  closeBtn.onmouseenter = () => {
+    closeBtn.style.background = "#e0e0e0";
+  };
+
+  closeBtn.onmouseleave = () => {
+    closeBtn.style.background = "#f5f5f5";
+  };
+
+  closeBtn.onclick = () => {
+    modalOverlay.remove();
+  };
+
+  modalContent.appendChild(closeBtn);
+
+  // Add modal to page
+  modalOverlay.appendChild(modalContent);
+  document.body.appendChild(modalOverlay);
+
+  // Close modal on overlay click
+  modalOverlay.onclick = (e) => {
+    if (e.target === modalOverlay) {
+      modalOverlay.remove();
+    }
+  };
+}
+
+// Function to show download modal
+function showDownloadModal(videoBlobData) {
+  // Create modal overlay
+  const modalOverlay = document.createElement("div");
+  modalOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  `;
+
+  // Create modal content
+  const modalContent = document.createElement("div");
+  modalContent.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 800px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+  `;
+
+  // Create left column for video preview
+  const leftColumn = document.createElement("div");
+  leftColumn.style.cssText = `
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  `;
+
+  // Create right column for details and actions
+  const rightColumn = document.createElement("div");
+  rightColumn.style.cssText = `
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  `;
+
+  // Add success icon to right column
+  const successIcon = document.createElement("div");
+  successIcon.innerHTML = `
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+  `;
+  successIcon.style.marginBottom = "20px";
+  rightColumn.appendChild(successIcon);
+
+  // Add title to right column
+  const title = document.createElement("h2");
+  title.textContent = "Recording Complete!";
+  title.style.cssText = `
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+  `;
+  rightColumn.appendChild(title);
+
+  // Add description to right column
+  const description = document.createElement("p");
+  description.textContent = "Your screen recording is ready for download.";
+  description.style.cssText = `
+    margin: 0 0 15px 0;
+    color: #666;
+    font-size: 16px;
+    line-height: 1.5;
+  `;
+  rightColumn.appendChild(description);
+
+  // Add file info to right column
+  const fileInfo = document.createElement("div");
+  fileInfo.style.cssText = `
+    margin: 0 0 25px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    text-align: left;
+  `;
+
+  // Calculate file size from base64 data
+  const fileSize = Math.round((videoBlobData.base64Data.length * 3) / 4 / 1024); // Approximate size in KB
+  const fileType = videoBlobData.type || "video/webm";
+  const fileExtension = fileType.split("/")[1] || "webm";
+
+  fileInfo.innerHTML = `
+    <div style="margin-bottom: 8px; font-weight: 600; color: #333;">File Information:</div>
+    <div style="color: #666; font-size: 14px;">
+      <div>Type: ${fileType}</div>
+      <div>Size: ~${fileSize} KB</div>
+      <div>Format: ${fileExtension.toUpperCase()}</div>
+    </div>
+  `;
+  rightColumn.appendChild(fileInfo);
+
+  // Add video preview to left column
+  const previewContainer = document.createElement("div");
+  previewContainer.style.cssText = `
+    text-align: center;
+    position: relative;
+    margin-bottom: 20px;
+  `;
+
+  const videoPreview = document.createElement("video");
+  videoPreview.style.cssText = `
+    width: 350px;
+    height: 250px;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    background: #000;
+    cursor: pointer;
+    object-fit: cover;
+  `;
+
+  // Set video attributes for looping
+  videoPreview.loop = true;
+  videoPreview.muted = true;
+  videoPreview.controls = false;
+  videoPreview.autoplay = true;
+  videoPreview.playsInline = true;
+
+  // Create video blob and set source
   const binaryString = atob(videoBlobData.base64Data);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
@@ -1155,24 +1536,222 @@ function showVideoDownload(videoBlobData) {
     type: videoBlobData.type || "video/webm",
   });
 
-  // Create download link
-  const downloadUrl = URL.createObjectURL(videoBlob);
-  const downloadLink = document.createElement("a");
-  downloadLink.href = downloadUrl;
-  downloadLink.download = `simulator-recording-${Date.now()}.webm`;
-  downloadLink.style.display = "none";
+  const videoUrl = URL.createObjectURL(videoBlob);
+  videoPreview.src = videoUrl;
 
-  // Auto-click the download link
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  document.body.removeChild(downloadLink);
+  // Clean up the preview URL when modal is closed
+  const cleanupPreview = () => {
+    URL.revokeObjectURL(videoUrl);
+  };
 
-  // Clean up the blob URL after a delay
-  setTimeout(() => {
-    URL.revokeObjectURL(downloadUrl);
-  }, 5000);
+  // Add play/pause overlay indicator
+  const playPauseOverlay = document.createElement("div");
+  playPauseOverlay.style.cssText = `
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+  `;
 
-  showRecordingStatus("Download started!", "success");
+  // Add play/pause icon
+  const playIcon = document.createElement("div");
+  playIcon.innerHTML = "▶";
+  playPauseOverlay.appendChild(playIcon);
+
+  // Show overlay on hover
+  videoPreview.addEventListener("mouseenter", () => {
+    playPauseOverlay.style.opacity = "1";
+  });
+
+  videoPreview.addEventListener("mouseleave", () => {
+    playPauseOverlay.style.opacity = "0";
+  });
+
+  // Toggle play/pause on click
+  videoPreview.addEventListener("click", () => {
+    if (videoPreview.paused) {
+      videoPreview.play();
+      playIcon.innerHTML = "⏸";
+    } else {
+      videoPreview.pause();
+      playIcon.innerHTML = "▶";
+    }
+  });
+
+  // Update overlay icon based on video state
+  videoPreview.addEventListener("play", () => {
+    playIcon.innerHTML = "⏸";
+  });
+
+  videoPreview.addEventListener("pause", () => {
+    playIcon.innerHTML = "▶";
+  });
+
+  // Add event listeners for cleanup
+  videoPreview.addEventListener("loadeddata", () => {
+    // Video is ready to play
+    videoPreview.play().catch((e) => console.log("Autoplay prevented:", e));
+  });
+
+  videoPreview.addEventListener("error", (e) => {
+    console.error("Video preview error:", e);
+    previewContainer.innerHTML = `
+      <div style="
+        width: 350px; 
+        height: 250px; 
+        background: #f8f9fa; 
+        border: 1px solid #e9ecef; 
+        border-radius: 12px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        color: #666;
+        font-size: 14px;
+      ">
+        <div>Video preview unavailable</div>
+      </div>
+    `;
+  });
+
+  previewContainer.appendChild(videoPreview);
+  previewContainer.appendChild(playPauseOverlay);
+
+  // Add preview label
+  const previewLabel = document.createElement("div");
+  previewLabel.textContent = "Click to play/pause • Looping preview";
+  previewLabel.style.cssText = `
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+  `;
+  previewContainer.appendChild(previewLabel);
+
+  // Add preview to left column
+  leftColumn.appendChild(previewContainer);
+
+  // Add download button
+  const downloadBtn = document.createElement("button");
+  downloadBtn.textContent = "Download Video";
+  downloadBtn.style.cssText = `
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0 10px 10px 0;
+    transition: all 0.2s ease;
+  `;
+
+  downloadBtn.onmouseenter = () => {
+    downloadBtn.style.background = "#1976D2";
+    downloadBtn.style.transform = "translateY(-1px)";
+  };
+
+  downloadBtn.onmouseleave = () => {
+    downloadBtn.style.background = "#2196F3";
+    downloadBtn.style.transform = "translateY(0)";
+  };
+
+  downloadBtn.onclick = () => {
+    // Reconstruct the blob from base64 data
+    const binaryString = atob(videoBlobData.base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const videoBlob = new Blob([bytes], {
+      type: videoBlobData.type || "video/webm",
+    });
+
+    // Create download link
+    const downloadUrl = URL.createObjectURL(videoBlob);
+    const downloadLink = document.createElement("a");
+    downloadLink.href = downloadUrl;
+    downloadLink.download = `simulator-recording-${Date.now()}.webm`;
+
+    // Trigger download
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    // Clean up the blob URL after a delay
+    setTimeout(() => {
+      URL.revokeObjectURL(downloadUrl);
+    }, 5000);
+
+    // Close modal and enable record button
+    cleanupPreview(); // Clean up video preview URL
+    modalOverlay.remove();
+    enableRecordButton();
+    showRecordingStatus("Download started!", "success");
+  };
+
+  rightColumn.appendChild(downloadBtn);
+
+  // Add close button
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Close";
+  closeBtn.style.cssText = `
+    background: #f5f5f5;
+    color: #666;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  `;
+
+  closeBtn.onmouseenter = () => {
+    closeBtn.style.background = "#e0e0e0";
+  };
+
+  closeBtn.onmouseleave = () => {
+    closeBtn.style.background = "#f5f5f5";
+  };
+
+  closeBtn.onclick = () => {
+    cleanupPreview(); // Clean up video preview URL
+    modalOverlay.remove();
+    enableRecordButton();
+  };
+
+  rightColumn.appendChild(closeBtn);
+
+  // Add both columns to modal content
+  modalContent.appendChild(leftColumn);
+  modalContent.appendChild(rightColumn);
+
+  // Add modal to page
+  modalOverlay.appendChild(modalContent);
+  document.body.appendChild(modalOverlay);
+
+  // Close modal on overlay click
+  modalOverlay.onclick = (e) => {
+    if (e.target === modalOverlay) {
+      cleanupPreview(); // Clean up video preview URL
+      modalOverlay.remove();
+      enableRecordButton();
+    }
+  };
 }
 
 function injectBrowserNavigationBar() {
