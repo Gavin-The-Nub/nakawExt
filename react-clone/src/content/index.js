@@ -204,6 +204,8 @@ function injectToolbar() {
         width: 560px;
         max-width: 640px;
         min-width: 520px;
+        max-height: 80vh;
+        overflow-y: auto;
         display: none;
       }
       .device-category {

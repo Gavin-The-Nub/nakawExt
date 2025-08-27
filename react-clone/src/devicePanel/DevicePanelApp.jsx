@@ -161,7 +161,7 @@ const DevicePanelApp = () => {
       <style jsx>{`
         .device-panel-app {
           width: 100vw;
-          height: 100vh;
+          height: 70vh;
           background: #1a1a1a;
           color: white;
           display: flex;
@@ -211,7 +211,8 @@ const DevicePanelApp = () => {
         .panel-content {
           flex: 1;
           display: flex;
-          overflow: hidden;
+          overflow: auto;
+          min-height: 0;
         }
 
         .device-list-sidebar {
