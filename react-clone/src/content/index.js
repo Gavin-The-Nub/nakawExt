@@ -1211,7 +1211,19 @@ function ensureStatusBar() {
       statusBar.style.display = "flex";
       statusBar.style.alignItems = "center";
       statusBar.style.justifyContent = "space-between";
-      statusBar.style.padding = platform === "iOS" ? "10px 30px" : "10px 12px";
+      let pad = [0, 0, 0, 0];
+      try {
+        const raw = frame.getAttribute("data-statusbar-padding");
+        if (raw) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) {
+            pad = [arr[0] || 0, arr[1] || 0, arr[2] || 0, arr[3] || 0];
+          } else if (typeof arr === "number") {
+            pad = [arr, arr, arr, arr];
+          }
+        }
+      } catch (_) {}
+      statusBar.style.padding = `${pad[0]}px ${pad[1]}px ${pad[2]}px ${pad[3]}px`;
       statusBar.style.zIndex = "9";
       statusBar.style.pointerEvents = "none";
       statusBar.style.fontFamily =
@@ -1265,7 +1277,19 @@ function ensureStatusBar() {
     } else {
       // Update styling if platform changed
       const platform = frame.getAttribute("data-platform") || "iOS";
-      statusBar.style.padding = platform === "iOS" ? "0 10px" : "0 12px";
+      let pad = [0, 0, 0, 0];
+      try {
+        const raw = frame.getAttribute("data-statusbar-padding");
+        if (raw) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) {
+            pad = [arr[0] || 0, arr[1] || 0, arr[2] || 0, arr[3] || 0];
+          } else if (typeof arr === "number") {
+            pad = [arr, arr, arr, arr];
+          }
+        }
+      } catch (_) {}
+      statusBar.style.padding = `${pad[0]}px ${pad[1]}px ${pad[2]}px ${pad[3]}px`;
       statusBar.style.height = platform === "iOS" ? "20px" : "24px";
       statusBar.style.background =
         platform === "iOS"

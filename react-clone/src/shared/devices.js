@@ -54,7 +54,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/applewatch.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3, scale: 1.2 },
+    screenPct: { top: 22, right: 10, bottom: 22, left: 10, radius: 3, scale: 1.2 },
   },
   {
     slug: "dell14",
@@ -87,6 +87,7 @@ export const DEVICES = [
       radius: 3,
       scale: 0.85,
     },
+    statusBarPadding: [0, 15, 0, 45],
   },
   {
     slug: "gpixel6",
@@ -119,6 +120,7 @@ export const DEVICES = [
       radius: 3,
       scale: 0.7,
     },
+    statusBarPadding: [0, 25, 0, 25],
   },
   {
     slug: "hp30",
@@ -498,6 +500,7 @@ export const DEVICES = [
       radius: 3,
       scale: 0.7,
     },
+    statusBarPadding: [0, 25, 0, 60],
   },
   {
     slug: "ofindx3",
@@ -513,6 +516,7 @@ export const DEVICES = [
       left: 2,
       radius: 3,
     },
+    statusBarPadding: [0, 25, 0, 60],
   },
   {
     slug: "sgalaxya12",
@@ -666,7 +670,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/undefined-medium_upscaled.png",
-    screenPct: { top: 5, right: 5, bottom: 5, left: 5, radius: 3 },
+    screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3 },
   },
   {
     slug: "x12",
@@ -693,3 +697,19 @@ export const getDeviceBySlug = (slug) => {
 };
 
 export const getDefaultDevice = () => DEVICES[0];
+
+// Ensure every device has a configurable status bar padding value
+// Use array format [top, right, bottom, left] in pixels for fine control
+DEVICES.forEach((device) => {
+  if (device.statusBarPadding == null) {
+    device.statusBarPadding = [0, 15, 0, 15];
+  }
+  if (typeof device.statusBarPadding === "number") {
+    const v = device.statusBarPadding;
+    device.statusBarPadding = [v, v, v, v];
+  }
+  if (Array.isArray(device.statusBarPadding)) {
+    const a = device.statusBarPadding;
+    device.statusBarPadding = [a[0] || 0, a[1] || 0, a[2] || 0, a[3] || 0];
+  }
+});

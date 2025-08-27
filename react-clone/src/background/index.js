@@ -623,6 +623,7 @@ async function showSimulator(tabId, state) {
           deviceScreenPct: adjustedScreenPct,
           orientation,
           platform: device.platform,
+          statusBarPadding: device.statusBarPadding || [0, 0, 0, 0],
         },
       ],
     });
@@ -650,6 +651,7 @@ function createSimulatorOverlay({
   deviceScreenPct,
   orientation,
   platform,
+  statusBarPadding,
 }) {
   const prev = document.getElementById("__mf_simulator_overlay__");
   if (prev) prev.remove();
@@ -673,6 +675,14 @@ function createSimulatorOverlay({
   // Store orientation and platform data for future reference
   mockupContainer.setAttribute("data-orientation", orientation);
   mockupContainer.setAttribute("data-platform", platform);
+  try {
+    const padArray = Array.isArray(statusBarPadding)
+      ? statusBarPadding
+      : [statusBarPadding, statusBarPadding, statusBarPadding, statusBarPadding];
+    mockupContainer.setAttribute("data-statusbar-padding", JSON.stringify(padArray));
+  } catch (_) {
+    mockupContainer.setAttribute("data-statusbar-padding", "[0,0,0,0]");
+  }
 
   // Create mockup image with proper sizing
   const mockupImg = document.createElement("img");
