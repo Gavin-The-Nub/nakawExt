@@ -156,12 +156,6 @@ function injectToolbar() {
         background: #f44336;
         animation: pulse 2s infinite;
       }
-      
-      .mf-toolbar-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        background: #ccc !important;
-      }
       @keyframes pulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.05); }
@@ -267,93 +261,6 @@ function injectToolbar() {
         max-width: 300px;
         pointer-events: none;
         transition: opacity 0.3s ease;
-      }
-      
-      .recording-status.processing {
-        min-width: 250px;
-      }
-      
-      .progress-bar {
-        width: 100%;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 2px;
-        margin-top: 8px;
-        overflow: hidden;
-      }
-      
-      .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #4CAF50, #45a049);
-        border-radius: 2px;
-        width: 0%;
-        transition: width 0.3s ease;
-        animation: progress-animation 2s ease-in-out infinite;
-      }
-      
-      @keyframes progress-animation {
-        0% { width: 0%; }
-        50% { width: 100%; }
-        100% { width: 0%; }
-      }
-      .recording-border-overlay {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        pointer-events: none;
-        z-index: 2147483647;
-        border: 10px solid red;
-        box-sizing: border-box;
-      }
-      .mf-modal-backdrop {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.4);
-        z-index: 2147483648;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .mf-modal {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-        padding: 32px 28px 24px 28px;
-        min-width: 320px;
-        max-width: 90vw;
-        text-align: center;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        z-index: 2147483649;
-        position: relative;
-      }
-      .mf-modal h2 {
-        margin-top: 0;
-        font-size: 1.3rem;
-        color: #222;
-      }
-      .mf-modal p {
-        color: #444;
-        margin-bottom: 24px;
-      }
-      .mf-modal .mf-modal-btn {
-        background: #2196f3;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 10px 24px;
-        font-size: 1rem;
-        margin: 0 8px;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      .mf-modal .mf-modal-btn:hover {
-        background: #1769aa;
-      }
-      .mf-modal .mf-modal-btn.cancel {
-        background: #eee;
-        color: #333;
-      }
-      .mf-modal .mf-modal-btn.cancel:hover {
-        background: #ccc;
       }
     </style>
     <button class="mf-toolbar-btn" id="mf-btn-close" title="Close Simulator">
@@ -688,20 +595,6 @@ function injectToolbar() {
   document.getElementById("mf-btn-record").onclick = () => {
     const recordBtn = document.getElementById("mf-btn-record");
     const isCurrentlyRecording = recordBtn.classList.contains("recording");
-    const isProcessing = document
-      .getElementById("mf-recording-status")
-      ?.classList.contains("processing");
-
-    // Prevent recording if video is being processed
-    if (isProcessing) {
-      showRecordingStatus(
-        "Please wait for current video to finish processing...",
-        "info",
-        false,
-        false
-      );
-      return;
-    }
 
     if (isCurrentlyRecording) {
       console.log("Stopping recording...");
@@ -711,9 +604,7 @@ function injectToolbar() {
       recordBtn.title = "Record";
       showRecordingStatus(
         "Recording completed! Check downloads folder.",
-        "success",
-        false,
-        false
+        "success"
       );
     } else {
       console.log("Starting recording...");
@@ -727,17 +618,12 @@ function injectToolbar() {
       if (!frameEl || !screenEl) {
         showRecordingStatus(
           "Simulator elements not found. Please ensure the simulator is active.",
-          "error",
-          false,
-          false
+          "error"
         );
         recordBtn.classList.remove("recording");
         recordBtn.classList.remove("recording");
         recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
         recordBtn.title = "Record";
-
-        // Re-enable recording button on error
-        setRecordingButtonState(true);
         return;
       }
 
@@ -988,36 +874,10 @@ function removeToolbar() {
   currentOrientation = "portrait";
 }
 
-function showRecordingStatus(
-  message,
-  type = "info",
-  showProgress = false,
-  persistent = false
-) {
+function showRecordingStatus(message, type = "info") {
   const statusDiv = document.getElementById("mf-recording-status");
   if (statusDiv) {
-    // Clear previous content
-    statusDiv.innerHTML = "";
-
-    // Create message text
-    const messageText = document.createElement("div");
-    messageText.textContent = message;
-    statusDiv.appendChild(messageText);
-
-    // Add progress bar if requested
-    if (showProgress) {
-      const progressBar = document.createElement("div");
-      progressBar.className = "progress-bar";
-      const progressFill = document.createElement("div");
-      progressFill.className = "progress-fill";
-      progressBar.appendChild(progressFill);
-      statusDiv.appendChild(progressBar);
-      statusDiv.classList.add("processing");
-    } else {
-      statusDiv.classList.remove("processing");
-    }
-
-    // Set styling based on type
+    statusDiv.textContent = message;
     statusDiv.className = "recording-status";
     if (type === "success") {
       statusDiv.style.color = "#4CAF50";
@@ -1026,35 +886,10 @@ function showRecordingStatus(
     } else {
       statusDiv.style.color = "#2196F3";
     }
-
     statusDiv.style.display = "block";
-
-    // Only auto-hide if not persistent
-    if (!persistent) {
-      setTimeout(() => {
-        statusDiv.style.display = "none";
-      }, 3000); // Hide after 3 seconds
-    }
-  }
-}
-
-function clearRecordingStatus() {
-  const statusDiv = document.getElementById("mf-recording-status");
-  if (statusDiv) {
-    statusDiv.style.display = "none";
-    statusDiv.classList.remove("processing");
-  }
-}
-
-function setRecordingButtonState(enabled) {
-  const recordBtn = document.getElementById("mf-btn-record");
-  if (recordBtn) {
-    recordBtn.disabled = !enabled;
-    if (!enabled) {
-      recordBtn.title = "Please wait for video processing...";
-    } else {
-      recordBtn.title = "Record";
-    }
+    setTimeout(() => {
+      statusDiv.style.display = "none";
+    }, 3000); // Hide after 3 seconds
   }
 }
 
@@ -1242,20 +1077,12 @@ function startOffscreenRecording(mockupBounds) {
         console.log("Offscreen recording started successfully");
         isRecording = true;
         recordingStartTime = Date.now();
-        showRecordingStatus(
-          "Recording started... (15 FPS for faster processing)",
-          "info",
-          false,
-          false
-        );
-        injectRecordingBorder();
+        showRecordingStatus("Recording started...", "info");
       } else {
         console.error("Failed to start offscreen recording:", response?.error);
         showRecordingStatus(
           "Failed to start recording: " + (response?.error || "unknown error"),
-          "error",
-          false,
-          false
+          "error"
         );
 
         // Reset button state on failure
@@ -1265,9 +1092,6 @@ function startOffscreenRecording(mockupBounds) {
           recordBtn.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
           recordBtn.title = "Record";
         }
-
-        // Re-enable recording button on error
-        setRecordingButtonState(true);
       }
     }
   );
@@ -1284,27 +1108,20 @@ function stopRecording() {
       console.log("Offscreen recording stopped successfully");
       isRecording = false;
 
-      // Show processing status with progress bar
-      showRecordingStatus("Processing video...", "info", true, true);
+      // Wait a moment for video processing, then show download option
+      setTimeout(() => {
+        showRecordingStatus("Processing video...", "info");
 
-      // Disable recording button during processing
-      setRecordingButtonState(false);
-
-      // Check for video completion
-      checkVideoCompletion();
-      removeRecordingBorder();
+        // Check for video completion
+        checkVideoCompletion();
+      }, 1000);
     } else {
       console.error("Failed to stop offscreen recording:", response?.error);
       showRecordingStatus(
         "Failed to stop recording: " + (response?.error || "unknown error"),
-        "error",
-        false,
-        false
+        "error"
       );
       isRecording = false;
-
-      // Re-enable recording button on error
-      setRecordingButtonState(true);
     }
   });
 }
@@ -1319,253 +1136,43 @@ function checkVideoCompletion() {
       // Recording stopped but no video yet, wait a bit more
       setTimeout(checkVideoCompletion, 500);
     } else {
-      // Still recording or error - keep showing progress bar
-      // Don't change the status here, let it continue showing "Processing video..."
+      // Still recording or error
+      showRecordingStatus("Video processing complete!", "success");
     }
   });
-
-  // Add a timeout to prevent infinite processing (max 30 seconds)
-  setTimeout(() => {
-    const statusDiv = document.getElementById("mf-recording-status");
-    if (statusDiv && statusDiv.classList.contains("processing")) {
-      showRecordingStatus(
-        "Video processing timeout. Please try recording again.",
-        "error",
-        false,
-        false
-      );
-      setRecordingButtonState(true);
-    }
-  }, 30000);
 }
 
 function showVideoDownload(videoBlobData) {
-  // Hide the progress bar and show final status
-  showRecordingStatus("Video ready!", "success", false, true);
-  setRecordingButtonState(true);
+  showRecordingStatus("Video ready! Click to download.", "success");
 
-  // Remove any existing modal
-  const oldModal = document.getElementById("mf-modal-backdrop");
-  if (oldModal) oldModal.remove();
-
-  // Create modal backdrop
-  const backdrop = document.createElement("div");
-  backdrop.id = "mf-modal-backdrop";
-  backdrop.className = "mf-modal-backdrop";
-  backdrop.tabIndex = -1;
-
-  // Modal dialog
-  const modal = document.createElement("div");
-  modal.className = "mf-modal";
-  modal.tabIndex = 0;
-  modal.innerHTML = `
-    <h2>Screen Recording Ready</h2>
-    <p>Your screen recording is ready. Would you like to download it?</p>
-    <button class="mf-modal-btn download">Download</button>
-    <button class="mf-modal-btn cancel">Cancel</button>
-  `;
-
-  // Download logic
-  function doDownload() {
-    // Reconstruct the blob from base64 data
-    const binaryString = atob(videoBlobData.base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const videoBlob = new Blob([bytes], {
-      type: videoBlobData.type || "video/webm",
-    });
-    const downloadUrl = URL.createObjectURL(videoBlob);
-    const downloadLink = document.createElement("a");
-    downloadLink.href = downloadUrl;
-    downloadLink.download = `simulator-recording-${Date.now()}.webm`;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
-    showRecordingStatus(
-      "Download started! Recording complete.",
-      "success",
-      false,
-      false
-    );
-    removeRecordingBorder();
-    backdrop.remove();
+  // Reconstruct the blob from base64 data
+  const binaryString = atob(videoBlobData.base64Data);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
-  // Cancel logic
-  function doCancel() {
-    showRecordingStatus(
-      "Recording complete. Download canceled.",
-      "info",
-      false,
-      false
-    );
-    removeRecordingBorder();
-    backdrop.remove();
-  }
-  // Button event listeners
-  modal.querySelector(".download").onclick = doDownload;
-  modal.querySelector(".cancel").onclick = doCancel;
-  // Keyboard accessibility
-  modal.onkeydown = (e) => {
-    if (e.key === "Escape") doCancel();
-    if (e.key === "Enter") doDownload();
-  };
-  // Focus modal for accessibility
-  setTimeout(() => modal.focus(), 0);
-  backdrop.appendChild(modal);
-  document.body.appendChild(backdrop);
-}
+  const videoBlob = new Blob([bytes], {
+    type: videoBlobData.type || "video/webm",
+  });
 
-function injectRecordingBorder() {
-  if (!document.getElementById("mf-recording-border")) {
-    const border = document.createElement("div");
-    border.id = "mf-recording-border";
-    border.className = "recording-border-overlay";
-    document.body.appendChild(border);
-  }
-}
+  // Create download link
+  const downloadUrl = URL.createObjectURL(videoBlob);
+  const downloadLink = document.createElement("a");
+  downloadLink.href = downloadUrl;
+  downloadLink.download = `simulator-recording-${Date.now()}.webm`;
+  downloadLink.style.display = "none";
 
-function removeRecordingBorder() {
-  const border = document.getElementById("mf-recording-border");
-  if (border) border.remove();
-}
+  // Auto-click the download link
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
 
-function injectBrowserNavigationBar() {
-  const frame = document.getElementById("__mf_simulator_frame__");
-  const screen = document.getElementById("__mf_simulator_screen__");
+  // Clean up the blob URL after a delay
+  setTimeout(() => {
+    URL.revokeObjectURL(downloadUrl);
+  }, 5000);
 
-  if (!frame || !screen) return;
-
-  // Remove existing navigation bar if present
-  const existingNavBar = document.getElementById("__mf_browser_nav_bar__");
-  if (existingNavBar) {
-    existingNavBar.remove();
-  }
-
-  const browserNavBar = document.createElement("div");
-  browserNavBar.id = "__mf_browser_nav_bar__";
-  const platform = frame.getAttribute("data-platform") || "iOS";
-
-  browserNavBar.style.position = "absolute";
-  browserNavBar.style.left = "0";
-  browserNavBar.style.right = "0";
-  browserNavBar.style.zIndex = "10";
-  browserNavBar.style.pointerEvents = "none";
-
-  if (platform === "iOS") {
-    // Position at bottom for iOS Safari UI
-    browserNavBar.style.top = "auto";
-    browserNavBar.style.bottom = "0";
-    browserNavBar.style.background =
-      "linear-gradient(180deg, #f9f9fb 0%, #ececf0 100%)";
-    browserNavBar.style.borderTop = "0.5px solid rgba(0,0,0,0.1)";
-    browserNavBar.style.display = "block";
-    browserNavBar.style.padding = "8px 12px 10px";
-    browserNavBar.style.fontFamily =
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-    browserNavBar.style.color = "#000";
-    browserNavBar.style.pointerEvents = "none";
-    browserNavBar.innerHTML = `
-      <div style=\"display:flex;justify-content:space-between;align-items:center;background:#EFF1F5;border-radius:10px;padding:10px 14px;margin: 0px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.08);border:1px solid rgba(142,142,147,0.2);pointer-events:auto;\">
-        <span style=\"display:inline-flex;margin-right:10px;color:#6b7280;\">
-          <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 7h16M4 12h16M4 17h16\"/></svg>
-        </span>
-        <span style=\"display:flex;align-items:center;\">
-          <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
-            <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
-          </span>
-          <span style=\"flex:1;color:#111827;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
-            window.location.hostname || "www.webmobilefirst.com"
-          }</span>
-        </span>
-        <button id=\"__mf_nav_refresh__\" style=\"margin-left:8px;padding:6px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
-          <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"1 4 1 10 7 10\"/><path d=\"M3.51 15a9 9 0 1 0 2-9.36L1 10\"/></svg>
-        </button>
-      </div>
-      <div style=\"display:flex;align-items:center;justify-content:center;gap:10%;margin-top:10px;pointer-events:auto;\">
-        <div style=\"display:flex;align-items:center;gap:30px;\">
-            <button id=\"__mf_nav_back__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"15 18 9 12 15 6\"/></svg>
-            </button>
-            <button id=\"__mf_nav_forward__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"9 18 15 12 9 6\"/></svg>
-            </button>
-            <button id=\"__mf_nav_share__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8\"/><polyline points=\"16 6 12 2 8 6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg>
-            </button>
-            <button id=\"__mf_nav_bookmark__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z\"/></svg>
-            </button>
-            <div style=\"position:relative;\">
-              <button id=\"__mf_nav_tabs__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"14\" height=\"14\" rx=\"2\"/><rect x=\"7\" y=\"8\" width=\"14\" height=\"14\" rx=\"2\" opacity=\".6\"/></svg>
-              </button>
-              <span style=\"position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:#2563eb;color:#fff;font-size:12px;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-weight:600;\">2</span>
-            </div>
-          </div>
-      </div>
-    `;
-
-    // Add event listeners for iOS navigation
-    const _b = browserNavBar.querySelector("#__mf_nav_back__");
-    if (_b) _b.onclick = () => history.back();
-    const _f = browserNavBar.querySelector("#__mf_nav_forward__");
-    if (_f) _f.onclick = () => history.forward();
-    const _r = browserNavBar.querySelector("#__mf_nav_refresh__");
-    if (_r) _r.onclick = () => location.reload();
-  } else {
-    // Position at top for Android Chrome UI
-    const statusBar = document.getElementById("__mf_status_bar__");
-    const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
-    browserNavBar.style.top = sbh + "px";
-    browserNavBar.style.bottom = "auto";
-    browserNavBar.style.background = "#ffffff";
-    browserNavBar.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.1)";
-    browserNavBar.style.display = "block";
-    browserNavBar.style.padding = "8px 10px";
-    browserNavBar.style.fontFamily = "'Roboto','Noto Sans',sans-serif";
-    browserNavBar.style.color = "#202124";
-    browserNavBar.style.pointerEvents = "none";
-    browserNavBar.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;gap:4%;margin-top:10px;pointer-events:auto;">
-        <svg data-v-472967bd="" width="20" height="19" viewBox="0 0 20 19" fill="black" xmlns="http://www.w3.org/2000/svg" class="home"><path data-v-472967bd="" d="M16.1398 6.35722C15.5274 6.35722 15.0309 6.85367 15.0309 7.46607V17.5001C15.0309 18.1125 15.5274 18.6089 16.1398 18.6089C16.7522 18.6089 17.2486 18.1125 17.2486 17.5001V7.46607C17.2486 6.85367 16.7522 6.35722 16.1398 6.35722Z"></path><path data-v-472967bd="" d="M17.2487 17.5063C17.2487 16.8973 16.755 16.4036 16.146 16.4036L3.81309 16.4036C3.20411 16.4036 2.71043 16.8973 2.71043 17.5063C2.71043 18.1153 3.20411 18.6089 3.81309 18.6089H16.146C16.755 18.6089 17.2487 18.1153 17.2487 17.5063Z"></path><path data-v-472967bd="" d="M10.6215 0.454741C10.2122 0.0434338 9.54515 0.0399337 9.13156 0.446924L0.880601 8.56614C0.467008 8.97313 0.463528 9.63649 0.872829 10.0478C1.28213 10.4591 1.94922 10.4626 2.36281 10.0556L10.6138 1.9364C11.0274 1.52941 11.0308 0.866048 10.6215 0.454741Z"></path><path data-v-472967bd="" d="M3.81921 6.35722C3.20681 6.35722 2.71036 6.85367 2.71036 7.46607V17.5001C2.71036 18.1125 3.20681 18.6089 3.81921 18.6089C4.43161 18.6089 4.92806 18.1125 4.92806 17.5001V7.46607C4.92806 6.85367 4.43161 6.35722 3.81921 6.35722Z"></path><path data-v-472967bd="" d="M9.15675 0.425978C9.54745 0.0333643 10.1842 0.0300235 10.579 0.418516L18.898 8.60472C19.2928 8.99321 19.2962 9.62642 18.9055 10.019C18.5148 10.4117 17.878 10.415 17.4832 10.0265L9.16417 1.8403C8.76937 1.4518 8.76605 0.818592 9.15675 0.425978Z"></path></svg>
-        <div style=\"display:flex;align-items:center;background:#f1f3f4;border-radius:10px;padding:8px 12px;border:1px solid rgba(0,0,0,0.06);pointer-events:auto;\">
-          <span style=\"display:inline-flex;margin-right:8px;color:#5f6368;\">
-            <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#5f6368\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
-          </span>
-          <span style=\"flex:1;color:#202124;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
-            window.location.hostname || "www.webmobilefirst.com"
-          }</span>
-        </div>
-        <svg data-v-472967bd="" width="18" height="19" viewBox="0 0 18 19" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M7.533 8.34082L9.024 7.02832V12.6983H10.536V5.26432H9.066L6.6405 7.31182L7.533 8.34082Z"></path><path data-v-472967bd="" fill-rule="evenodd" clip-rule="evenodd" d="M0 5.2123C0 2.45087 2.23858 0.212296 5 0.212296H13C15.7614 0.212296 18 2.45087 18 5.2123V13.1117C18 15.8732 15.7614 18.1117 13 18.1117H5C2.23858 18.1117 0 15.8732 0 13.1117V5.2123ZM5 2.2123H13C14.6569 2.2123 16 3.55544 16 5.2123V13.1117C16 14.7686 14.6569 16.1117 13 16.1117H5C3.34315 16.1117 2 14.7686 2 13.1117V5.2123C2 3.55544 3.34315 2.2123 5 2.2123Z"></path></svg>
-        <svg data-v-472967bd="" width="4" height="17" viewBox="0 0 4 17" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M-0.000244141 2.1667C-0.000244141 3.24918 0.882209 4.1267 1.97077 4.1267C3.05933 4.1267 3.94178 3.24918 3.94178 2.1667C3.94178 1.08422 3.05933 0.206696 1.97077 0.206696C0.882209 0.206696 -0.000244141 1.08422 -0.000244141 2.1667Z"></path><path data-v-472967bd="" d="M-0.000244141 14.1573C-0.000244141 15.2398 0.882209 16.1173 1.97077 16.1173C3.05933 16.1173 3.94178 15.2398 3.94178 14.1573C3.94178 13.0748 3.05933 12.1973 1.97077 12.1973C0.882209 12.1973 -0.000244141 13.0748 -0.000244141 14.1573Z"></path><path data-v-472967bd="" d="M-0.000244141 8.16202C-0.000244141 9.2445 0.882209 10.122 1.97077 10.122C3.05933 10.122 3.94178 9.2445 3.94178 8.16202C3.94178 7.07954 3.05933 6.20201 1.97077 6.20201C0.882209 6.20201 -0.000244141 7.07954 -0.000244141 8.16202Z"></path></svg>
-      </div>
-    `;
-
-    // Add event listener for Android menu button
-    const menuBtn = browserNavBar.querySelector("#__mf_nav_menu__");
-    if (menuBtn) {
-      menuBtn.onclick = () => {
-        // Toggle browser navigation bar visibility
-        const isVisible = browserNavBar.style.display !== "none";
-        if (isVisible) {
-          browserNavBar.style.display = "none";
-          const button = document.getElementById("mf-btn-browser-nav");
-          if (button) button.classList.remove("selected");
-        } else {
-          browserNavBar.style.display = "block";
-          const button = document.getElementById("mf-btn-browser-nav");
-          if (button) button.classList.add("selected");
-        }
-        adjustIframeForBars();
-      };
-    }
-  }
-
-  screen.insertBefore(browserNavBar, screen.firstChild);
-  adjustIframeForBars();
+  showRecordingStatus("Download started!", "success");
 }
 
 function injectBrowserNavigationBar() {
