@@ -294,6 +294,66 @@ function injectToolbar() {
         pointer-events: none;
         transition: opacity 0.3s ease;
       }
+      /* Settings panel */
+      #mf-settings-panel {
+        position: fixed;
+        top: 60px;
+        right: 100px;
+        z-index: 2147483648;
+        width: 360px;
+        max-height: 80vh;
+        overflow-y: auto;
+        background: #111827;
+        color: #e5e7eb;
+        border-radius: 12px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+        border: 1px solid rgba(255,255,255,0.08);
+        display: none;
+        pointer-events: auto;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      #mf-settings-panel .mf-sp-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        position: sticky;
+        top: 0;
+        background: rgba(17,24,39,0.9);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+      }
+      #mf-settings-panel .mf-sp-title {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: .02em;
+        color: #f9fafb;
+      }
+      #mf-settings-panel .mf-sp-close {
+        background: transparent;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+      }
+      #mf-settings-panel .mf-sp-close:hover { color: #e5e7eb; background: rgba(255,255,255,0.06); }
+      #mf-settings-panel .mf-sp-body { padding: 12px 16px 16px; }
+      #mf-settings-panel .mf-sp-section { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+      #mf-settings-panel .mf-sp-section:last-child { border-bottom: none; }
+      #mf-settings-panel .mf-sp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      #mf-settings-panel .mf-sp-label { display: flex; flex-direction: column; gap: 4px; }
+      #mf-settings-panel .mf-sp-label .title { font-size: 13px; font-weight: 600; color: #f3f4f6; }
+      #mf-settings-panel .mf-sp-label .desc { font-size: 12px; color: #9ca3af; }
+      #mf-settings-panel .mf-sp-toggle { width: 44px; height: 26px; background: #374151; border-radius: 9999px; position: relative; cursor: pointer; transition: all .2s; flex-shrink: 0; }
+      #mf-settings-panel .mf-sp-toggle .dot { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: #e5e7eb; border-radius: 50%; transition: all .2s; }
+      #mf-settings-panel .mf-sp-toggle.active { background: #2563eb; }
+      #mf-settings-panel .mf-sp-toggle.active .dot { left: 21px; background: #fff; }
+      #mf-settings-panel .mf-sp-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #374151; border-radius: 9999px; outline: none; }
+      #mf-settings-panel .mf-sp-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #60a5fa; cursor: pointer; box-shadow: 0 0 0 4px rgba(37,99,235,0.2); border: 2px solid #1d4ed8; }
+      #mf-settings-panel .mf-sp-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #60a5fa; border: 2px solid #1d4ed8; }
     </style>
     <button class="mf-toolbar-btn" id="mf-btn-close" title="Close Simulator">
       <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
@@ -312,13 +372,41 @@ function injectToolbar() {
     <button class="mf-toolbar-btn" id="mf-btn-record" title="Record">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
     </button>
-    <button class="mf-toolbar-btn" id="mf-btn-browser-nav" title="Toggle Browser Navigation">
-      <svg viewBox="0 0 24 24"><path d="M3 7H21V9H3V7ZM3 11H21V13H3V11ZM3 15H21V17H3V15Z" stroke="currentColor" stroke-width="1.5"/></svg>
-    </button>
-    <button class="mf-toolbar-btn" id="mf-btn-status-bar" title="Toggle Status Bar">
-      <svg viewBox="0 0 24 24"><path d="M1 4H23V8H1V4Z M1 10H23V14H1V10Z M1 16H23V20H1V16Z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+    
+    <button class="mf-toolbar-btn" id="mf-btn-settings" title="Settings">
+      <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .66.42 1.25 1.04 1.47.21.08.45.12.69.12H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
     </button>
     <div id="mf-recording-status" class="recording-status" style="display: none;"></div>
+    <div id="mf-settings-panel">
+      <div class="mf-sp-header">
+        <div class="mf-sp-title">Simulator Settings</div>
+        <button class="mf-sp-close" id="mf-sp-close" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="mf-sp-body">
+        <div class="mf-sp-section">
+          <div class="mf-sp-row" style="margin-bottom:10px;">
+            <div class="mf-sp-label">
+              <div class="title">Status Bar</div>
+              <div class="desc">Show/hide and adjust opacity</div>
+            </div>
+            <div class="mf-sp-toggle" id="mf-toggle-status"><div class="dot"></div></div>
+          </div>
+          <input id="mf-slider-status" class="mf-sp-slider" type="range" min="0" max="100" value="100" />
+        </div>
+        <div class="mf-sp-section">
+          <div class="mf-sp-row" style="margin-bottom:10px;">
+            <div class="mf-sp-label">
+              <div class="title">Browser Navigation</div>
+              <div class="desc">Show/hide and adjust opacity</div>
+            </div>
+            <div class="mf-sp-toggle" id="mf-toggle-browsernav"><div class="dot"></div></div>
+          </div>
+          <input id="mf-slider-browsernav" class="mf-sp-slider" type="range" min="0" max="100" value="100" />
+        </div>
+      </div>
+    </div>
   `;
 
   // Ensure we append to body and it's properly attached
@@ -618,68 +706,116 @@ function injectToolbar() {
     }
   };
 
-  document.getElementById("mf-btn-status-bar").onclick = () => {
-    // Toggle status bar visibility and reflow
-    const statusBar = document.getElementById("__mf_status_bar__");
-    const button = document.getElementById("mf-btn-status-bar");
+  
+
+  // Settings button and panel logic
+  const settingsBtn = document.getElementById("mf-btn-settings");
+  const settingsPanel = document.getElementById("mf-settings-panel");
+  const settingsClose = document.getElementById("mf-sp-close");
+  const statusToggle = document.getElementById("mf-toggle-status");
+  const statusSlider = document.getElementById("mf-slider-status");
+  const browserToggle = document.getElementById("mf-toggle-browsernav");
+  const browserSlider = document.getElementById("mf-slider-browsernav");
+
+  function syncSettingsPanelState() {
     const frame = document.getElementById("__mf_simulator_frame__");
-
-    if (!frame) return;
-
-    const platform = frame.getAttribute("data-platform") || "iOS";
-
-    if (platform === "macOS") {
-      // No status bar for macOS; ensure selected is off
-      if (button) button.classList.remove("selected");
-      return;
-    }
-
-    // Ensure status bar exists if toggling on
-    if (!statusBar) {
-      ensureStatusBar();
-    }
-
+    const platform = frame?.getAttribute("data-platform") || "iOS";
     const sb = document.getElementById("__mf_status_bar__");
-    if (!sb) {
-      if (button) button.classList.remove("selected");
-      return;
-    }
+    const nb = document.getElementById("__mf_browser_nav_bar__");
 
+    // Status bar availability
+    const statusVisible = !!(sb && sb.style.display !== "none" && platform !== "macOS");
+    if (statusVisible) statusToggle.classList.add("active"); else statusToggle.classList.remove("active");
+    if (sb && sb.style.opacity) {
+      const v = Math.round(parseFloat(sb.style.opacity || "1") * 100);
+      statusSlider.value = String(isNaN(v) ? 100 : v);
+    } else {
+      statusSlider.value = "100";
+    }
+    // Disable status controls on macOS
+    const statusDisabled = platform === "macOS";
+    statusToggle.style.opacity = statusDisabled ? "0.5" : "1";
+    statusToggle.style.pointerEvents = statusDisabled ? "none" : "auto";
+    statusSlider.disabled = statusDisabled;
+
+    // Browser nav
+    const navVisible = !!(nb && nb.style.display !== "none");
+    if (navVisible) browserToggle.classList.add("active"); else browserToggle.classList.remove("active");
+    if (nb && nb.style.opacity) {
+      const v2 = Math.round(parseFloat(nb.style.opacity || "1") * 100);
+      browserSlider.value = String(isNaN(v2) ? 100 : v2);
+    } else {
+      browserSlider.value = "100";
+    }
+  }
+
+  function showSettings() {
+    syncSettingsPanelState();
+    settingsPanel.style.display = "block";
+  }
+  function hideSettings() { settingsPanel.style.display = "none"; }
+
+  if (settingsBtn) settingsBtn.onclick = () => {
+    if (!settingsPanel) return;
+    if (settingsPanel.style.display === "block") hideSettings(); else showSettings();
+  };
+  if (settingsClose) settingsClose.onclick = () => hideSettings();
+
+  // Toggle handlers
+  if (statusToggle) statusToggle.onclick = () => {
+    const frame = document.getElementById("__mf_simulator_frame__");
+    const platform = frame?.getAttribute("data-platform") || "iOS";
+    if (platform === "macOS") return; // no-op
+    let sb = document.getElementById("__mf_status_bar__");
+    if (!sb) ensureStatusBar();
+    sb = document.getElementById("__mf_status_bar__");
+    if (!sb) return;
     const isVisible = sb.style.display !== "none";
     if (isVisible) {
       sb.style.display = "none";
+      statusToggle.classList.remove("active");
+      const button = document.getElementById("mf-btn-status-bar");
       if (button) button.classList.remove("selected");
     } else {
       sb.style.display = "flex";
+      statusToggle.classList.add("active");
+      const button = document.getElementById("mf-btn-status-bar");
       if (button) button.classList.add("selected");
     }
-
     adjustIframeForBars();
   };
 
-  document.getElementById("mf-btn-browser-nav").onclick = () => {
-    // Toggle browser navigation bar visibility and let shared layout handle positioning
-    const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
+  if (browserToggle) browserToggle.onclick = () => {
+    const nb = document.getElementById("__mf_browser_nav_bar__");
     const button = document.getElementById("mf-btn-browser-nav");
-
-    if (browserNavBar) {
-      const isVisible = browserNavBar.style.display !== "none";
-
-      if (isVisible) {
-        browserNavBar.style.display = "none";
-        if (button) button.classList.remove("selected");
-      } else {
-        // Use block to match initial creation and avoid flex-induced layout shifts
-        browserNavBar.style.display = "block";
-        browserNavBar.setAttribute("data-auto-hidden", "false");
-        browserNavBar.style.transform = "translateY(0)";
-        browserNavBar.style.opacity = "1";
-        if (button) button.classList.add("selected");
-      }
-
-      // Recalculate iframe and nav positions consistently for current platform
-      adjustIframeForBars();
+    if (!nb) return;
+    const isVisible = nb.style.display !== "none";
+    if (isVisible) {
+      nb.style.display = "none";
+      browserToggle.classList.remove("active");
+      if (button) button.classList.remove("selected");
+    } else {
+      nb.style.display = "block";
+      nb.setAttribute("data-auto-hidden", "false");
+      nb.style.transform = "translateY(0)";
+      nb.style.opacity = "1";
+      browserToggle.classList.add("active");
+      if (button) button.classList.add("selected");
     }
+    adjustIframeForBars();
+  };
+
+  if (statusSlider) statusSlider.oninput = (e) => {
+    const sb = document.getElementById("__mf_status_bar__");
+    if (!sb) return;
+    const val = parseInt(e.target.value, 10);
+    sb.style.opacity = String(Math.max(0, Math.min(100, val)) / 100);
+  };
+  if (browserSlider) browserSlider.oninput = (e) => {
+    const nb = document.getElementById("__mf_browser_nav_bar__");
+    if (!nb) return;
+    const val = parseInt(e.target.value, 10);
+    nb.style.opacity = String(Math.max(0, Math.min(100, val)) / 100);
   };
 
   // Update orientation indicator after toolbar is created
@@ -708,6 +844,8 @@ function injectToolbar() {
     }
     // After everything mounts, ensure status bar layout is applied
     adjustIframeForBars();
+    // Sync settings panel with current state
+    try { syncSettingsPanelState(); } catch (_) {}
   }, 100);
 }
 
