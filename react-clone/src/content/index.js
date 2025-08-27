@@ -405,6 +405,15 @@ function injectToolbar() {
           </div>
           <input id="mf-slider-browsernav" class="mf-sp-slider" type="range" min="0" max="100" value="100" />
         </div>
+        <div class="mf-sp-section">
+          <div class="mf-sp-row" style="margin-bottom:2px;">
+            <div class="mf-sp-label">
+              <div class="title">Site Scrollbar</div>
+              <div class="desc">Enable or disable page scrolling inside device</div>
+            </div>
+            <div class="mf-sp-toggle" id="mf-toggle-scrollbar"><div class="dot"></div></div>
+          </div>
+        </div>
       </div>
     </div>
   `;
@@ -716,6 +725,7 @@ function injectToolbar() {
   const statusSlider = document.getElementById("mf-slider-status");
   const browserToggle = document.getElementById("mf-toggle-browsernav");
   const browserSlider = document.getElementById("mf-slider-browsernav");
+  const scrollbarToggle = document.getElementById("mf-toggle-scrollbar");
 
   function syncSettingsPanelState() {
     const frame = document.getElementById("__mf_simulator_frame__");
@@ -747,6 +757,16 @@ function injectToolbar() {
     } else {
       browserSlider.value = "100";
     }
+
+    // Scrollbar UI visibility (default hidden). We use iframe data attribute for truth.
+    let scrollbarVisible = false;
+    try {
+      const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
+      const attr = iframe?.getAttribute("data-scroll-enabled");
+      if (attr === "true") scrollbarVisible = true;
+      if (attr === "false") scrollbarVisible = false;
+    } catch (_) {}
+    if (scrollbarVisible) scrollbarToggle?.classList.add("active"); else scrollbarToggle?.classList.remove("active");
   }
 
   function showSettings() {
@@ -817,6 +837,82 @@ function injectToolbar() {
     const val = parseInt(e.target.value, 10);
     nb.style.opacity = String(Math.max(0, Math.min(100, val)) / 100);
   };
+
+  // Scrollbar toggle handler
+  function setScrollbarEnabled(enabled) {
+    try {
+      const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
+      if (!iframe) return;
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) return;
+      // Manage a dedicated style tag for scrollbar policy
+      let styleEl = doc.getElementById("__mf_iframe_scrollbar_style__");
+      if (!styleEl) {
+        styleEl = doc.createElement("style");
+        styleEl.id = "__mf_iframe_scrollbar_style__";
+        doc.head.appendChild(styleEl);
+      }
+      if (enabled) {
+        styleEl.textContent = `
+          /* Ensure scrolling is enabled */
+          html, body {
+            overflow: auto !important;
+            overscroll-behavior: auto !important;
+            -ms-overflow-style: auto !important; /* IE/Edge */
+            scrollbar-width: auto !important;     /* Firefox */
+            scrollbar-color: #666 transparent !important; /* Firefox colors */
+          }
+          /* Force show scrollbar UI (WebKit/Blink) */
+          ::-webkit-scrollbar {
+            width: 12px !important;
+            height: 12px !important;
+            display: block !important;
+            background: transparent !important;
+          }
+          ::-webkit-scrollbar-track {
+            display: block !important;
+            background: rgba(0,0,0,0.08) !important;
+          }
+          ::-webkit-scrollbar-thumb {
+            display: block !important;
+            background-color: rgba(0,0,0,0.35) !important;
+            border-radius: 10px !important;
+            border: 2px solid transparent !important;
+            background-clip: content-box !important;
+          }
+          ::-webkit-scrollbar-corner { display: block !important; background: transparent !important; }
+          ::-webkit-scrollbar-button { display: none !important; }
+        `;
+        iframe.setAttribute("data-scroll-enabled", "true");
+      } else {
+        styleEl.textContent = `
+          /* hide scrollbar UI but keep scrolling */
+          html, body { overflow: auto !important; overscroll-behavior: auto !important; }
+          ::-webkit-scrollbar { display: none !important; width:0 !important; height:0 !important; }
+          ::-webkit-scrollbar-track, ::-webkit-scrollbar-thumb, ::-webkit-scrollbar-corner, ::-webkit-scrollbar-button { display:none !important; }
+        `;
+        iframe.setAttribute("data-scroll-enabled", "false");
+      }
+    } catch (_) {}
+  }
+  if (scrollbarToggle) scrollbarToggle.onclick = () => {
+    const isActive = scrollbarToggle.classList.contains("active");
+    const next = !isActive; // true = show scrollbar UI; false = hide UI but scrollable
+    if (next) scrollbarToggle.classList.add("active"); else scrollbarToggle.classList.remove("active");
+    setScrollbarEnabled(next);
+  };
+
+  // Set default: disable iframe scrolling
+  setTimeout(() => {
+    try {
+      const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
+      const current = iframe?.getAttribute("data-scroll-enabled");
+      if (current == null) {
+        setScrollbarEnabled(false);
+        if (scrollbarToggle) scrollbarToggle.classList.remove("active");
+      }
+    } catch (_) {}
+  }, 300);
 
   // Update orientation indicator after toolbar is created
   updateToolbarOrientation();

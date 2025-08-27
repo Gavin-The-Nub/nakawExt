@@ -742,36 +742,15 @@ function createSimulatorOverlay({
     "allow-same-origin allow-scripts allow-forms allow-pointer-lock allow-popups";
   iframe.src = window.location.href;
 
-  // Add CSS to iframe to hide scrollbars after it loads
+  // Let content script manage iframe scrollbars
   iframe.onload = function () {
     try {
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       const style = iframeDoc.createElement("style");
-      style.textContent = `
-        html, body {
-          overflow: auto !important;
-        }
-        ::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
-        }
-        ::-webkit-scrollbar-track {
-          display: none !important;
-        }
-        ::-webkit-scrollbar-thumb {
-          display: none !important;
-        }
-        ::-webkit-scrollbar-corner {
-          display: none !important;
-        }
-        ::-webkit-scrollbar-button {
-          display: none !important;
-        }
-      `;
+      style.textContent = `html, body { overflow: auto !important; }`;
       iframeDoc.head.appendChild(style);
     } catch (e) {
-      console.log("Cannot inject CSS into cross-origin iframe");
+      console.log("Cannot access iframe document on load");
     }
   };
 
