@@ -550,8 +550,10 @@ function injectToolbar() {
             const sh = Math.round(screenRect.height * dpr);
             // Inset the destination by 1 device pixel to avoid tiny white corners
             const inset = Math.max(1, Math.round(1.6 * dpr));
-            const dx = Math.round((screenRect.left - frameRect.left) * dpr) + inset;
-            const dy = Math.round((screenRect.top - frameRect.top) * dpr) + inset;
+            const dx =
+              Math.round((screenRect.left - frameRect.left) * dpr) + inset;
+            const dy =
+              Math.round((screenRect.top - frameRect.top) * dpr) + inset;
             const dw = Math.max(0, sw - inset * 2);
             const dh = Math.max(0, sh - inset * 2);
             ctx.drawImage(
@@ -715,8 +717,6 @@ function injectToolbar() {
     }
   };
 
-  
-
   // Settings button and panel logic
   const settingsBtn = document.getElementById("mf-btn-settings");
   const settingsPanel = document.getElementById("mf-settings-panel");
@@ -734,8 +734,13 @@ function injectToolbar() {
     const nb = document.getElementById("__mf_browser_nav_bar__");
 
     // Status bar availability
-    const statusVisible = !!(sb && sb.style.display !== "none" && platform !== "macOS");
-    if (statusVisible) statusToggle.classList.add("active"); else statusToggle.classList.remove("active");
+    const statusVisible = !!(
+      sb &&
+      sb.style.display !== "none" &&
+      platform !== "macOS"
+    );
+    if (statusVisible) statusToggle.classList.add("active");
+    else statusToggle.classList.remove("active");
     if (sb && sb.style.opacity) {
       const v = Math.round(parseFloat(sb.style.opacity || "1") * 100);
       statusSlider.value = String(isNaN(v) ? 100 : v);
@@ -750,7 +755,8 @@ function injectToolbar() {
 
     // Browser nav
     const navVisible = !!(nb && nb.style.display !== "none");
-    if (navVisible) browserToggle.classList.add("active"); else browserToggle.classList.remove("active");
+    if (navVisible) browserToggle.classList.add("active");
+    else browserToggle.classList.remove("active");
     if (nb && nb.style.opacity) {
       const v2 = Math.round(parseFloat(nb.style.opacity || "1") * 100);
       browserSlider.value = String(isNaN(v2) ? 100 : v2);
@@ -774,77 +780,86 @@ function injectToolbar() {
       if (attr === "true") scrollbarVisible = true;
       if (attr === "false") scrollbarVisible = false;
     } catch (_) {}
-    if (scrollbarVisible) scrollbarToggle?.classList.add("active"); else scrollbarToggle?.classList.remove("active");
+    if (scrollbarVisible) scrollbarToggle?.classList.add("active");
+    else scrollbarToggle?.classList.remove("active");
   }
 
   function showSettings() {
     syncSettingsPanelState();
     settingsPanel.style.display = "block";
   }
-  function hideSettings() { settingsPanel.style.display = "none"; }
+  function hideSettings() {
+    settingsPanel.style.display = "none";
+  }
 
-  if (settingsBtn) settingsBtn.onclick = () => {
-    if (!settingsPanel) return;
-    if (settingsPanel.style.display === "block") hideSettings(); else showSettings();
-  };
+  if (settingsBtn)
+    settingsBtn.onclick = () => {
+      if (!settingsPanel) return;
+      if (settingsPanel.style.display === "block") hideSettings();
+      else showSettings();
+    };
   if (settingsClose) settingsClose.onclick = () => hideSettings();
 
   // Toggle handlers
-  if (statusToggle) statusToggle.onclick = () => {
-    const frame = document.getElementById("__mf_simulator_frame__");
-    const platform = frame?.getAttribute("data-platform") || "iOS";
-    if (platform === "macOS") return; // no-op
-    let sb = document.getElementById("__mf_status_bar__");
-    if (!sb) ensureStatusBar();
-    sb = document.getElementById("__mf_status_bar__");
-    if (!sb) return;
-    const isVisible = sb.style.display !== "none";
-    if (isVisible) {
-      sb.style.display = "none";
-      statusToggle.classList.remove("active");
-      const button = document.getElementById("mf-btn-status-bar");
-      if (button) button.classList.remove("selected");
-    } else {
-      sb.style.display = "flex";
-      statusToggle.classList.add("active");
-      const button = document.getElementById("mf-btn-status-bar");
-      if (button) button.classList.add("selected");
-    }
-    adjustIframeForBars();
-  };
+  if (statusToggle)
+    statusToggle.onclick = () => {
+      const frame = document.getElementById("__mf_simulator_frame__");
+      const platform = frame?.getAttribute("data-platform") || "iOS";
+      if (platform === "macOS") return; // no-op
+      let sb = document.getElementById("__mf_status_bar__");
+      if (!sb) ensureStatusBar();
+      sb = document.getElementById("__mf_status_bar__");
+      if (!sb) return;
+      const isVisible = sb.style.display !== "none";
+      if (isVisible) {
+        sb.style.display = "none";
+        statusToggle.classList.remove("active");
+        const button = document.getElementById("mf-btn-status-bar");
+        if (button) button.classList.remove("selected");
+      } else {
+        sb.style.display = "flex";
+        statusToggle.classList.add("active");
+        const button = document.getElementById("mf-btn-status-bar");
+        if (button) button.classList.add("selected");
+      }
+      adjustIframeForBars();
+    };
 
-  if (browserToggle) browserToggle.onclick = () => {
-    const nb = document.getElementById("__mf_browser_nav_bar__");
-    const button = document.getElementById("mf-btn-browser-nav");
-    if (!nb) return;
-    const isVisible = nb.style.display !== "none";
-    if (isVisible) {
-      nb.style.display = "none";
-      browserToggle.classList.remove("active");
-      if (button) button.classList.remove("selected");
-    } else {
-      nb.style.display = "block";
-      nb.setAttribute("data-auto-hidden", "false");
-      nb.style.transform = "translateY(0)";
-      nb.style.opacity = "1";
-      browserToggle.classList.add("active");
-      if (button) button.classList.add("selected");
-    }
-    adjustIframeForBars();
-  };
+  if (browserToggle)
+    browserToggle.onclick = () => {
+      const nb = document.getElementById("__mf_browser_nav_bar__");
+      const button = document.getElementById("mf-btn-browser-nav");
+      if (!nb) return;
+      const isVisible = nb.style.display !== "none";
+      if (isVisible) {
+        nb.style.display = "none";
+        browserToggle.classList.remove("active");
+        if (button) button.classList.remove("selected");
+      } else {
+        nb.style.display = "block";
+        nb.setAttribute("data-auto-hidden", "false");
+        nb.style.transform = "translateY(0)";
+        nb.style.opacity = "1";
+        browserToggle.classList.add("active");
+        if (button) button.classList.add("selected");
+      }
+      adjustIframeForBars();
+    };
 
-  if (statusSlider) statusSlider.oninput = (e) => {
-    const sb = document.getElementById("__mf_status_bar__");
-    if (!sb) return;
-    const val = parseInt(e.target.value, 10);
-    sb.style.opacity = String(Math.max(0, Math.min(100, val)) / 100);
-  };
-  if (browserSlider) browserSlider.oninput = (e) => {
-    const nb = document.getElementById("__mf_browser_nav_bar__");
-    if (!nb) return;
-    const val = parseInt(e.target.value, 10);
-    nb.style.opacity = String(Math.max(0, Math.min(100, val)) / 100);
-  };
+  if (statusSlider)
+    statusSlider.oninput = (e) => {
+      const sb = document.getElementById("__mf_status_bar__");
+      if (!sb) return;
+      const val = parseInt(e.target.value, 10);
+      sb.style.opacity = String(Math.max(0, Math.min(100, val)) / 100);
+    };
+  if (browserSlider)
+    browserSlider.oninput = (e) => {
+      const nb = document.getElementById("__mf_browser_nav_bar__");
+      if (!nb) return;
+      const val = parseInt(e.target.value, 10);
+      nb.style.opacity = String(Math.max(0, Math.min(100, val)) / 100);
+    };
 
   // Scrollbar toggle handler
   function setScrollbarEnabled(enabled) {
@@ -903,12 +918,14 @@ function injectToolbar() {
       }
     } catch (_) {}
   }
-  if (scrollbarToggle) scrollbarToggle.onclick = () => {
-    const isActive = scrollbarToggle.classList.contains("active");
-    const next = !isActive; // true = show scrollbar UI; false = hide UI but scrollable
-    if (next) scrollbarToggle.classList.add("active"); else scrollbarToggle.classList.remove("active");
-    setScrollbarEnabled(next);
-  };
+  if (scrollbarToggle)
+    scrollbarToggle.onclick = () => {
+      const isActive = scrollbarToggle.classList.contains("active");
+      const next = !isActive; // true = show scrollbar UI; false = hide UI but scrollable
+      if (next) scrollbarToggle.classList.add("active");
+      else scrollbarToggle.classList.remove("active");
+      setScrollbarEnabled(next);
+    };
 
   // Set default: disable iframe scrolling
   setTimeout(() => {
@@ -949,7 +966,9 @@ function injectToolbar() {
     // After everything mounts, ensure status bar layout is applied
     adjustIframeForBars();
     // Sync settings panel with current state
-    try { syncSettingsPanelState(); } catch (_) {}
+    try {
+      syncSettingsPanelState();
+    } catch (_) {}
   }, 100);
 }
 
@@ -971,7 +990,8 @@ function attachBrowserNavAutoHide() {
       // If nav is manually hidden, do nothing
       if (browserNavBar.style.display === "none") return;
 
-      const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop || 0;
+      const scrollTop =
+        doc.documentElement.scrollTop || doc.body.scrollTop || 0;
       const atTop = scrollTop <= 0;
 
       if (atTop && lastState !== "top") {
@@ -1307,7 +1327,7 @@ function adjustIframeForBars() {
   if (navVisible) {
     const autoHidden =
       browserNavBar.getAttribute("data-auto-hidden") === "true";
-    navBarHeight = autoHidden ? 0 : platform === "iOS" ? 44 : 56;
+    navBarHeight = autoHidden ? 0 : platform === "iOS" ? 28 : 56;
   }
   if (platform === "iOS") {
     // Status bar at top, browser nav at bottom
@@ -1321,7 +1341,8 @@ function adjustIframeForBars() {
 
   // Update slide transform based on auto-hide state and platform
   if (browserNavBar && navVisible) {
-    const autoHidden = browserNavBar.getAttribute("data-auto-hidden") === "true";
+    const autoHidden =
+      browserNavBar.getAttribute("data-auto-hidden") === "true";
     if (autoHidden) {
       if (platform === "iOS") {
         // slide down out of view from bottom
@@ -2172,7 +2193,9 @@ function injectBrowserNavigationBar() {
   // Do not render browser navigation on macOS devices
   if (platform === "macOS") {
     // Ensure layout updates if an existing bar was removed
-    try { adjustIframeForBars(); } catch (_) {}
+    try {
+      adjustIframeForBars();
+    } catch (_) {}
     return;
   }
 
@@ -2189,52 +2212,61 @@ function injectBrowserNavigationBar() {
     // Position at bottom for iOS Safari UI
     browserNavBar.style.top = "auto";
     browserNavBar.style.bottom = "0";
-    browserNavBar.style.background =
-      "linear-gradient(180deg, #f9f9fb 0%, #ececf0 100%)";
-    browserNavBar.style.borderTop = "0.5px solid rgba(0,0,0,0.1)";
+    browserNavBar.style.background = "rgba(15,16,20,0.75)";
+    browserNavBar.style.backdropFilter = "blur(14px) saturate(150%)";
+    browserNavBar.style.WebkitBackdropFilter = "blur(14px) saturate(150%)";
+    browserNavBar.style.borderTop = "1px solid rgba(255,255,255,0.22)";
     browserNavBar.style.display = "block";
-    browserNavBar.style.padding = "8px 12px 10px";
+    // Tighten outer padding to reduce overall height and sit closer to bottom
+    browserNavBar.style.padding = "7px 10px 6px";
     browserNavBar.style.fontFamily =
       "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     browserNavBar.style.color = "#000";
     browserNavBar.style.pointerEvents = "none";
     browserNavBar.innerHTML = `
-      <div style=\"display:flex;justify-content:space-between;align-items:center;background:#EFF1F5;border-radius:10px;padding:10px 14px;margin: 0px 15px;box-shadow:0 1px 2px rgba(0,0,0,0.08);border:1px solid rgba(142,142,147,0.2);pointer-events:auto;\">
-        <span style=\"display:inline-flex;margin-right:10px;color:#6b7280;\">
-          <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 7h16M4 12h16M4 17h16\"/></svg>
+      <div style=\"display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.22);border-radius:10px;padding:6px 10px;margin: 0px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.08);;backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);pointer-events:auto;font-family:'SF Pro Text','SF Pro Display','SF UI','San Francisco',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;\">
+        <span style=\"display:inline-flex;margin-right:10px;color:#ffffff;\"> 
+          <span style=\"display:inline-flex;align-items:flex-end;justify-content:center;width:22px;height:20px;border-radius:4px;background:transparent;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1;gap:1px;\"> 
+           <span style=\"font-size:15px;font-weight:400;line-height:1;\">A</span>
+            <span style=\"font-size:11px;font-weight:400;line-height:1;\">A</span>
+           
+          </span>
         </span>
         <span style=\"display:flex;align-items:center;\">
           <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
-            <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
+            <svg data-v-50b8ed5c=\"\" width=\"19.6\" height=\"10.6\" viewBox=\"0 0 16 23\" fill=\"#ffffff\" xmlns=\"http://www.w3.org/2000/svg\" class=\"cadena\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M2 6C2 2.68629 4.68629 0 8 0C11.3137 0 14 2.68629 14 6V10C15.1046 10 16 10.8954 16 12V21C16 22.1046 15.1046 23 14 23H2C0.895431 23 0 22.1046 0 21V12C0 10.8954 0.895431 10 2 10V6ZM11.5 6C11.5 4.067 9.933 2.5 8 2.5C6.067 2.5 4.5 4.067 4.5 6V10H11.5V6Z\" fill=\"#eeeeef\"></path></svg>
           </span>
-          <span style=\"flex:1;color:#111827;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
-            window.location.hostname || "www.webmobilefirst.com"
+          <span style=\"flex:1;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
+            window.location.hostname || "website.com"
           }</span>
         </span>
-        <button id=\"__mf_nav_refresh__\" style=\"margin-left:8px;padding:6px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
-          <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"1 4 1 10 7 10\"/><path d=\"M3.51 15a9 9 0 1 0 2-9.36L1 10\"/></svg>
+    <button id=\"__mf_nav_refresh__\" style=\"margin-left:8px;padding:6px;border-radius:9999px;transition:background .2s;cursor:pointer;background:transparent;border:none;\">
+          <svg data-v-50b8ed5c=\"\" width=\"16\" height=\"16\" viewBox=\"0 0 25 31\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" class=\"refresh\" style=\"opacity: 1;\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M18.1868 7.33683C18.16 7.36365 18.1322 7.38887 18.1035 7.41249C18.0531 7.5023 17.9897 7.58678 17.9133 7.66319L12.5396 13.0368C12.0905 13.4859 11.3624 13.4859 10.9133 13.0368C10.4642 12.5877 10.4642 11.8596 10.9133 11.4105L14.5001 7.82364H12.15C12.0992 7.82364 12.0491 7.82034 12 7.81395V7.83569C6.59894 8.0964 2.3 12.558 2.3 18.0237C2.3 23.657 6.8667 28.2237 12.5 28.2237C17.9657 28.2237 22.4273 23.9247 22.688 18.5237H22.7V18.3737C22.7 17.7385 23.2149 17.2237 23.85 17.2237C24.4851 17.2237 25 17.7385 25 18.3737V18.6737C25 18.7697 24.9882 18.863 24.966 18.9522C24.4909 25.4221 19.0912 30.5237 12.5 30.5237C5.59644 30.5237 0 24.9272 0 18.0237C0 11.2881 5.32745 5.79674 11.9985 5.53353C12.0481 5.52701 12.0986 5.52364 12.15 5.52364H14.7473L11.1868 1.96317C10.7377 1.51407 10.7377 0.78593 11.1868 0.336827C11.6359 -0.112276 12.3641 -0.112276 12.8132 0.336827L18.1868 5.71048C18.6359 6.15958 18.6359 6.88772 18.1868 7.33683Z\" fill=\"#ffffff\"></path></svg>
         </button>
       </div>
-      <div style=\"display:flex;align-items:center;justify-content:center;gap:10%;margin-top:10px;pointer-events:auto;\">
+      <div style=\"display:flex;align-items:center;justify-content:center;gap:10%;margin-top:4px;pointer-events:auto;\">
         <div style=\"display:flex;align-items:center;gap:30px;\">
-            <button id=\"__mf_nav_back__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"15 18 9 12 15 6\"/></svg>
+            <button id=\"__mf_nav_back__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
+             <svg data-v-50b8ed5c=\"\" width=\"18\" height=\"18\" viewBox=\"0 0 31 55\" stroke=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" d=\"M28.3144 2.5354L3.53595 27.021M28.4655 52.0619L3.0625 27.5349\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>
             </button>
-            <button id=\"__mf_nav_forward__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-              <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"9 18 15 12 9 6\"/></svg>
+            <button id=\"__mf_nav_forward__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
+              <svg data-v-50b8ed5c=\"\" width=\"18\" height=\"18\" viewBox=\"0 0 31 55\" stroke=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\" class=\"inactive\"><path data-v-50b8ed5c=\"\" d=\"M2.68623 52.4645L27.4647 27.979M2.53516 2.93799L27.9381 27.465\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>
             </button>
-            <button id=\"__mf_nav_share__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-              <svg data-v-50b8ed5c="" width="24" height="24" viewBox="0 0 56 73" fill="gray" xmlns="http://www.w3.org/2000/svg"><path data-v-50b8ed5c="" d="M15.591 11.8068C14.7123 12.6855 14.7123 14.1101 15.591 14.9888C16.4697 15.8675 17.8943 15.8675 18.773 14.9888L26 7.76178V45.1971C26 46.4398 27.0074 47.4471 28.25 47.4471C29.4926 47.4471 30.5 46.4398 30.5 45.1971V7.48272L37.7832 14.7659C38.6619 15.6446 40.0865 15.6446 40.9652 14.7659C41.8439 13.8873 41.8439 12.4626 40.9652 11.584L30.1965 0.815221C30.0099 0.62864 29.7987 0.481678 29.5733 0.374336C28.6995 -0.206342 27.5093 -0.11145 26.7388 0.65901L15.591 11.8068Z" stroke-width="0"></path><path data-v-50b8ed5c="" d="M8 20.4471H19V24.9471H8C6.067 24.9471 4.5 26.5141 4.5 28.4471V64.4471C4.5 66.3801 6.067 67.9471 8 67.9471H48C49.933 67.9471 51.5 66.3801 51.5 64.4471V28.4471C51.5 26.5141 49.933 24.9471 48 24.9471H38V20.4471H48C52.4183 20.4471 56 24.0289 56 28.4471V64.4471C56 68.8654 52.4183 72.4471 48 72.4471H8C3.58172 72.4471 0 68.8654 0 64.4471V28.4471C0 24.0289 3.58172 20.4471 8 20.4471Z" stroke-width="0"></path></svg>
+            <button id=\"__mf_nav_share__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
+              <svg data-v-50b8ed5c=\"\" width=\"24\" height=\"24\" viewBox=\"0 0 56 73\" fill=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" d=\"M15.591 11.8068C14.7123 12.6855 14.7123 14.1101 15.591 14.9888C16.4697 15.8675 17.8943 15.8675 18.773 14.9888L26 7.76178V45.1971C26 46.4398 27.0074 47.4471 28.25 47.4471C29.4926 47.4471 30.5 46.4398 30.5 45.1971V7.48272L37.7832 14.7659C38.6619 15.6446 40.0865 15.6446 40.9652 14.7659C41.8439 13.8873 41.8439 12.4626 40.9652 11.584L30.1965 0.815221C30.0099 0.62864 29.7987 0.481678 29.5733 0.374336C28.6995 -0.206342 27.5093 -0.11145 26.7388 0.65901L15.591 11.8068Z\" stroke-width=\"0\"></path><path data-v-50b8ed5c=\"\" d=\"M8 20.4471H19V24.9471H8C6.067 24.9471 4.5 26.5141 4.5 28.4471V64.4471C4.5 66.3801 6.067 67.9471 8 67.9471H48C49.933 67.9471 51.5 66.3801 51.5 64.4471V28.4471C51.5 26.5141 49.933 24.9471 48 24.9471H38V20.4471H48C52.4183 20.4471 56 24.0289 56 28.4471V64.4471C56 68.8654 52.4183 72.4471 48 72.4471H8C3.58172 72.4471 0 68.8654 0 64.4471V28.4471C0 24.0289 3.58172 20.4471 8 20.4471Z\" stroke-width=\"0\"></path></svg>
             </button>
-            <button id=\"__mf_nav_bookmark__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-              <svg data-v-50b8ed5c="" width="26" height="20" viewBox="0 0 70 60" fill="gray" xmlns="http://www.w3.org/2000/svg"><path data-v-50b8ed5c="" fill-rule="evenodd" stroke-width="0" clip-rule="evenodd" d="M32.2931 61C31.7327 60.3476 31.0631 59.7201 30.2817 59.1293C27.4234 56.9682 23.2728 55.5 18.5 55.5C13.7272 55.5 9.5766 56.9682 6.7183 59.1293C5.93693 59.7201 5.26734 60.3476 4.70686 61H0V8.81399C3.30175 3.60059 10.3448 0 18.5 0C25.266 0 31.2665 2.47839 35 6.29998C38.7335 2.47839 44.734 0 51.5 0C60.094 0 67.4529 3.99843 70.5 9.66911V61H65.2931C64.7327 60.3476 64.0631 59.7201 63.2817 59.1293C60.4234 56.9682 56.2728 55.5 51.5 55.5C46.7272 55.5 42.5766 56.9682 39.7183 59.1293C38.9369 59.7201 38.2673 60.3476 37.7069 61H32.2931ZM37.5 10.248V55.1774C41.1642 52.5862 46.0871 51 51.5 51C57.1631 51 62.2899 52.7362 66 55.5431V10.9184C65.3272 9.93494 64.4239 8.9929 63.2817 8.12931C60.4234 5.96815 56.2728 4.5 51.5 4.5C46.7272 4.5 42.5766 5.96815 39.7183 8.12931C38.8384 8.79462 38.1002 9.50648 37.5 10.248ZM33 55.5431C29.2899 52.7362 24.1631 51 18.5 51C13.0871 51 8.1642 52.5862 4.5 55.1774V10.248C5.10022 9.50648 5.83838 8.79462 6.7183 8.12931C9.5766 5.96815 13.7272 4.5 18.5 4.5C23.2728 4.5 27.4234 5.96815 30.2817 8.12931C31.4239 8.9929 32.3272 9.93494 33 10.9184V55.5431Z"></path></svg>
+            <button id=\"__mf_nav_bookmark__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
+              <svg data-v-50b8ed5c=\"\" width=\"26\" height=\"20\" viewBox=\"0 0 70 60\" fill=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" stroke-width=\"0\" clip-rule=\"evenodd\" d=\"M32.2931 61C31.7327 60.3476 31.0631 59.7201 30.2817 59.1293C27.4234 56.9682 23.2728 55.5 18.5 55.5C13.7272 55.5 9.5766 56.9682 6.7183 59.1293C5.93693 59.7201 5.26734 60.3476 4.70686 61H0V8.81399C3.30175 3.60059 10.3448 0 18.5 0C25.266 0 31.2665 2.47839 35 6.29998C38.7335 2.47839 44.734 0 51.5 0C60.094 0 67.4529 3.99843 70.5 9.66911V61H65.2931C64.7327 60.3476 64.0631 59.7201 63.2817 59.1293C60.4234 56.9682 56.2728 55.5 51.5 55.5C46.7272 55.5 42.5766 56.9682 39.7183 59.1293C38.9369 59.7201 38.2673 60.3476 37.7069 61H32.2931ZM37.5 10.248V55.1774C41.1642 52.5862 46.0871 51 51.5 51C57.1631 51 62.2899 52.7362 66 55.5431V10.9184C65.3272 9.93494 64.4239 8.9929 63.2817 8.12931C60.4234 5.96815 56.2728 4.5 51.5 4.5C46.7272 4.5 42.5766 5.96815 39.7183 8.12931C38.8384 8.79462 38.1002 9.50648 37.5 10.248ZM33 55.5431C29.2899 52.7362 24.1631 51 18.5 51C13.0871 51 8.1642 52.5862 4.5 55.1774V10.248C5.10022 9.50648 5.83838 8.79462 6.7183 8.12931C9.5766 5.96815 13.7272 4.5 18.5 4.5C23.2728 4.5 27.4234 5.96815 30.2817 8.12931C31.4239 8.9929 32.3272 9.93494 33 10.9184V55.5431Z\"></path></svg>
             </button>
             <div style=\"position:relative;\">
-              <button id=\"__mf_nav_tabs__\" style=\"padding:10px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\">
-                <svg data-v-50b8ed5c="" width="22" height="22" viewBox="0 0 67 66" fill="gray" xmlns="http://www.w3.org/2000/svg"><path data-v-50b8ed5c="" fill-rule="evenodd" stroke-width="0" clip-rule="evenodd" d="M52 14H59C63.4183 14 67 17.5817 67 22V58C67 62.4183 63.4183 66 59 66H23C18.5817 66 15 62.4183 15 58V52H8C3.58172 52 0 48.4183 0 44V8C0 3.58172 3.58172 0 8 0H44C48.4183 0 52 3.58172 52 8V14ZM44 4.5H8C6.067 4.5 4.5 6.067 4.5 8V44C4.5 45.933 6.067 47.5 8 47.5H15V22C15 17.5817 18.5817 14 23 14H47.5V8C47.5 6.067 45.933 4.5 44 4.5ZM23 18.5H59C60.933 18.5 62.5 20.067 62.5 22V58C62.5 59.933 60.933 61.5 59 61.5H23C21.067 61.5 19.5 59.933 19.5 58V22C19.5 20.067 21.067 18.5 23 18.5Z"></path></svg>
+              <button id=\"__mf_nav_tabs__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
+                <svg data-v-50b8ed5c=\"\" width=\"22\" height=\"22\" viewBox=\"0 0 67 66\" fill=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" stroke-width=\"0\" clip-rule=\"evenodd\" d=\"M52 14H59C63.4183 14 67 17.5817 67 22V58C67 62.4183 63.4183 66 59 66H23C18.5817 66 15 62.4183 15 58V52H8C3.58172 52 0 48.4183 0 44V8C0 3.58172 3.58172 0 8 0H44C48.4183 0 52 3.58172 52 8V14ZM44 4.5H8C6.067 4.5 4.5 6.067 4.5 8V44C4.5 45.933 6.067 47.5 8 47.5H15V22C15 17.5817 18.5817 14 23 14H47.5V8C47.5 6.067 45.933 4.5 44 4.5ZM23 18.5H59C60.933 18.5 62.5 20.067 62.5 22V58C62.5 59.933 60.933 61.5 59 61.5H23C21.067 61.5 19.5 59.933 19.5 58V22C19.5 20.067 21.067 18.5 23 18.5Z\"></path></svg>
               </button>
             </div>
           </div>
+      </div>
+      <div style=\"display:flex;justify-content:center;margin-top:6px;margin-bottom:4px;pointer-events:none;\"> 
+        <div style=\"width:120px;height:4px;border-radius:3px;background:#ffffff;\"></div>
       </div>
     `;
 
@@ -2260,7 +2292,7 @@ function injectBrowserNavigationBar() {
     browserNavBar.style.pointerEvents = "none";
     browserNavBar.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:center;gap:4%;margin-top:10px;pointer-events:auto;">
-        <svg data-v-472967bd="" width="20" height="19" viewBox="0 0 20 19" fill="black" xmlns="http://www.w3.org/2000/svg" class="home"><path data-v-472967bd="" d="M16.1398 6.35722C15.5274 6.35722 15.0309 6.85367 15.0309 7.46607V17.5001C15.0309 18.1125 15.5274 18.6089 16.1398 18.6089C16.7522 18.6089 17.2486 18.1125 17.2486 17.5001V7.46607C17.2486 6.85367 16.7522 6.35722 16.1398 6.35722Z"></path><path data-v-472967bd="" d="M17.2487 17.5063C17.2487 16.8973 16.755 16.4036 16.146 16.4036L3.81309 16.4036C3.20411 16.4036 2.71043 16.8973 2.71043 17.5063C2.71043 18.1153 3.20411 18.6089 3.81309 18.6089H16.146C16.755 18.6089 17.2487 18.1153 17.2487 17.5063Z"></path><path data-v-472967bd="" d="M10.6215 0.454741C10.2122 0.0434338 9.54515 0.0399337 9.13156 0.446924L0.880601 8.56614C0.467008 8.97313 0.463528 9.63649 0.872829 10.0478C1.28213 10.4591 1.94922 10.4626 2.36281 10.0556L10.6138 1.9364C11.0274 1.52941 11.0308 0.866048 10.6215 0.454741Z"></path><path data-v-472967bd="" d="M3.81921 6.35722C3.20681 6.35722 2.71036 6.85367 2.71036 7.46607V17.5001C2.71036 18.1125 3.20681 18.6089 3.81921 18.6089C4.43161 18.6089 4.92806 18.1125 4.92806 17.5001V7.46607C4.92806 6.85367 4.43161 6.35722 3.81921 6.35722Z"></path><path data-v-472967bd="" d="M9.15675 0.425978C9.54745 0.0333643 10.1842 0.0300235 10.579 0.418516L18.898 8.60472C19.2928 8.99321 19.2962 9.62642 18.9055 10.019C18.5148 10.4117 17.878 10.415 17.4832 10.0265L9.16417 1.8403C8.76937 1.4518 8.76605 0.818592 9.15675 0.425978Z"></path></svg>
+        <svg data-v-472967bd=\"\" width="20" height="19" viewBox="0 0 20 19" fill="black" xmlns="http://www.w3.org/2000/svg" class="home"><path data-v-472967bd=\"\" d="M16.1398 6.35722C15.5274 6.35722 15.0309 6.85367 15.0309 7.46607V17.5001C15.0309 18.1125 15.5274 18.6089 16.1398 18.6089C16.7522 18.6089 17.2486 18.1125 17.2486 17.5001V7.46607C17.2486 6.85367 16.7522 6.35722 16.1398 6.35722Z"></path><path data-v-472967bd=\"\" d="M17.2487 17.5063C17.2487 16.8973 16.755 16.4036 16.146 16.4036L3.81309 16.4036C3.20411 16.4036 2.71043 16.8973 2.71043 17.5063C2.71043 18.1153 3.20411 18.6089 3.81309 18.6089H16.146C16.755 18.6089 17.2487 18.1153 17.2487 17.5063Z"></path><path data-v-472967bd=\"\" d="M10.6215 0.454741C10.2122 0.0434338 9.54515 0.0399337 9.13156 0.446924L0.880601 8.56614C0.467008 8.97313 0.463528 9.63649 0.872829 10.0478C1.28213 10.4591 1.94922 10.4626 2.36281 10.0556L10.6138 1.9364C11.0274 1.52941 11.0308 0.866048 10.6215 0.454741Z"></path><path data-v-472967bd=\"\" d="M3.81921 6.35722C3.20681 6.35722 2.71036 6.85367 2.71036 7.46607V17.5001C2.71036 18.1125 3.20681 18.6089 3.81921 18.6089C4.43161 18.6089 4.92806 18.1125 4.92806 17.5001V7.46607C4.92806 6.85367 4.43161 6.35722 3.81921 6.35722Z"></path><path data-v-472967bd=\"\" d="M9.15675 0.425978C9.54745 0.0333643 10.1842 0.0300235 10.579 0.418516L18.898 8.60472C19.2928 8.99321 19.2962 9.62642 18.9055 10.019C18.5148 10.4117 17.878 10.415 17.4832 10.0265L9.16417 1.8403C8.76937 1.4518 8.76605 0.818592 9.15675 0.425978Z"></path></svg>
         <div style=\"display:flex;align-items:center;background:#f1f3f4;border-radius:10px;padding:8px 12px;border:1px solid rgba(0,0,0,0.06);pointer-events:auto;\">
           <span style=\"display:inline-flex;margin-right:8px;color:#5f6368;\">
             <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#5f6368\" stroke-width=\"2\"><rect x=\"6\" y=\"10\" width=\"12\" height=\"10\" rx=\"2\"/><path d=\"M9 10V7a3 3 0 0 1 6 0v3\"/></svg>
@@ -2269,8 +2301,8 @@ function injectBrowserNavigationBar() {
             window.location.hostname || "www.webmobilefirst.com"
           }</span>
         </div>
-        <svg data-v-472967bd="" width="18" height="19" viewBox="0 0 18 19" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M7.533 8.34082L9.024 7.02832V12.6983H10.536V5.26432H9.066L6.6405 7.31182L7.533 8.34082Z"></path><path data-v-472967bd="" fill-rule="evenodd" clip-rule="evenodd" d="M0 5.2123C0 2.45087 2.23858 0.212296 5 0.212296H13C15.7614 0.212296 18 2.45087 18 5.2123V13.1117C18 15.8732 15.7614 18.1117 13 18.1117H5C2.23858 18.1117 0 15.8732 0 13.1117V5.2123ZM5 2.2123H13C14.6569 2.2123 16 3.55544 16 5.2123V13.1117C16 14.7686 14.6569 16.1117 13 16.1117H5C3.34315 16.1117 2 14.7686 2 13.1117V5.2123C2 3.55544 3.34315 2.2123 5 2.2123Z"></path></svg>
-        <svg data-v-472967bd="" width="4" height="17" viewBox="0 0 4 17" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M-0.000244141 2.1667C-0.000244141 3.24918 0.882209 4.1267 1.97077 4.1267C3.05933 4.1267 3.94178 3.24918 3.94178 2.1667C3.94178 1.08422 3.05933 0.206696 1.97077 0.206696C0.882209 0.206696 -0.000244141 1.08422 -0.000244141 2.1667Z"></path><path data-v-472967bd="" d="M-0.000244141 14.1573C-0.000244141 15.2398 0.882209 16.1173 1.97077 16.1173C3.05933 16.1173 3.94178 15.2398 3.94178 14.1573C3.94178 13.0748 3.05933 12.1973 1.97077 12.1973C0.882209 12.1973 -0.000244141 13.0748 -0.000244141 14.1573Z"></path><path data-v-472967bd="" d="M-0.000244141 8.16202C-0.000244141 9.2445 0.882209 10.122 1.97077 10.122C3.05933 10.122 3.94178 9.2445 3.94178 8.16202C3.94178 7.07954 3.05933 6.20201 1.97077 6.20201C0.882209 6.20201 -0.000244141 7.07954 -0.000244141 8.16202Z"></path></svg>
+        <svg data-v-472967bd=\"\" width="18" height="19" viewBox="0 0 18 19" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd=\"\" d="M7.533 8.34082L9.024 7.02832V12.6983H10.536V5.26432H9.066L6.6405 7.31182L7.533 8.34082Z"></path><path data-v-472967bd=\"\" fill-rule="evenodd" clip-rule="evenodd" d="M0 5.2123C0 2.45087 2.23858 0.212296 5 0.212296H13C15.7614 0.212296 18 2.45087 18 5.2123V13.1117C18 15.8732 15.7614 18.1117 13 18.1117H5C2.23858 18.1117 0 15.8732 0 13.1117V5.2123ZM5 2.2123H13C14.6569 2.2123 16 3.55544 16 5.2123V13.1117C16 14.7686 14.6569 16.1117 13 16.1117H5C3.34315 16.1117 2 14.7686 2 13.1117V5.2123C2 3.55544 3.34315 2.2123 5 2.2123Z"></path></svg>
+        <svg data-v-472967bd=\"\" width="4" height="17" viewBox="0 0 4 17" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd=\"\" d="M-0.000244141 2.1667C-0.000244141 3.24918 0.882209 4.1267 1.97077 4.1267C3.05933 4.1267 3.94178 3.24918 3.94178 2.1667C3.94178 1.08422 3.05933 0.206696 1.97077 0.206696C0.882209 0.206696 -0.000244141 1.08422 -0.000244141 2.1667Z"></path><path data-v-472967bd=\"\" d="M-0.000244141 14.1573C-0.000244141 15.2398 0.882209 16.1173 1.97077 16.1173C3.05933 16.1173 3.94178 15.2398 3.94178 14.1573C3.94178 13.0748 3.05933 12.1973 1.97077 12.1973C0.882209 12.1973 -0.000244141 13.0748 -0.000244141 14.1573Z"></path><path data-v-472967bd=\"\" d="M-0.000244141 8.16202C-0.000244141 9.2445 0.882209 10.122 1.97077 10.122C3.05933 10.122 3.94178 9.2445 3.94178 8.16202C3.94178 7.07954 3.05933 6.20201 1.97077 6.20201C0.882209 6.20201 -0.000244141 7.07954 -0.000244141 8.16202Z"></path></svg>
       </div>
     `;
 
