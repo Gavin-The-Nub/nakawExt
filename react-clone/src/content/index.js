@@ -578,49 +578,24 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-browser-nav").onclick = () => {
-    // Toggle browser navigation bar visibility
+    // Toggle browser navigation bar visibility and let shared layout handle positioning
     const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
-    const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
     const button = document.getElementById("mf-btn-browser-nav");
 
-    if (browserNavBar && iframe) {
+    if (browserNavBar) {
       const isVisible = browserNavBar.style.display !== "none";
 
       if (isVisible) {
-        // Hide the navigation bar
         browserNavBar.style.display = "none";
-        // Keep space for status bar
-        const statusBar = document.getElementById("__mf_status_bar__");
-        const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
-        // iOS had nav at bottom; Android at top
-        const mockupContainer = document.querySelector(
-          "#__mf_simulator_frame__"
-        );
-        const platform =
-          mockupContainer?.getAttribute("data-platform") || "iOS";
-        // When nav is hidden, top inset is just status bar for both
-        iframe.style.top = sbh + "px";
-        iframe.style.height = `calc(100% - ${sbh}px)`;
-        button.classList.remove("selected");
+        if (button) button.classList.remove("selected");
       } else {
-        // Show the navigation bar
-        browserNavBar.style.display = "flex";
-        // Get platform from the mockup container data attribute or infer from device
-        const mockupContainer = document.querySelector(
-          "#__mf_simulator_frame__"
-        );
-        const platform =
-          mockupContainer?.getAttribute("data-platform") || "iOS";
-        const navBarHeight = platform === "iOS" ? 44 : 56;
-        const statusBar = document.getElementById("__mf_status_bar__");
-        const sbh = statusBar ? statusBar.getBoundingClientRect().height : 0;
-        // iOS nav at bottom increases bottom inset; Android at top increases top inset
-        const topInset = platform === "iOS" ? sbh : sbh + navBarHeight;
-        const totalInset = sbh + navBarHeight;
-        iframe.style.top = topInset + "px";
-        iframe.style.height = `calc(100% - ${totalInset}px)`;
-        button.classList.add("selected");
+        // Use block to match initial creation and avoid flex-induced layout shifts
+        browserNavBar.style.display = "block";
+        if (button) button.classList.add("selected");
       }
+
+      // Recalculate iframe and nav positions consistently for current platform
+      adjustIframeForBars();
     }
   };
 
