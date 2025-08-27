@@ -51,14 +51,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         // Recreate browser navigation bar for new device platform
         setTimeout(() => {
-          const existingNavBar = document.getElementById("__mf_browser_nav_bar__");
+          const existingNavBar = document.getElementById(
+            "__mf_browser_nav_bar__"
+          );
           if (existingNavBar) {
             existingNavBar.remove();
           }
           // Re-inject browser navigation bar with new platform
           injectBrowserNavigationBar();
         }, 100); // Delay to ensure overlay recreation is complete
-        
+
         // Update browser navigation toggle button state after device change
         setTimeout(() => {
           const browserNavBar = document.getElementById(
@@ -1433,25 +1435,25 @@ function removeRecordingBorder() {
 function injectBrowserNavigationBar() {
   const frame = document.getElementById("__mf_simulator_frame__");
   const screen = document.getElementById("__mf_simulator_screen__");
-  
+
   if (!frame || !screen) return;
-  
+
   // Remove existing navigation bar if present
   const existingNavBar = document.getElementById("__mf_browser_nav_bar__");
   if (existingNavBar) {
     existingNavBar.remove();
   }
-  
+
   const browserNavBar = document.createElement("div");
   browserNavBar.id = "__mf_browser_nav_bar__";
   const platform = frame.getAttribute("data-platform") || "iOS";
-  
+
   browserNavBar.style.position = "absolute";
   browserNavBar.style.left = "0";
   browserNavBar.style.right = "0";
   browserNavBar.style.zIndex = "10";
   browserNavBar.style.pointerEvents = "none";
-  
+
   if (platform === "iOS") {
     // Position at bottom for iOS Safari UI
     browserNavBar.style.top = "auto";
@@ -1505,15 +1507,14 @@ function injectBrowserNavigationBar() {
           </div>
       </div>
     `;
-    
+
     // Add event listeners for iOS navigation
-    const _b = browserNavBar.querySelector('#__mf_nav_back__');
+    const _b = browserNavBar.querySelector("#__mf_nav_back__");
     if (_b) _b.onclick = () => history.back();
-    const _f = browserNavBar.querySelector('#__mf_nav_forward__');
+    const _f = browserNavBar.querySelector("#__mf_nav_forward__");
     if (_f) _f.onclick = () => history.forward();
-    const _r = browserNavBar.querySelector('#__mf_nav_refresh__');
+    const _r = browserNavBar.querySelector("#__mf_nav_refresh__");
     if (_r) _r.onclick = () => location.reload();
-    
   } else {
     // Position at top for Android Chrome UI
     const statusBar = document.getElementById("__mf_status_bar__");
@@ -1542,9 +1543,9 @@ function injectBrowserNavigationBar() {
         <svg data-v-472967bd="" width="4" height="17" viewBox="0 0 4 17" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M-0.000244141 2.1667C-0.000244141 3.24918 0.882209 4.1267 1.97077 4.1267C3.05933 4.1267 3.94178 3.24918 3.94178 2.1667C3.94178 1.08422 3.05933 0.206696 1.97077 0.206696C0.882209 0.206696 -0.000244141 1.08422 -0.000244141 2.1667Z"></path><path data-v-472967bd="" d="M-0.000244141 14.1573C-0.000244141 15.2398 0.882209 16.1173 1.97077 16.1173C3.05933 16.1173 3.94178 15.2398 3.94178 14.1573C3.94178 13.0748 3.05933 12.1973 1.97077 12.1973C0.882209 12.1973 -0.000244141 13.0748 -0.000244141 14.1573Z"></path><path data-v-472967bd="" d="M-0.000244141 8.16202C-0.000244141 9.2445 0.882209 10.122 1.97077 10.122C3.05933 10.122 3.94178 9.2445 3.94178 8.16202C3.94178 7.07954 3.05933 6.20201 1.97077 6.20201C0.882209 6.20201 -0.000244141 7.07954 -0.000244141 8.16202Z"></path></svg>
       </div>
     `;
-    
+
     // Add event listener for Android menu button
-    const menuBtn = browserNavBar.querySelector('#__mf_nav_menu__');
+    const menuBtn = browserNavBar.querySelector("#__mf_nav_menu__");
     if (menuBtn) {
       menuBtn.onclick = () => {
         // Toggle browser navigation bar visibility
@@ -1562,7 +1563,7 @@ function injectBrowserNavigationBar() {
       };
     }
   }
-  
+
   screen.insertBefore(browserNavBar, screen.firstChild);
   adjustIframeForBars();
 }
@@ -1570,25 +1571,25 @@ function injectBrowserNavigationBar() {
 function injectBrowserNavigationBar() {
   const frame = document.getElementById("__mf_simulator_frame__");
   const screen = document.getElementById("__mf_simulator_screen__");
-  
+
   if (!frame || !screen) return;
-  
+
   // Remove existing navigation bar if present
   const existingNavBar = document.getElementById("__mf_browser_nav_bar__");
   if (existingNavBar) {
     existingNavBar.remove();
   }
-  
+
   const browserNavBar = document.createElement("div");
   browserNavBar.id = "__mf_browser_nav_bar__";
   const platform = frame.getAttribute("data-platform") || "iOS";
-  
+
   browserNavBar.style.position = "absolute";
   browserNavBar.style.left = "0";
   browserNavBar.style.right = "0";
   browserNavBar.style.zIndex = "10";
   browserNavBar.style.pointerEvents = "none";
-  
+
   if (platform === "iOS") {
     // Position at bottom for iOS Safari UI
     browserNavBar.style.top = "auto";
@@ -1642,15 +1643,14 @@ function injectBrowserNavigationBar() {
           </div>
       </div>
     `;
-    
+
     // Add event listeners for iOS navigation
-    const _b = browserNavBar.querySelector('#__mf_nav_back__');
+    const _b = browserNavBar.querySelector("#__mf_nav_back__");
     if (_b) _b.onclick = () => history.back();
-    const _f = browserNavBar.querySelector('#__mf_nav_forward__');
+    const _f = browserNavBar.querySelector("#__mf_nav_forward__");
     if (_f) _f.onclick = () => history.forward();
-    const _r = browserNavBar.querySelector('#__mf_nav_refresh__');
+    const _r = browserNavBar.querySelector("#__mf_nav_refresh__");
     if (_r) _r.onclick = () => location.reload();
-    
   } else {
     // Position at top for Android Chrome UI
     const statusBar = document.getElementById("__mf_status_bar__");
@@ -1679,9 +1679,9 @@ function injectBrowserNavigationBar() {
         <svg data-v-472967bd="" width="4" height="17" viewBox="0 0 4 17" fill="black" xmlns="http://www.w3.org/2000/svg"><path data-v-472967bd="" d="M-0.000244141 2.1667C-0.000244141 3.24918 0.882209 4.1267 1.97077 4.1267C3.05933 4.1267 3.94178 3.24918 3.94178 2.1667C3.94178 1.08422 3.05933 0.206696 1.97077 0.206696C0.882209 0.206696 -0.000244141 1.08422 -0.000244141 2.1667Z"></path><path data-v-472967bd="" d="M-0.000244141 14.1573C-0.000244141 15.2398 0.882209 16.1173 1.97077 16.1173C3.05933 16.1173 3.94178 15.2398 3.94178 14.1573C3.94178 13.0748 3.05933 12.1973 1.97077 12.1973C0.882209 12.1973 -0.000244141 13.0748 -0.000244141 14.1573Z"></path><path data-v-472967bd="" d="M-0.000244141 8.16202C-0.000244141 9.2445 0.882209 10.122 1.97077 10.122C3.05933 10.122 3.94178 9.2445 3.94178 8.16202C3.94178 7.07954 3.05933 6.20201 1.97077 6.20201C0.882209 6.20201 -0.000244141 7.07954 -0.000244141 8.16202Z"></path></svg>
       </div>
     `;
-    
+
     // Add event listener for Android menu button
-    const menuBtn = browserNavBar.querySelector('#__mf_nav_menu__');
+    const menuBtn = browserNavBar.querySelector("#__mf_nav_menu__");
     if (menuBtn) {
       menuBtn.onclick = () => {
         // Toggle browser navigation bar visibility
@@ -1699,7 +1699,7 @@ function injectBrowserNavigationBar() {
       };
     }
   }
-  
+
   screen.insertBefore(browserNavBar, screen.firstChild);
   adjustIframeForBars();
 }
