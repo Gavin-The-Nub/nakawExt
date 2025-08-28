@@ -52,7 +52,7 @@ export const DEVICES = [
     name: "Apple Watch Series 6",
     viewport: { width: 162, height: 197 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-    platform: "iOS",
+    platform: "macOS",
     mockup: "assets/devices/applewatch.png",
     screenPct: {
       top: 22,
@@ -403,7 +403,7 @@ export const DEVICES = [
   {
     slug: "ipad-air",
     name: "ipad air",
-    viewport: { width: 820, height: 1180 },
+    viewport: { width: 697, height: 1003 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ipad-air.png",
@@ -421,7 +421,7 @@ export const DEVICES = [
   {
     slug: "ipad-pro",
     name: "ipad pro",
-    viewport: { width: 834, height: 1194 },
+    viewport: { width: 709, height: 1015 },
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ipad-pro.png",
@@ -489,7 +489,7 @@ export const DEVICES = [
     name: "Microsoft Surface Duo",
     viewport: { width: 1114, height: 705 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-    platform: "Android",
+    platform: "macOS",
     mockup: "assets/devices/microsoftsurfaceduo.png",
     screenPct: { top: 9, right: 5, bottom: 9, left: 5, radius: 3 },
   },
@@ -647,7 +647,7 @@ export const DEVICES = [
   {
     slug: "sgalaxytabs7",
     name: "Samsung Galaxy Tab S7",
-    viewport: { width: 800, height: 1280 },
+    viewport: { width: 600, height: 960 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxytabs7.png",
@@ -665,9 +665,9 @@ export const DEVICES = [
   {
     slug: "ssmarttv",
     name: "Samsung Smart TV",
-    viewport: { width: 1920, height: 1080 },
+    viewport: { width: 1344, height: 840 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-    platform: "Android",
+    platform: "macOS",
     mockup: "assets/devices/ssmarttv.png",
     screenPct: { top: 0.5, right: 0.5, bottom: 9, left: 0.5, radius: 0 },
   },

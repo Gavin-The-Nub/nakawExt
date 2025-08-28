@@ -94,6 +94,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               statusBarBtn.classList.remove("selected");
             }
           }
+
+          // Update rotate button state based on new device
+          updateToolbarOrientation();
         }, 150); // Additional delay to ensure browser nav bar is created
       }, 100); // Small delay to ensure overlay recreation is complete
       break;
@@ -157,15 +160,16 @@ function injectToolbar() {
         z-index: 2147483648 !important;
         display: flex !important;
         flex-direction: column;
-        gap: 24px;
+        gap: 16px;
         pointer-events: none;
       }
       .mf-toolbar-btn {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: #555;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: rgba(85, 85, 85, 0.9);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -173,49 +177,78 @@ function injectToolbar() {
         cursor: pointer;
         border: none;
         outline: none;
-        transition: background 0.2s;
+        transition: all 0.2s ease;
         pointer-events: auto;
+        position: relative;
+      }
+      .mf-toolbar-btn:hover {
+        background: rgba(85, 85, 85, 1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       }
       .mf-toolbar-btn:active {
-        background: #333;
+        background: rgba(51, 51, 51, 0.9);
+        transform: translateY(0);
       }
       .mf-toolbar-btn.selected {
-        background: #2196f3;
+        background: rgba(33, 150, 243, 0.9);
+        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+      }
+      .mf-toolbar-btn.selected:hover {
+        background: rgba(33, 150, 243, 1);
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
       }
       .mf-toolbar-btn.recording {
-        background: #f44336;
+        background: rgba(244, 67, 54, 0.9);
         animation: pulse 2s infinite;
+        box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+      }
+      .mf-toolbar-btn.recording:hover {
+        background: rgba(244, 67, 54, 1);
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+      }
+      .mf-toolbar-btn.disabled {
+        opacity: 0.4 !important;
+        cursor: not-allowed !important;
+        pointer-events: none;
+        transform: none !important;
+      }
+      .mf-toolbar-btn.disabled:hover {
+        background: rgba(85, 85, 85, 0.9) !important;
+        transform: none !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
       }
       @keyframes pulse {
         0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
+        50% { transform: scale(1.02); }
         100% { transform: scale(1); }
       }
       .mf-toolbar-btn svg {
-        width: 28px;
-        height: 28px;
+        width: 20px;
+        height: 20px;
         stroke: #fff;
         fill: none;
-        stroke-width: 2.2;
+        stroke-width: 2;
         stroke-linecap: round;
         stroke-linejoin: round;
       }
       
       .orientation-indicator {
         position: absolute;
-        top: -8px;
-        right: -8px;
-        width: 20px;
-        height: 20px;
+        top: -6px;
+        right: -6px;
+        width: 16px;
+        height: 16px;
         background: #ff6b6b;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
+        font-size: 8px;
         font-weight: bold;
         color: white;
-        border: 2px solid #333;
+        border: 1.5px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
       }
       
       #mf-device-selector {
@@ -459,6 +492,11 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-rotate").onclick = () => {
+    // Check if rotation is supported for current device
+    if (!isRotationSupported()) {
+      return; // Do nothing if rotation is not supported
+    }
+
     // Implement rotate functionality with visual animation (like basic_clone)
     try {
       // Get current orientation from frame attribute (fallback to tracked state)
@@ -985,24 +1023,50 @@ function attachBrowserNavAutoHide() {
     if (!win || !doc) return;
 
     // Debounced handler for scroll position
-    let lastState = null; // null | "top" | "scrolled"
+    let lastScrollTop = 0;
+    let lastShowScrollTop = 0;
+    const SHOW_THRESHOLD = 50; // px
+    let lastState = null; // null | "top" | "shown" | "hidden"
+
     const onScroll = () => {
-      // If nav is manually hidden, do nothing
       if (browserNavBar.style.display === "none") return;
 
       const scrollTop =
         doc.documentElement.scrollTop || doc.body.scrollTop || 0;
-      const atTop = scrollTop <= 0;
 
-      if (atTop && lastState !== "top") {
+      // Always show at very top
+      if (scrollTop <= 0) {
         browserNavBar.setAttribute("data-auto-hidden", "false");
         adjustIframeForBars();
+        lastScrollTop = scrollTop;
+        lastShowScrollTop = scrollTop;
         lastState = "top";
-      } else if (!atTop && lastState !== "scrolled") {
-        browserNavBar.setAttribute("data-auto-hidden", "true");
-        adjustIframeForBars();
-        lastState = "scrolled";
+        return;
       }
+
+      // Scrolling up
+      if (scrollTop < lastScrollTop) {
+        if (
+          lastShowScrollTop - scrollTop >= SHOW_THRESHOLD ||
+          lastState !== "shown"
+        ) {
+          browserNavBar.setAttribute("data-auto-hidden", "false");
+          adjustIframeForBars();
+          lastShowScrollTop = scrollTop;
+          lastState = "shown";
+        }
+      }
+      // Scrolling down
+      else if (scrollTop > lastScrollTop) {
+        if (lastState !== "hidden") {
+          browserNavBar.setAttribute("data-auto-hidden", "true");
+          adjustIframeForBars();
+          lastState = "hidden";
+        }
+        // Don't update lastShowScrollTop here, so we can measure up distance
+      }
+
+      lastScrollTop = scrollTop;
     };
 
     // Attach listeners once
@@ -1041,7 +1105,7 @@ function createDeviceSelector() {
   const categories = {
     iOS: devices.filter((d) => d.platform === "iOS"),
     Android: devices.filter((d) => d.platform === "Android"),
-    macOS: devices.filter((d) => d.platform === "macOS"),
+    SPECIALS: devices.filter((d) => d.platform === "macOS"),
   };
 
   let html =
@@ -1107,26 +1171,56 @@ function hideDeviceSelector() {
   }
 }
 
+// Function to check if rotation is supported for the current device
+function isRotationSupported() {
+  const frame = document.getElementById("__mf_simulator_frame__");
+  if (!frame) return false;
+
+  const platform = frame.getAttribute("data-platform") || "iOS";
+
+  // Only mobile devices (iOS and Android) support rotation
+  // Desktop devices (macOS) do not support rotation
+  return platform === "iOS" || platform === "Android";
+}
+
 function updateToolbarOrientation() {
   // Update the rotate button to show current orientation
   const rotateBtn = document.getElementById("mf-btn-rotate");
   if (rotateBtn) {
-    if (currentOrientation === "landscape") {
-      rotateBtn.title = "Rotate to Portrait";
-      rotateBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" style="transform: rotate(90deg);">
-          <path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/>
-        </svg>
-      `;
-      rotateBtn.querySelector(".orientation-indicator").textContent = "L";
+    // Check if rotation is supported for current device
+    const rotationSupported = isRotationSupported();
+
+    if (!rotationSupported) {
+      // Disable rotate button for desktop devices
+      rotateBtn.disabled = true;
+      rotateBtn.style.opacity = "0.5";
+      rotateBtn.style.cursor = "not-allowed";
+      rotateBtn.title = "Rotation not available for desktop devices";
+      rotateBtn.classList.add("disabled");
     } else {
-      rotateBtn.title = "Rotate to Landscape";
-      rotateBtn.innerHTML = `
-        <svg viewBox="0 0 24 24">
-          <path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/>
-        </svg>
-      `;
-      rotateBtn.querySelector(".orientation-indicator").textContent = "P";
+      // Enable rotate button for mobile devices
+      rotateBtn.disabled = false;
+      rotateBtn.style.opacity = "1";
+      rotateBtn.style.cursor = "pointer";
+      rotateBtn.classList.remove("disabled");
+
+      if (currentOrientation === "landscape") {
+        rotateBtn.title = "Rotate to Portrait";
+        rotateBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" style="transform: rotate(90deg);">
+            <path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/>
+          </svg>
+        `;
+        rotateBtn.querySelector(".orientation-indicator").textContent = "L";
+      } else {
+        rotateBtn.title = "Rotate to Landscape";
+        rotateBtn.innerHTML = `
+          <svg viewBox="0 0 24 24">
+            <path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/>
+          </svg>
+        `;
+        rotateBtn.querySelector(".orientation-indicator").textContent = "P";
+      }
     }
   }
 
@@ -1618,13 +1712,33 @@ function showScreenshotDownloadModal(blob) {
     background: white;
     border-radius: 12px;
     padding: 30px;
-    max-width: 400px;
+    max-width: 800px;
     width: 90%;
-    text-align: center;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
   `;
 
-  // Add success icon
+  // Create left column for image preview
+  const leftColumn = document.createElement("div");
+  leftColumn.style.cssText = `
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  `;
+
+  // Create right column for details and actions
+  const rightColumn = document.createElement("div");
+  rightColumn.style.cssText = `
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  `;
+
+  // Add success icon to right column
   const successIcon = document.createElement("div");
   successIcon.innerHTML = `
     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2">
@@ -1633,9 +1747,9 @@ function showScreenshotDownloadModal(blob) {
     </svg>
   `;
   successIcon.style.marginBottom = "20px";
-  modalContent.appendChild(successIcon);
+  rightColumn.appendChild(successIcon);
 
-  // Add title
+  // Add title to right column
   const title = document.createElement("h2");
   title.textContent = "Screenshot Ready!";
   title.style.cssText = `
@@ -1644,9 +1758,9 @@ function showScreenshotDownloadModal(blob) {
     font-size: 24px;
     font-weight: 600;
   `;
-  modalContent.appendChild(title);
+  rightColumn.appendChild(title);
 
-  // Add description
+  // Add description to right column
   const description = document.createElement("p");
   description.textContent = "Your screenshot is ready for download.";
   description.style.cssText = `
@@ -1655,9 +1769,9 @@ function showScreenshotDownloadModal(blob) {
     font-size: 16px;
     line-height: 1.5;
   `;
-  modalContent.appendChild(description);
+  rightColumn.appendChild(description);
 
-  // Add file info
+  // Add file info to right column
   const fileInfo = document.createElement("div");
   fileInfo.style.cssText = `
     margin: 0 0 25px 0;
@@ -1677,27 +1791,47 @@ function showScreenshotDownloadModal(blob) {
       <div>Format: Portable Network Graphics</div>
     </div>
   `;
-  modalContent.appendChild(fileInfo);
+  rightColumn.appendChild(fileInfo);
 
-  // Add preview (for screenshots)
+  // Add image preview to left column
   const previewContainer = document.createElement("div");
   previewContainer.style.cssText = `
-    margin: 0 0 25px 0;
     text-align: center;
+    position: relative;
+    margin-bottom: 20px;
   `;
 
   const preview = document.createElement("img");
   preview.src = URL.createObjectURL(blob);
   preview.style.cssText = `
-    max-width: 200px;
-    max-height: 150px;
+    max-width: 350px;
+    max-height: 400px;
     border-radius: 8px;
     border: 1px solid #e9ecef;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    object-fit: contain;
   `;
 
+  // Clean up the preview URL when modal is closed
+  const cleanupPreview = () => {
+    URL.revokeObjectURL(preview.src);
+  };
+
   previewContainer.appendChild(preview);
-  modalContent.appendChild(previewContainer);
+
+  // Add preview label
+  const previewLabel = document.createElement("div");
+  previewLabel.textContent = "Screenshot preview";
+  previewLabel.style.cssText = `
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+  `;
+  previewContainer.appendChild(previewLabel);
+
+  // Add preview to left column
+  leftColumn.appendChild(previewContainer);
 
   // Add download button
   const downloadBtn = document.createElement("button");
@@ -1743,10 +1877,11 @@ function showScreenshotDownloadModal(blob) {
     }, 5000);
 
     // Close modal
+    cleanupPreview(); // Clean up preview URL
     modalOverlay.remove();
   };
 
-  modalContent.appendChild(downloadBtn);
+  rightColumn.appendChild(downloadBtn);
 
   // Add copy button
   const copyBtn = document.createElement("button");
@@ -1792,7 +1927,7 @@ function showScreenshotDownloadModal(blob) {
     }
   };
 
-  modalContent.appendChild(copyBtn);
+  rightColumn.appendChild(copyBtn);
 
   // Add close button
   const closeBtn = document.createElement("button");
@@ -1818,10 +1953,15 @@ function showScreenshotDownloadModal(blob) {
   };
 
   closeBtn.onclick = () => {
+    cleanupPreview(); // Clean up preview URL
     modalOverlay.remove();
   };
 
-  modalContent.appendChild(closeBtn);
+  rightColumn.appendChild(closeBtn);
+
+  // Add both columns to modal content
+  modalContent.appendChild(leftColumn);
+  modalContent.appendChild(rightColumn);
 
   // Add modal to page
   modalOverlay.appendChild(modalContent);
@@ -1830,6 +1970,7 @@ function showScreenshotDownloadModal(blob) {
   // Close modal on overlay click
   modalOverlay.onclick = (e) => {
     if (e.target === modalOverlay) {
+      cleanupPreview(); // Clean up preview URL
       modalOverlay.remove();
     }
   };
@@ -2236,10 +2377,10 @@ function injectBrowserNavigationBar() {
     // Position at bottom for iOS Safari UI
     browserNavBar.style.top = "auto";
     browserNavBar.style.bottom = "0";
-    browserNavBar.style.background = "rgba(15,16,20,0.65)";
-    browserNavBar.style.backdropFilter = "blur(14px) saturate(150%)";
-    browserNavBar.style.WebkitBackdropFilter = "blur(14px) saturate(150%)";
-    browserNavBar.style.borderTop = "1px solid rgba(255,255,255,0.22)";
+    browserNavBar.style.background = "rgba(15,16,20,0.5)";
+    browserNavBar.style.backdropFilter = "blur(25px) saturate(150%)";
+    browserNavBar.style.WebkitBackdropFilter = "blur(25px) saturate(150%)";
+    browserNavBar.style.borderTop = "none";
     browserNavBar.style.display = "block";
     // Tighten outer padding to reduce overall height and sit closer to bottom
     browserNavBar.style.padding = "7px 10px 6px";
@@ -2248,7 +2389,7 @@ function injectBrowserNavigationBar() {
     browserNavBar.style.color = "#000";
     browserNavBar.style.pointerEvents = "none";
     browserNavBar.innerHTML = `
-      <div style=\"display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.22);border-radius:10px;padding:6px 10px;margin: 0px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.08);;backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);pointer-events:auto;font-family:'SF Pro Text','SF Pro Display','SF UI','San Francisco',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;\">
+      <div style=\"display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.45);border-radius:10px;padding:6px 10px;margin: 0px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.08);;backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);pointer-events:auto;font-family:'SF Pro Text','SF Pro Display','SF UI','San Francisco',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;\">
         <span style=\"display:inline-flex;margin-right:10px;color:#ffffff;\"> 
           <span style=\"display:inline-flex;align-items:flex-end;justify-content:center;width:22px;height:20px;border-radius:4px;background:transparent;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1;gap:1px;\"> 
            <span style=\"font-size:15px;font-weight:400;line-height:1;\">A</span>
@@ -2260,7 +2401,7 @@ function injectBrowserNavigationBar() {
           <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
             <svg data-v-50b8ed5c=\"\" width=\"19.6\" height=\"10.6\" viewBox=\"0 0 16 23\" fill=\"#ffffff\" xmlns=\"http://www.w3.org/2000/svg\" class=\"cadena\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M2 6C2 2.68629 4.68629 0 8 0C11.3137 0 14 2.68629 14 6V10C15.1046 10 16 10.8954 16 12V21C16 22.1046 15.1046 23 14 23H2C0.895431 23 0 22.1046 0 21V12C0 10.8954 0.895431 10 2 10V6ZM11.5 6C11.5 4.067 9.933 2.5 8 2.5C6.067 2.5 4.5 4.067 4.5 6V10H11.5V6Z\" fill=\"#eeeeef\"></path></svg>
           </span>
-          <span style=\"flex:1;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
+          <span style=\"flex:1;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:.02em;border:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
             window.location.hostname || "website.com"
           }</span>
         </span>
@@ -2271,20 +2412,20 @@ function injectBrowserNavigationBar() {
       <div style=\"display:flex;align-items:center;justify-content:center;gap:10%;margin-top:4px;pointer-events:auto;\">
         <div style=\"display:flex;align-items:center;gap:30px;\">
             <button id=\"__mf_nav_back__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
-             <svg data-v-50b8ed5c=\"\" width=\"18\" height=\"18\" viewBox=\"0 0 31 55\" stroke=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" d=\"M28.3144 2.5354L3.53595 27.021M28.4655 52.0619L3.0625 27.5349\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>
+             <svg data-v-50b8ed5c=\"\" width=\"18\" height=\"18\" viewBox=\"0 0 31 55\" stroke=\"#ffffff\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" d=\"M28.3144 2.5354L3.53595 27.021M28.4655 52.0619L3.0625 27.5349\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>
             </button>
             <button id=\"__mf_nav_forward__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
-              <svg data-v-50b8ed5c=\"\" width=\"18\" height=\"18\" viewBox=\"0 0 31 55\" stroke=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\" class=\"inactive\"><path data-v-50b8ed5c=\"\" d=\"M2.68623 52.4645L27.4647 27.979M2.53516 2.93799L27.9381 27.465\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>
+              <svg data-v-50b8ed5c=\"\" width=\"18\" height=\"18\" viewBox=\"0 0 31 55\" stroke=\"#ffffff\" xmlns=\"http://www.w3.org/2000/svg\" class=\"inactive\"><path data-v-50b8ed5c=\"\" d=\"M2.68623 52.4645L27.4647 27.979M2.53516 2.93799L27.9381 27.465\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>
             </button>
             <button id=\"__mf_nav_share__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
-              <svg data-v-50b8ed5c=\"\" width=\"24\" height=\"24\" viewBox=\"0 0 56 73\" fill=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" d=\"M15.591 11.8068C14.7123 12.6855 14.7123 14.1101 15.591 14.9888C16.4697 15.8675 17.8943 15.8675 18.773 14.9888L26 7.76178V45.1971C26 46.4398 27.0074 47.4471 28.25 47.4471C29.4926 47.4471 30.5 46.4398 30.5 45.1971V7.48272L37.7832 14.7659C38.6619 15.6446 40.0865 15.6446 40.9652 14.7659C41.8439 13.8873 41.8439 12.4626 40.9652 11.584L30.1965 0.815221C30.0099 0.62864 29.7987 0.481678 29.5733 0.374336C28.6995 -0.206342 27.5093 -0.11145 26.7388 0.65901L15.591 11.8068Z\" stroke-width=\"0\"></path><path data-v-50b8ed5c=\"\" d=\"M8 20.4471H19V24.9471H8C6.067 24.9471 4.5 26.5141 4.5 28.4471V64.4471C4.5 66.3801 6.067 67.9471 8 67.9471H48C49.933 67.9471 51.5 66.3801 51.5 64.4471V28.4471C51.5 26.5141 49.933 24.9471 48 24.9471H38V20.4471H48C52.4183 20.4471 56 24.0289 56 28.4471V64.4471C56 68.8654 52.4183 72.4471 48 72.4471H8C3.58172 72.4471 0 68.8654 0 64.4471V28.4471C0 24.0289 3.58172 20.4471 8 20.4471Z\" stroke-width=\"0\"></path></svg>
+              <svg data-v-50b8ed5c=\"\" width=\"24\" height=\"24\" viewBox=\"0 0 56 73\" fill=\"#ffffff\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" d=\"M15.591 11.8068C14.7123 12.6855 14.7123 14.1101 15.591 14.9888C16.4697 15.8675 17.8943 15.8675 18.773 14.9888L26 7.76178V45.1971C26 46.4398 27.0074 47.4471 28.25 47.4471C29.4926 47.4471 30.5 46.4398 30.5 45.1971V7.48272L37.7832 14.7659C38.6619 15.6446 40.0865 15.6446 40.9652 14.7659C41.8439 13.8873 41.8439 12.4626 40.9652 11.584L30.1965 0.815221C30.0099 0.62864 29.7987 0.481678 29.5733 0.374336C28.6995 -0.206342 27.5093 -0.11145 26.7388 0.65901L15.591 11.8068Z\" stroke-width=\"0\"></path><path data-v-50b8ed5c=\"\" d=\"M8 20.4471H19V24.9471H8C6.067 24.9471 4.5 26.5141 4.5 28.4471V64.4471C4.5 66.3801 6.067 67.9471 8 67.9471H48C49.933 67.9471 51.5 66.3801 51.5 64.4471V28.4471C51.5 26.5141 49.933 24.9471 48 24.9471H38V20.4471H48C52.4183 20.4471 56 24.0289 56 28.4471V64.4471C56 68.8654 52.4183 72.4471 48 72.4471H8C3.58172 72.4471 0 68.8654 0 64.4471V28.4471C0 24.0289 3.58172 20.4471 8 20.4471Z\" stroke-width=\"0\"></path></svg>
             </button>
             <button id=\"__mf_nav_bookmark__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
-              <svg data-v-50b8ed5c=\"\" width=\"26\" height=\"20\" viewBox=\"0 0 70 60\" fill=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" stroke-width=\"0\" clip-rule=\"evenodd\" d=\"M32.2931 61C31.7327 60.3476 31.0631 59.7201 30.2817 59.1293C27.4234 56.9682 23.2728 55.5 18.5 55.5C13.7272 55.5 9.5766 56.9682 6.7183 59.1293C5.93693 59.7201 5.26734 60.3476 4.70686 61H0V8.81399C3.30175 3.60059 10.3448 0 18.5 0C25.266 0 31.2665 2.47839 35 6.29998C38.7335 2.47839 44.734 0 51.5 0C60.094 0 67.4529 3.99843 70.5 9.66911V61H65.2931C64.7327 60.3476 64.0631 59.7201 63.2817 59.1293C60.4234 56.9682 56.2728 55.5 51.5 55.5C46.7272 55.5 42.5766 56.9682 39.7183 59.1293C38.9369 59.7201 38.2673 60.3476 37.7069 61H32.2931ZM37.5 10.248V55.1774C41.1642 52.5862 46.0871 51 51.5 51C57.1631 51 62.2899 52.7362 66 55.5431V10.9184C65.3272 9.93494 64.4239 8.9929 63.2817 8.12931C60.4234 5.96815 56.2728 4.5 51.5 4.5C46.7272 4.5 42.5766 5.96815 39.7183 8.12931C38.8384 8.79462 38.1002 9.50648 37.5 10.248ZM33 55.5431C29.2899 52.7362 24.1631 51 18.5 51C13.0871 51 8.1642 52.5862 4.5 55.1774V10.248C5.10022 9.50648 5.83838 8.79462 6.7183 8.12931C9.5766 5.96815 13.7272 4.5 18.5 4.5C23.2728 4.5 27.4234 5.96815 30.2817 8.12931C31.4239 8.9929 32.3272 9.93494 33 10.9184V55.5431Z\"></path></svg>
+              <svg data-v-50b8ed5c=\"\" width=\"26\" height=\"20\" viewBox=\"0 0 70 60\" fill=\"#ffffff\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" stroke-width=\"0\" clip-rule=\"evenodd\" d=\"M32.2931 61C31.7327 60.3476 31.0631 59.7201 30.2817 59.1293C27.4234 56.9682 23.2728 55.5 18.5 55.5C13.7272 55.5 9.5766 56.9682 6.7183 59.1293C5.93693 59.7201 5.26734 60.3476 4.70686 61H0V8.81399C3.30175 3.60059 10.3448 0 18.5 0C25.266 0 31.2665 2.47839 35 6.29998C38.7335 2.47839 44.734 0 51.5 0C60.094 0 67.4529 3.99843 70.5 9.66911V61H65.2931C64.7327 60.3476 64.0631 59.7201 63.2817 59.1293C60.4234 56.9682 56.2728 55.5 51.5 55.5C46.7272 55.5 42.5766 56.9682 39.7183 59.1293C38.9369 59.7201 38.2673 60.3476 37.7069 61H32.2931ZM37.5 10.248V55.1774C41.1642 52.5862 46.0871 51 51.5 51C57.1631 51 62.2899 52.7362 66 55.5431V10.9184C65.3272 9.93494 64.4239 8.9929 63.2817 8.12931C60.4234 5.96815 56.2728 4.5 51.5 4.5C46.7272 4.5 42.5766 5.96815 39.7183 8.12931C38.8384 8.79462 38.1002 9.50648 37.5 10.248ZM33 55.5431C29.2899 52.7362 24.1631 51 18.5 51C13.0871 51 8.1642 52.5862 4.5 55.1774V10.248C5.10022 9.50648 5.83838 8.79462 6.7183 8.12931C9.5766 5.96815 13.7272 4.5 18.5 4.5C23.2728 4.5 27.4234 5.96815 30.2817 8.12931C31.4239 8.9929 32.3272 9.93494 33 10.9184V55.5431Z\"></path></svg>
             </button>
             <div style=\"position:relative;\">
               <button id=\"__mf_nav_tabs__\" style=\"padding:6px;border-radius:9999px;transition:all .2s;background:transparent;border:none;color:#6b7280;cursor:pointer;\"> 
-                <svg data-v-50b8ed5c=\"\" width=\"22\" height=\"22\" viewBox=\"0 0 67 66\" fill=\"#4169E1\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" stroke-width=\"0\" clip-rule=\"evenodd\" d=\"M52 14H59C63.4183 14 67 17.5817 67 22V58C67 62.4183 63.4183 66 59 66H23C18.5817 66 15 62.4183 15 58V52H8C3.58172 52 0 48.4183 0 44V8C0 3.58172 3.58172 0 8 0H44C48.4183 0 52 3.58172 52 8V14ZM44 4.5H8C6.067 4.5 4.5 6.067 4.5 8V44C4.5 45.933 6.067 47.5 8 47.5H15V22C15 17.5817 18.5817 14 23 14H47.5V8C47.5 6.067 45.933 4.5 44 4.5ZM23 18.5H59C60.933 18.5 62.5 20.067 62.5 22V58C62.5 59.933 60.933 61.5 59 61.5H23C21.067 61.5 19.5 59.933 19.5 58V22C19.5 20.067 21.067 18.5 23 18.5Z\"></path></svg>
+                <svg data-v-50b8ed5c=\"\" width=\"22\" height=\"22\" viewBox=\"0 0 67 66\" fill=\"#ffffff\" xmlns=\"http://www.w3.org/2000/svg\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" stroke-width=\"0\" clip-rule=\"evenodd\" d=\"M52 14H59C63.4183 14 67 17.5817 67 22V58C67 62.4183 63.4183 66 59 66H23C18.5817 66 15 62.4183 15 58V52H8C3.58172 52 0 48.4183 0 44V8C0 3.58172 3.58172 0 8 0H44C48.4183 0 52 3.58172 52 8V14ZM44 4.5H8C6.067 4.5 4.5 6.067 4.5 8V44C4.5 45.933 6.067 47.5 8 47.5H15V22C15 17.5817 18.5817 14 23 14H47.5V8C47.5 6.067 45.933 4.5 44 4.5ZM23 18.5H59C60.933 18.5 62.5 20.067 62.5 22V58C62.5 59.933 60.933 61.5 59 61.5H23C21.067 61.5 19.5 59.933 19.5 58V22C19.5 20.067 21.067 18.5 23 18.5Z\"></path></svg>
               </button>
             </div>
           </div>
