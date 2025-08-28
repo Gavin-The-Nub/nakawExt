@@ -1109,6 +1109,15 @@ function render3DModelInMockup(key) {
   const screen = document.getElementById("__mf_simulator_screen__");
   if (!frame || !screen) return;
 
+  // Enlarge overall simulator container scale for better 3D viewing
+  try {
+    if (!frame.getAttribute('data-original-scale')) {
+      const original = frame.style.scale && frame.style.scale.trim() !== '' ? frame.style.scale : '0.7';
+      frame.setAttribute('data-original-scale', original);
+    }
+    frame.style.scale = '0.9';
+  } catch (_) {}
+
   // Hide 2D mockup image and screen iframe
   const mockupImg = document.getElementById("__mf_simulator_mockup__");
   if (mockupImg) mockupImg.style.display = "none";
