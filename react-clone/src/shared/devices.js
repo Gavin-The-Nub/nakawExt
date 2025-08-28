@@ -6,6 +6,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip16.png",
+    mockup2: "assets/device-thumbnails/ip16.png",
     screenPct: {
       top: 2.2,
       right: 5,
@@ -22,6 +23,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/macbook-air.png",
+    mockup2: "assets/device-thumbnails/mb-air.png",
     screenPct: {
       top: 5.0,
       right: 10,
@@ -38,6 +40,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/apple-imac.png",
+    mockup2: "assets/device-thumbnails/apple-imac.png",
     screenPct: {
       top: 2.8,
       right: 1,
@@ -54,6 +57,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "macOS",
     mockup: "assets/devices/applewatch.png",
+    mockup2: "assets/device-thumbnails/applewatch.png",
     screenPct: {
       top: 22,
       right: 10,
@@ -70,6 +74,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/dell14.png",
+    mockup2: "assets/device-thumbnails/dell14.png",
     screenPct: {
       top: 6.5,
       right: 9,
@@ -86,6 +91,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/gpixel5.png",
+    mockup2: "assets/device-thumbnails/gpixel5.png",
     screenPct: {
       top: 2,
       right: 4.5,
@@ -103,6 +109,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/gpixel6.png",
+    mockup2: "assets/device-thumbnails/gpixel6.png",
     screenPct: {
       top: 2,
       right: 0,
@@ -119,6 +126,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/gpixel8.png",
+    mockup2: "assets/device-thumbnails/gpixel8.png",
     screenPct: {
       top: 2,
       right: 2,
@@ -136,6 +144,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/hp30.png",
+    mockup2: "assets/device-thumbnails/hp30.png",
     screenPct: {
       top: 2,
       right: 2,
@@ -152,6 +161,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip11.png",
+    mockup2: "assets/device-thumbnails/ip11.png",
     screenPct: { top: 4, right: 7, bottom: 3, left: 7, radius: 3, scale: 0.8 },
   },
   {
@@ -161,6 +171,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip11pro.png",
+    mockup2: "assets/device-thumbnails/ip11pro.png",
     screenPct: { top: 3, right: 7, bottom: 3, left: 7, radius: 3, scale: 0.8 },
   },
   {
@@ -170,6 +181,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip11promax.png",
+    mockup2: "assets/device-thumbnails/ip11promax.png",
     screenPct: { top: 2, right: 6, bottom: 2, left: 6, radius: 3, scale: 0.8 },
   },
   {
@@ -179,6 +191,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip12.png",
+    mockup2: "assets/device-thumbnails/ip12.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
   },
   {
@@ -188,6 +201,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip12max.png",
+    mockup2: "assets/device-thumbnails/ip12max.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
   },
   {
@@ -197,6 +211,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip12mini.png",
+    mockup2: "assets/device-thumbnails/ip12mini.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.85 },
   },
   {
@@ -206,6 +221,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip12promax.png",
+    mockup2: "assets/device-thumbnails/ip12promax.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.7 },
   },
   {
@@ -215,6 +231,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip13.png",
+    mockup2: "assets/device-thumbnails/ip13.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
     statusBarPadding: [0, 20, 0, 20],
   },
@@ -225,6 +242,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip13mini.png",
+    mockup2: "assets/device-thumbnails/ip13mini.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.85 },
   },
   {
@@ -234,6 +252,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip13pro.png",
+    mockup2: "assets/device-thumbnails/ip13pro.png",
     screenPct: { top: 2, right: 4, bottom: 2, left: 4, radius: 3, scale: 0.8 },
   },
   {
@@ -243,6 +262,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip13promax.png",
+    mockup2: "assets/device-thumbnails/ip13promax.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.75 },
   },
   {
@@ -252,6 +272,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip14.png",
+    mockup2: "assets/device-thumbnails/ip14.png",
     screenPct: { top: 2, right: 4, bottom: 2, left: 4, radius: 3, scale: 0.8 },
   },
   {
@@ -261,6 +282,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip14max.png",
+    mockup2: "assets/device-thumbnails/ip14max.png",
     screenPct: {
       top: 2,
       right: 4.8,
@@ -277,6 +299,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip14pro.png",
+    mockup2: "assets/device-thumbnails/ip14pro.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3, scale: 0.8 },
   },
   {
@@ -286,6 +309,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip14promax.png",
+    mockup2: "assets/device-thumbnails/ip14promax.png",
     screenPct: {
       top: 2,
       right: 4.9,
@@ -302,6 +326,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip15.png",
+    mockup2: "assets/device-thumbnails/ip15.png",
     screenPct: {
       top: 1.8,
       right: 4.5,
@@ -318,6 +343,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip15plus.png",
+    mockup2: "assets/device-thumbnails/ip15plus.png",
     screenPct: {
       top: 1.8,
       right: 4.5,
@@ -334,6 +360,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip15pro.png",
+    mockup2: "assets/device-thumbnails/ip15pro.png",
     screenPct: {
       top: 1.8,
       right: 4.5,
@@ -350,6 +377,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip15promax.png",
+    mockup2: "assets/device-thumbnails/ip15promax.png",
     screenPct: {
       top: 1.5,
       right: 4,
@@ -366,6 +394,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip16plus.png",
+    mockup2: "assets/device-thumbnails/ip16plus.png",
     screenPct: {
       top: 2,
       right: 4,
@@ -382,6 +411,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip16promax.png",
+    mockup2: "assets/device-thumbnails/ip16promax.png",
     screenPct: {
       top: 1.8,
       right: 4,
@@ -398,6 +428,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ip5.png",
+    mockup2: "assets/device-thumbnails/ip5.png",
     screenPct: { top: 14, right: 5, bottom: 14, left: 5, radius: 3, scale: 1 },
   },
   {
@@ -407,6 +438,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ipad-air.png",
+    mockup2: "assets/device-thumbnails/ipad-air.png",
     screenPct: { top: 4, right: 5, bottom: 4, left: 5, radius: 3 },
   },
   {
@@ -416,6 +448,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ipad-mini.png",
+    mockup2: "assets/device-thumbnails/ipad-mini.png",
     screenPct: { top: 10, right: 5, bottom: 10, left: 5, radius: 3 },
   },
   {
@@ -425,6 +458,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ipad-pro.png",
+    mockup2: "assets/device-thumbnails/ipad-pro.png",
     screenPct: { top: 3.5, right: 4.8, bottom: 3.5, left: 4.8, radius: 3 },
   },
   {
@@ -434,6 +468,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ipse.png",
+    mockup2: "assets/device-thumbnails/ipse.png",
     screenPct: { top: 12, right: 5, bottom: 12, left: 5, radius: 3, scale: 1 },
   },
   {
@@ -443,6 +478,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ipx.png",
+    mockup2: "assets/device-thumbnails/ipx.png",
     screenPct: {
       top: 2,
       right: 4.5,
@@ -459,6 +495,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
     platform: "iOS",
     mockup: "assets/devices/ipxr.png",
+    mockup2: "assets/device-thumbnails/ipxr.png",
     screenPct: {
       top: 3.5,
       right: 5.5,
@@ -475,6 +512,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/macbookpro.png",
+    mockup2: "assets/device-thumbnails/macbookpro.png",
     screenPct: {
       top: 3.5,
       right: 8,
@@ -491,6 +529,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/microsoftsurfaceduo.png",
+    mockup2: "assets/device-thumbnails/microsoftsurfaceduo.png",
     screenPct: { top: 9, right: 5, bottom: 9, left: 5, radius: 3 },
   },
   {
@@ -500,6 +539,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/nord2.png",
+    mockup2: "assets/device-thumbnails/nord2.png",
     screenPct: {
       top: 2,
       right: 2,
@@ -517,6 +557,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/ofindx3.png",
+    mockup2: "assets/device-thumbnails/ofindx3.png",
     screenPct: {
       top: 2,
       right: 2,
@@ -533,6 +574,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxya12.png",
+    mockup2: "assets/device-thumbnails/sgalaxya12.png",
     screenPct: {
       top: 2,
       right: 2,
@@ -549,6 +591,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxyfold.png",
+    mockup2: "assets/device-thumbnails/sgalaxyfold.png",
     screenPct: {
       top: 1.8,
       right: 2,
@@ -565,6 +608,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "special",
     mockup: "assets/devices/sgalaxynote20ultra.png",
+    mockup2: "assets/device-thumbnails/sgalaxynote20ultra.png",
     screenPct: {
       top: 0,
       right: 0.5,
@@ -581,6 +625,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxys12ultra.png",
+    mockup2: "assets/device-thumbnails/sgalaxys12ultra.png",
     screenPct: {
       top: 1.4,
       right: 2,
@@ -597,6 +642,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxys20.png",
+    mockup2: "assets/device-thumbnails/sgalaxys20.png",
     screenPct: { top: 1, right: 4, bottom: 1, left: 4, radius: 3 },
   },
   {
@@ -606,6 +652,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxys22.png",
+    mockup2: "assets/device-thumbnails/sgalaxys22.png",
     screenPct: { top: 1, right: 4, bottom: 1, left: 4, radius: 3 },
   },
   {
@@ -615,6 +662,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxys22plus.png",
+    mockup2: "assets/device-thumbnails/sgalaxys22plus.png",
     screenPct: { top: 1, right: 4, bottom: 1, left: 3.8, radius: 3 },
   },
   {
@@ -624,6 +672,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxys22ultra.png",
+    mockup2: "assets/device-thumbnails/sgalaxys22ultra.png",
     screenPct: { top: 0, right: 1, bottom: 0, left: 1, radius: 3 },
   },
   {
@@ -633,6 +682,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxys24.png",
+    mockup2: "assets/device-thumbnails/sgalaxys24.png",
     screenPct: { top: 1, right: 4, bottom: 1, left: 3.3, radius: 3 },
   },
   {
@@ -642,6 +692,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxys24ultra.png",
+    mockup2: "assets/device-thumbnails/sgalaxys24ultra.png",
     screenPct: { top: 1, right: 4.5, bottom: 1, left: 4, radius: 3 },
   },
   {
@@ -651,6 +702,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxytabs7.png",
+    mockup2: "assets/device-thumbnails/sgalaxytabs7.png",
     screenPct: { top: 3, right: 5, bottom: 3, left: 5, radius: 3 },
   },
   {
@@ -660,6 +712,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/sgalaxyzflip.png",
+    mockup2: "assets/device-thumbnails/sgalaxyzflip.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3 },
   },
   {
@@ -669,6 +722,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "macOS",
     mockup: "assets/devices/ssmarttv.png",
+    mockup2: "assets/device-thumbnails/ssmarttv.png",
     screenPct: { top: 0.5, right: 0.5, bottom: 9, left: 0.5, radius: 0 },
   },
   {
@@ -678,6 +732,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/undefined-medium_upscaled.png",
+    mockup2: "assets/device-thumbnails/undefined-medium_upscaled.png",
     screenPct: { top: 2, right: 5, bottom: 2, left: 5, radius: 3 },
   },
   {
@@ -687,6 +742,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/x12.png",
+    mockup2: "assets/device-thumbnails/x12.png",
     screenPct: { top: 1.5, right: 2, bottom: 2, left: 2, radius: 3 },
   },
   {
@@ -696,6 +752,7 @@ export const DEVICES = [
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
     platform: "Android",
     mockup: "assets/devices/xm11i.png",
+    mockup2: "assets/device-thumbnails/xm11i.png",
     screenPct: { top: 2, right: 2, bottom: 2, left: 2, radius: 3 },
   },
 ];

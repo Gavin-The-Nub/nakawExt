@@ -255,18 +255,19 @@ function injectToolbar() {
         position: fixed;
         top: 60px;
         right: 100px;
-        background: rgba(0, 0, 0, 0.9);
-        color: white;
+        background: rgba(255, 255, 255, 0.98);
+        color: #111827;
         padding: 20px;
         border-radius: 12px;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-size: 14px;
         z-index: 2147483648;
         backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        width: 560px;
-        max-width: 640px;
-        min-width: 520px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(0,0,0,0.08);
+        width: 400px;
+        max-width: 500px;
+        min-width: 300px;
         max-height: 80vh;
         overflow-y: auto;
         display: none;
@@ -280,34 +281,60 @@ function injectToolbar() {
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: rgba(255, 255, 255, 0.7);
+        color: #6b7280;
       }
       .device-grid {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 10px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
       }
       .device-btn {
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-        border: none;
-        padding: 8px 12px;
+        background:rgb(255, 255, 255);
+        color: #11182;
+        border: 1px solid #e5e7eb;
+        padding: 8px 6px;
         border-radius: 6px;
-        font-size: 12px;
+        font-size: 11px;
         cursor: pointer;
         transition: all 0.2s;
-        text-align: left;
+        text-align: center;
         white-space: normal;
         overflow: hidden;
         text-overflow: clip;
         line-height: 1.2;
-        min-height: 36px;
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+      .device-image {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .device-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      .device-name {
+        font-size: 13px;
+        line-height: 1.1;
+        color: rgb(100, 100, 100);
+
+        font-weight: lighter;
       }
       .device-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
+        background: #e5e7eb;
+        border-color: #d1d5db;
       }
       .device-btn.selected {
-        background: #007AFF;
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #ffffff;
       }
       
       .recording-status {
@@ -1092,6 +1119,8 @@ function createDeviceSelector() {
     slug: d.slug,
     name: d.name,
     platform: d.platform,
+    mockup: d.mockup,
+    mockup2: d.mockup2,
   }));
 
   // Optional: sort devices by platform then name for consistent ordering
@@ -1123,7 +1152,12 @@ function createDeviceSelector() {
     platformDevices.forEach((device) => {
       html += `
         <button class="device-btn" data-device="${device.slug}">
-          ${device.name}
+          <div class="device-image">
+            <img src="${chrome.runtime.getURL(
+              device.mockup2 || device.mockup
+            )}" alt="${device.name}" />
+          </div>
+          <div class="device-name">${device.name}</div>
         </button>
       `;
     });
