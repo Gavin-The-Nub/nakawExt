@@ -1142,12 +1142,13 @@ function render3DModelInMockup(key) {
   threeRoot = createRoot(mount);
 
   const Model = key === 'iphone' ? Iphone : Macbook;
+  const enableZoom = key !== 'iphone';
   threeRoot.render(
     <Canvas shadows camera={{ position: [2.5, 1.5, 3.5], fov: 45 }}>
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 5, 5]} intensity={1.2} castShadow />
       <Environment preset="city" />
-      <OrbitControls enableDamping />
+      <OrbitControls enableDamping enableZoom={enableZoom} />
       <Model />
     </Canvas>
   );
