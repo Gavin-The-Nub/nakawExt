@@ -2,37 +2,12 @@
 import React, { useRef } from "react";
 import { useGLTF, useTexture } from "@react-three/drei";
 import * as THREE from "three"
-import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
 
 export function Macbook(props : any) {
   const { nodes, materials } = useGLTF("scenes/macbook_pro.glb");
   const texture = useTexture("/textures/yellow.png");
   const modelRef = useRef<THREE.Group>(null);
-    useGSAP(() => {
-      const proxy = document.querySelector("#scroll-proxy");
-      if (!modelRef.current || !proxy) return;
-  
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: proxy,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-          pin: true,
-        },
-      });
-  
-      tl.to(modelRef.current.rotation, {
-        y: Math.PI * 2,
-        ease: "none",
-      });
-  
-      return () => {
-        tl.scrollTrigger?.kill();
-      };
-    }, []);
-  
+
   return (
     <group ref={modelRef} {...props} dispose={null}>
       <group position={[1.3, 0.007, 0]}>
