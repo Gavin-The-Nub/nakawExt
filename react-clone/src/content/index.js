@@ -1,6 +1,13 @@
 // Content script for device simulation
 // This script injects a floating toolbar when the simulator is active
+import React, {useEffect} from "react";
+import { createRoot } from "react-dom/client";
 import { DEVICES } from "../shared/devices";
+import DevicePanelApp from "../devicePanel/DevicePanelApp";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Environment } from "@react-three/drei";
+import Iphone from "../models/Iphone";
+import { Macbook } from "../models/Macbook";
 
 let toolbar = null;
 let deviceSelector = null;
@@ -421,6 +428,9 @@ function injectToolbar() {
     <button class="mf-toolbar-btn" id="mf-btn-device" title="Device Mode">
       <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="18" r="1.5"/></svg>
     </button>
+    <button class="mf-toolbar-btn" id="mf-btn-device-panel" title="3D Device Panel">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </button>
   
     <button class="mf-toolbar-btn" id="mf-btn-rotate" title="Rotate to Landscape" style="position: relative;">
       <svg viewBox="0 0 24 24"><path d="M2 12A10 10 0 1 1 12 22"/><polyline points="2 12 2 6 8 6"/></svg>
@@ -517,6 +527,13 @@ function injectToolbar() {
   document.getElementById("mf-btn-device").onclick = () => {
     toggleDeviceSelector();
   };
+
+  const devicePanelBtn = document.getElementById("mf-btn-device-panel");
+  if (devicePanelBtn) {
+    devicePanelBtn.onclick = () => {
+      toggle3DPanel();
+    };
+  }
 
   document.getElementById("mf-btn-rotate").onclick = () => {
     // Check if rotation is supported for current device
@@ -1035,6 +1052,96 @@ function injectToolbar() {
       syncSettingsPanelState();
     } catch (_) {}
   }, 100);
+}
+
+let panelRoot = null;
+function toggle3DPanel() {
+  const existing = document.getElementById("mf-3d-panel");
+  if (existing) {
+    try { panelRoot && panelRoot.unmount && panelRoot.unmount(); } catch (_) {}
+    existing.remove();
+    return;
+  }
+
+  const panel = document.createElement("div");
+  panel.id = "mf-3d-panel";
+  panel.innerHTML = `
+    <style>
+      #mf-3d-panel {
+        position: fixed;
+        top: 60px;
+        right: 100px;
+        z-index: 2147483648;
+        width: 720px;
+        height: 520px;
+        background: #111827;
+        color: #e5e7eb;
+        border-radius: 12px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+        border: 1px solid rgba(255,255,255,0.08);
+        overflow: hidden;
+      }
+      #mf-3d-panel .header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 12px; background: rgba(17,24,39,0.9); border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      #mf-3d-panel .body { height: calc(100% - 44px); }
+      #mf-3d-close { background: transparent; color: #9ca3af; border: none; cursor: pointer; }
+      #mf-3d-close:hover { color: #e5e7eb; }
+    </style>
+    <div class="header">
+      <div>3D Device Panel</div>
+      <button id="mf-3d-close">✕</button>
+    </div>
+    <div class="body"><div id="mf-3d-root" style="width:100%;height:100%"></div></div>
+  `;
+
+  document.body.appendChild(panel);
+  panel.querySelector('#mf-3d-close').onclick = () => panel.remove();
+  const container = panel.querySelector('#mf-3d-root');
+  panelRoot = createRoot(container);
+  panelRoot.render(<DevicePanelApp onSelectModel={(key) => render3DModelInMockup(key)} />);
+}
+
+let threeRoot = null;
+function render3DModelInMockup(key) {
+  const frame = document.getElementById("__mf_simulator_frame__");
+  const screen = document.getElementById("__mf_simulator_screen__");
+  if (!frame || !screen) return;
+
+  // Hide 2D mockup image and screen iframe
+  const mockupImg = document.getElementById("__mf_simulator_mockup__");
+  if (mockupImg) mockupImg.style.display = "none";
+  screen.style.display = "none";
+
+  // Create or reuse a mount for 3D canvas
+  let mount = document.getElementById("__mf_simulator_3d__");
+  if (!mount) {
+    mount = document.createElement("div");
+    mount.id = "__mf_simulator_3d__";
+    mount.style.position = "absolute";
+    mount.style.inset = "0";
+    mount.style.zIndex = "3";
+    frame.appendChild(mount);
+  }
+
+  // Mount R3F Canvas
+  if (threeRoot) {
+    try { threeRoot.unmount(); } catch (_) {}
+    threeRoot = null;
+  }
+  threeRoot = createRoot(mount);
+
+  const Model = key === 'iphone' ? Iphone : Macbook;
+  threeRoot.render(
+    <Canvas shadows camera={{ position: [2.5, 1.5, 3.5], fov: 45 }}>
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[5, 5, 5]} intensity={1.2} castShadow />
+      <Environment preset="city" />
+      <OrbitControls enableDamping />
+      <Model />
+    </Canvas>
+  );
 }
 
 // Attach scroll listeners to auto-hide/show browser nav bar depending on iframe scroll position

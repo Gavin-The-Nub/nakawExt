@@ -5,6 +5,7 @@ module.exports = {
   entry: {
     background: "./src/background/index.js",
     content: "./src/content/index.js",
+    devicePanel: "./src/devicePanel/index.js",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -19,7 +20,10 @@ module.exports = {
         use: {
           loader: "babel-loader",
           options: {
-            presets: ["@babel/preset-env", "@babel/preset-react"],
+            presets: [
+              "@babel/preset-env",
+              "@babel/preset-react",
+            ],
           },
         },
       },
@@ -40,6 +44,7 @@ module.exports = {
         { from: "src/icons", to: "icons" },
         { from: "src/assets", to: "assets", noErrorOnMissing: true },
         { from: "src/offscreen", to: "offscreen" },
+        { from: "src/devicePanel/index.html", to: "devicePanel.html" },
       ],
     }),
   ],

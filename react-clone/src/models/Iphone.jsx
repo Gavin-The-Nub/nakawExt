@@ -1,14 +1,37 @@
 "use client"
 import { useGLTF, useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import React, { useEffect, useRef, useState } from "react";
-import * as THREE from "three"
+import React, { useRef, useEffect, useState } from "react";
 
-export default function Model(props : any) {
-  const modelRef = useRef<THREE.Group>(null);
-  const { nodes, materials } = useGLTF("/scenes/iphone.glb");
-  const texture = useTexture("/textures/yellow.png");
-  const [hasRendered, setHasRendered] = useState(false);
+const assetUrl = (path) => {
+  try {
+    // Ensure relative to extension root where assets are copied
+    const normalized = path.startsWith("assets/") ? path : `assets/${path.replace(/^\//, "")}`;
+    const rt = (typeof globalThis !== "undefined" && globalThis.chrome && globalThis.chrome.runtime) ? globalThis.chrome.runtime : null;
+    return rt && typeof rt.getURL === "function"
+      ? rt.getURL(normalized)
+      : `/${normalized}`;
+  } catch {
+    return path;
+  }
+};
+
+export default function Model(props) {
+  const modelRef = useRef(null);
+  const { nodes, materials } = useGLTF(assetUrl("scenes/iphone.glb"));
+  const [screenshotUrl, setScreenshotUrl] = useState(null);
+  const texture = useTexture(screenshotUrl || assetUrl("textures/yellow.png"));
+
+  useEffect(() => {
+    try {
+      chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+        if (resp && resp.ok && resp.dataUrl) {
+          setScreenshotUrl(resp.dataUrl);
+        }
+      });
+    } catch (_) {}
+  }, []);
+
 
 
   return (
@@ -16,112 +39,112 @@ export default function Model(props : any) {
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.ttmRoLdJipiIOmf as THREE.Mesh).geometry}
+        geometry={nodes.ttmRoLdJipiIOmf.geometry}
         material={materials.hUlRcbieVuIiOXG}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.DjsDkGiopeiEJZK as THREE.Mesh).geometry}
+        geometry={nodes.DjsDkGiopeiEJZK.geometry}
         material={materials.PaletteMaterial001}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.buRWvyqhBBgcJFo as THREE.Mesh).geometry}
+        geometry={nodes.buRWvyqhBBgcJFo.geometry}
         material={materials.PaletteMaterial002}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.MrMmlCAsAxJpYqQ_0 as THREE.Mesh).geometry}
+        geometry={nodes.MrMmlCAsAxJpYqQ_0.geometry}
         material={materials.dxCVrUCvYhjVxqy}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.wqbHSzWaUxBCwxY_0 as THREE.Mesh).geometry}
+        geometry={nodes.wqbHSzWaUxBCwxY_0.geometry}
         material={materials.MHFGNLrDQbTNima}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.QvGDcbDApaGssma as THREE.Mesh).geometry}
+        geometry={nodes.QvGDcbDApaGssma.geometry}
         material={materials.kUhjpatHUvkBwfM}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.vFwJFNASGvEHWhs as THREE.Mesh).geometry}
+        geometry={nodes.vFwJFNASGvEHWhs.geometry}
         material={materials.RJoymvEsaIItifI}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.evAxFwhaQUwXuua as THREE.Mesh).geometry}
+        geometry={nodes.evAxFwhaQUwXuua.geometry}
         material={materials.KSIxMqttXxxmOYl}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.USxQiqZgxHbRvqB as THREE.Mesh).geometry}
+        geometry={nodes.USxQiqZgxHbRvqB.geometry}
         material={materials.mcPrzcBUcdqUybC}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.TvgBVmqNmSrFVfW as THREE.Mesh).geometry}
+        geometry={nodes.TvgBVmqNmSrFVfW.geometry}
         material={materials.pIhYLPqiSQOZTjn}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.GuYJryuYunhpphO as THREE.Mesh).geometry}
+        geometry={nodes.GuYJryuYunhpphO.geometry}
         material={materials.eShKpuMNVJTRrgg}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.pvdHknDTGDzVpwc as THREE.Mesh).geometry}
+        geometry={nodes.pvdHknDTGDzVpwc.geometry}
         material={materials.xdyiJLYTYRfJffH}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.CfghdUoyzvwzIum as THREE.Mesh).geometry}
+        geometry={nodes.CfghdUoyzvwzIum.geometry}
         material={materials.jpGaQNgTtEGkTfo}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.DjdhycfQYjKMDyn as THREE.Mesh).geometry}
+        geometry={nodes.DjdhycfQYjKMDyn.geometry}
         material={materials.ujsvqBWRMnqdwPx}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.usFLmqcyrnltBUr as THREE.Mesh).geometry}
+        geometry={nodes.usFLmqcyrnltBUr.geometry}
         material={materials.sxNzrmuTqVeaXdg}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.xXDHkMplTIDAXLN as THREE.Mesh).geometry}
+        geometry={nodes.xXDHkMplTIDAXLN.geometry}
         material={materials.pIJKfZsazmcpEiU}
         scale={0.35}
       >
@@ -130,105 +153,105 @@ export default function Model(props : any) {
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.vELORlCJixqPHsZ as THREE.Mesh).geometry}
+        geometry={nodes.vELORlCJixqPHsZ.geometry}
         material={materials.zFdeDaGNRwzccye}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.EbQGKrWAqhBHiMv as THREE.Mesh).geometry}
+        geometry={nodes.EbQGKrWAqhBHiMv.geometry}
         material={materials.TBLSREBUyLMVtJa}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.EddVrWkqZTlvmci as THREE.Mesh).geometry}
+        geometry={nodes.EddVrWkqZTlvmci.geometry}
         material={materials.xNrofRCqOXXHVZt}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.KSWlaxBcnPDpFCs as THREE.Mesh).geometry}
+        geometry={nodes.KSWlaxBcnPDpFCs.geometry}
         material={materials.yQQySPTfbEJufve}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.TakBsdEjEytCAMK as THREE.Mesh).geometry}
+        geometry={nodes.TakBsdEjEytCAMK.geometry}
         material={materials.PaletteMaterial003}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.IykfmVvLplTsTEW as THREE.Mesh).geometry}
+        geometry={nodes.IykfmVvLplTsTEW.geometry}
         material={materials.PaletteMaterial004}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.wLfSXtbwRlBrwof as THREE.Mesh).geometry}
+        geometry={nodes.wLfSXtbwRlBrwof.geometry}
         material={materials.oZRkkORNzkufnGD}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.WJwwVjsahIXbJpU as THREE.Mesh).geometry}
+        geometry={nodes.WJwwVjsahIXbJpU.geometry}
         material={materials.yhcAXNGcJWCqtIS}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.YfrJNXgMvGOAfzz as THREE.Mesh).geometry}
+        geometry={nodes.YfrJNXgMvGOAfzz.geometry}
         material={materials.bCgzXjHOanGdTFV}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.DCLCbjzqejuvsqH as THREE.Mesh).geometry}
+        geometry={nodes.DCLCbjzqejuvsqH.geometry}
         material={materials.vhaEJjZoqGtyLdo}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.CdalkzDVnwgdEhS as THREE.Mesh).geometry}
+        geometry={nodes.CdalkzDVnwgdEhS.geometry}
         material={materials.jlzuBkUzuJqgiAK}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.NtjcIgolNGgYlCg as THREE.Mesh).geometry}
+        geometry={nodes.NtjcIgolNGgYlCg.geometry}
         material={materials.PpwUTnTFZJXxCoE}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.pXBNoLiaMwsDHRF as THREE.Mesh).geometry}
+        geometry={nodes.pXBNoLiaMwsDHRF.geometry}
         material={materials.yiDkEwDSyEhavuP}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.IkoiNqATMVoZFKD as THREE.Mesh).geometry}
+        geometry={nodes.IkoiNqATMVoZFKD.geometry}
         material={materials.hiVunnLeAHkwGEo}
         scale={0.35}
       />
       <mesh
         castShadow
         receiveShadow
-        geometry={(nodes.rqgRAGHOwnuBypi as THREE.Mesh).geometry}
+        geometry={nodes.rqgRAGHOwnuBypi.geometry}
         material={materials.HGhEhpqSBZRnjHC}
         scale={0.35}
       />
@@ -236,4 +259,4 @@ export default function Model(props : any) {
   );
 }
 
-useGLTF.preload("/scenes/iphone.glb");
+useGLTF.preload(assetUrl("scenes/iphone.glb"));

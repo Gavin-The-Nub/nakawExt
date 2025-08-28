@@ -1,161 +1,43 @@
-import React, { useState, useEffect } from "react";
-import { DEVICES, getDeviceBySlug } from "../shared/devices";
+import React, { useState } from "react";
+import Iphone from "../models/Iphone";
+import { Macbook } from "../models/Macbook";
+// Options-only panel; rendering is handled by the content script in the mockup area
 
-const DevicePanelApp = () => {
-  const [selectedDevice, setSelectedDevice] = useState(DEVICES[0]);
-  const [is3DMode, setIs3DMode] = useState(false);
+const DevicePanelApp = ({ onSelectModel }) => {
+  const models = [
+    { key: "iphone", name: "iPhone 14", component: Iphone },
+    { key: "macbook", name: "MacBook Pro", component: Macbook },
+  ];
+  const [selectedModelKey, setSelectedModelKey] = useState(models[0].key);
 
-  useEffect(() => {
-    // Listen for messages from content script
-    chrome.runtime.onMessage.addListener((message) => {
-      if (message.type === "OPEN_DEVICE_PANEL") {
-        // Handle device panel opening
-        console.log("Device panel opened");
-      }
-    });
-  }, []);
-
-  const handleDeviceSelect = (device) => {
-    setSelectedDevice(device);
-
-    // Send message to content script to change device
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.runtime.sendMessage({
-          type: "SET_DEVICE_FOR_TAB",
-          tabId: tabs[0].id,
-          deviceSlug: device.slug,
-        });
-      }
-    });
-  };
+  
 
   return (
     <div className="device-panel-app">
       <header className="panel-header">
-        <h1>Device Simulator - Panel</h1>
-        <div className="panel-controls">
-          <button
-            className={`mode-btn ${!is3DMode ? "active" : ""}`}
-            onClick={() => setIs3DMode(false)}
-          >
-            2D View
-          </button>
-          <button
-            className={`mode-btn ${is3DMode ? "active" : ""}`}
-            onClick={() => setIs3DMode(true)}
-            disabled
-          >
-            3D View (Coming Soon)
-          </button>
-        </div>
+        <h1>3D Device Panel</h1>
       </header>
 
       <div className="panel-content">
         <div className="device-list-sidebar">
-          <h3>Available Devices</h3>
-          <div className="device-categories">
-            {Object.entries(
-              DEVICES.reduce((groups, device) => {
-                if (!groups[device.platform]) {
-                  groups[device.platform] = [];
-                }
-                groups[device.platform].push(device);
-                return groups;
-              }, {})
-            ).map(([platform, devices]) => (
-              <div key={platform} className="device-category">
-                <h4>{platform}</h4>
-                {devices.map((device) => (
-                  <button
-                    key={device.slug}
-                    className={`device-btn ${
-                      selectedDevice.slug === device.slug ? "selected" : ""
-                    }`}
-                    onClick={() => handleDeviceSelect(device)}
-                  >
-                    <div className="device-info">
-                      <div className="device-name">{device.name}</div>
-                      <div className="device-resolution">
-                        {device.viewport.width} × {device.viewport.height}
-                      </div>
-                    </div>
-                  </button>
-                ))}
+          <h3>3D Models</h3>
+          {models.map((m) => (
+            <button
+              key={m.key}
+              className={`device-btn ${selectedModelKey === m.key ? "selected" : ""}`}
+              onClick={() => {
+                setSelectedModelKey(m.key);
+                if (onSelectModel) onSelectModel(m.key);
+              }}
+            >
+              <div className="device-info">
+                <div className="device-name">{m.name}</div>
               </div>
-            ))}
-          </div>
+            </button>
+          ))}
         </div>
 
-        <div className="device-preview-area">
-          <div className="device-preview-2d">
-            <div className="device-mockup-2d">
-              <div
-                className="device-frame"
-                style={{
-                  width: selectedDevice.viewport.width * 0.3,
-                  height: selectedDevice.viewport.height * 0.3,
-                  backgroundColor:
-                    selectedDevice.platform === "iOS" ? "#000" : "#333",
-                  borderRadius:
-                    selectedDevice.platform === "iOS" ? "20px" : "10px",
-                  position: "relative",
-                  margin: "0 auto",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                }}
-              >
-                <div
-                  className="device-screen"
-                  style={{
-                    width: "90%",
-                    height: "85%",
-                    backgroundColor: "#fff",
-                    position: "absolute",
-                    top: "7.5%",
-                    left: "5%",
-                    borderRadius:
-                      selectedDevice.platform === "iOS" ? "12px" : "6px",
-                  }}
-                >
-                  <div className="screen-content">
-                    <div className="status-bar">
-                      <span>9:41</span>
-                      <span>100%</span>
-                    </div>
-                    <div className="app-content">
-                      <div className="content-placeholder">
-                        <div className="placeholder-line"></div>
-                        <div className="placeholder-line"></div>
-                        <div className="placeholder-line short"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="device-info-panel">
-            <h3>{selectedDevice.name}</h3>
-            <div className="info-grid">
-              <div className="info-item">
-                <label>Platform:</label>
-                <span>{selectedDevice.platform}</span>
-              </div>
-              <div className="info-item">
-                <label>Resolution:</label>
-                <span>
-                  {selectedDevice.viewport.width} ×{" "}
-                  {selectedDevice.viewport.height}
-                </span>
-              </div>
-              <div className="info-item">
-                <label>User Agent:</label>
-                <span className="ua-text">{selectedDevice.ua}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div className="device-preview-area" style={{display:"none"}} />
       </div>
 
       <style jsx>{`
@@ -229,19 +111,6 @@ const DevicePanelApp = () => {
           font-weight: 600;
         }
 
-        .device-category {
-          margin-bottom: 24px;
-        }
-
-        .device-category h4 {
-          margin: 0 0 12px 0;
-          font-size: 14px;
-          font-weight: 500;
-          color: #999;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
         .device-btn {
           width: 100%;
           padding: 12px;
@@ -288,12 +157,18 @@ const DevicePanelApp = () => {
           padding: 20px;
         }
 
-        .device-preview-2d {
+        .device-preview-2d, .device-preview-3d {
           flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
           background: #000;
+          border-radius: 8px;
+        }
+
+        .device-preview-3d canvas {
+          width: 100% !important;
+          height: 100% !important;
           border-radius: 8px;
         }
 
