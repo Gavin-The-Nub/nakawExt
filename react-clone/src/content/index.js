@@ -1061,6 +1061,71 @@ let capturedIframeImage = null;
 // Function to capture iframe content
 function captureIframeContent() {
   return new Promise((resolve) => {
+    // Preferred path: if simulator overlay is present, make sure it's visible and capture the composite (mobile iframe), then crop.
+    try {
+      const overlay = document.getElementById("__mf_simulator_overlay__");
+      const screenEl = document.getElementById("__mf_simulator_screen__");
+      if (overlay && screenEl) {
+        const screenRect = screenEl.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const prevDisplay = overlay.style.display;
+        const wasHidden = overlay.style.display === "none";
+        if (wasHidden) {
+          overlay.style.display = "";
+        }
+        // Allow paint to flush before capture
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            try {
+              chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+                try {
+                  if (wasHidden) overlay.style.display = prevDisplay || "";
+                } catch (_) {}
+                if (!resp || !resp.ok || !resp.dataUrl) {
+                  // Fall through to iframe/html2canvas path
+                  proceedWithIframeCapture();
+                  return;
+                }
+                const fullTabImg = new Image();
+                fullTabImg.onload = () => {
+                  try {
+                    const sx = Math.max(0, Math.round(screenRect.left * dpr));
+                    const sy = Math.max(0, Math.round(screenRect.top * dpr));
+                    const sw = Math.max(1, Math.round(screenRect.width * dpr));
+                    const sh = Math.max(1, Math.round(screenRect.height * dpr));
+                    const canvas = document.createElement("canvas");
+                    canvas.width = sw;
+                    canvas.height = sh;
+                    const ctx = canvas.getContext("2d");
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = "high";
+                    ctx.clearRect(0, 0, sw, sh);
+                    ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
+                    resolve(canvas.toDataURL());
+                  } catch (e) {
+                    console.error("Overlay capture crop failed", e);
+                    proceedWithIframeCapture();
+                  }
+                };
+                fullTabImg.onerror = () => proceedWithIframeCapture();
+                fullTabImg.src = resp.dataUrl;
+              });
+            } catch (e) {
+              try {
+                if (wasHidden) overlay.style.display = prevDisplay || "";
+              } catch (_) {}
+              proceedWithIframeCapture();
+            }
+          }, 30);
+        });
+        return; // handled via async path above
+      }
+    } catch (_) {}
+
+    // Fallback to iframe/html2canvas path when overlay is not present
+    proceedWithIframeCapture();
+
+    function proceedWithIframeCapture() {
     const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
     if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
       try {
@@ -1073,7 +1138,7 @@ function captureIframeContent() {
         html2canvas(iframeDocument.body, {
           useCORS: true,
           allowTaint: true,
-          backgroundColor: "#fff", // Always use white background
+          backgroundColor: "#fff",
           scale: 1,
           x: scrollX,
           y: scrollY,
@@ -1083,18 +1148,150 @@ function captureIframeContent() {
           windowHeight: iframeDocument.documentElement.clientHeight,
         })
           .then((canvas) => {
-            resolve(canvas.toDataURL());
+            try {
+              const dataUrl = canvas.toDataURL();
+              // Heuristic: if the result looks suspiciously tiny or blank, fall back to tab capture crop
+              const isProbablyBlank =
+                !dataUrl || dataUrl.length < 2000; // very small dataURL often indicates blank
+              if (!isProbablyBlank) {
+                resolve(dataUrl);
+                return;
+              }
+            } catch (_) {}
+            // Fallback: crop from background tab capture over the simulator screen area
+            try {
+              const screenEl = document.getElementById("__mf_simulator_screen__");
+              if (!screenEl) {
+                resolve(null);
+                return;
+              }
+              const screenRect = screenEl.getBoundingClientRect();
+              const dpr = window.devicePixelRatio || 1;
+              chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+                if (!resp || !resp.ok || !resp.dataUrl) {
+                  resolve(null);
+                  return;
+                }
+                const fullTabImg = new Image();
+                fullTabImg.onload = () => {
+                  try {
+                    const sx = Math.max(0, Math.round(screenRect.left * dpr));
+                    const sy = Math.max(0, Math.round(screenRect.top * dpr));
+                    const sw = Math.max(1, Math.round(screenRect.width * dpr));
+                    const sh = Math.max(1, Math.round(screenRect.height * dpr));
+                    const canvas = document.createElement("canvas");
+                    canvas.width = sw;
+                    canvas.height = sh;
+                    const ctx = canvas.getContext("2d");
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = "high";
+                    ctx.clearRect(0, 0, sw, sh);
+                    ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
+                    resolve(canvas.toDataURL());
+                  } catch (e) {
+                    console.error("Tab capture crop failed", e);
+                    resolve(null);
+                  }
+                };
+                fullTabImg.onerror = () => resolve(null);
+                fullTabImg.src = resp.dataUrl;
+              });
+            } catch (err) {
+              console.log("Tab capture fallback failed:", err);
+              resolve(null);
+            }
           })
           .catch((err) => {
             console.log("Failed to capture iframe:", err);
-            resolve(null);
+            // On failure, attempt the same tab capture crop fallback
+            try {
+              const screenEl = document.getElementById("__mf_simulator_screen__");
+              if (!screenEl) {
+                resolve(null);
+                return;
+              }
+              const screenRect = screenEl.getBoundingClientRect();
+              const dpr = window.devicePixelRatio || 1;
+              chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+                if (!resp || !resp.ok || !resp.dataUrl) {
+                  resolve(null);
+                  return;
+                }
+                const fullTabImg = new Image();
+                fullTabImg.onload = () => {
+                  try {
+                    const sx = Math.max(0, Math.round(screenRect.left * dpr));
+                    const sy = Math.max(0, Math.round(screenRect.top * dpr));
+                    const sw = Math.max(1, Math.round(screenRect.width * dpr));
+                    const sh = Math.max(1, Math.round(screenRect.height * dpr));
+                    const canvas = document.createElement("canvas");
+                    canvas.width = sw;
+                    canvas.height = sh;
+                    const ctx = canvas.getContext("2d");
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = "high";
+                    ctx.clearRect(0, 0, sw, sh);
+                    ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
+                    resolve(canvas.toDataURL());
+                  } catch (e) {
+                    console.error("Tab capture crop failed", e);
+                    resolve(null);
+                  }
+                };
+                fullTabImg.onerror = () => resolve(null);
+                fullTabImg.src = resp.dataUrl;
+              });
+            } catch (fallbackErr) {
+              resolve(null);
+            }
           });
       } catch (err) {
         console.log("Cannot access iframe content (cross-origin):", err);
-        resolve(null);
+        // Cross-origin or restricted: fall back to tab capture crop as best-effort
+        try {
+          const screenEl = document.getElementById("__mf_simulator_screen__");
+          if (!screenEl) {
+            resolve(null);
+            return;
+          }
+          const screenRect = screenEl.getBoundingClientRect();
+          const dpr = window.devicePixelRatio || 1;
+          chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+            if (!resp || !resp.ok || !resp.dataUrl) {
+              resolve(null);
+              return;
+            }
+            const fullTabImg = new Image();
+            fullTabImg.onload = () => {
+              try {
+                const sx = Math.max(0, Math.round(screenRect.left * dpr));
+                const sy = Math.max(0, Math.round(screenRect.top * dpr));
+                const sw = Math.max(1, Math.round(screenRect.width * dpr));
+                const sh = Math.max(1, Math.round(screenRect.height * dpr));
+                const canvas = document.createElement("canvas");
+                canvas.width = sw;
+                canvas.height = sh;
+                const ctx = canvas.getContext("2d");
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+                ctx.clearRect(0, 0, sw, sh);
+                ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
+                resolve(canvas.toDataURL());
+              } catch (e) {
+                console.error("Tab capture crop failed", e);
+                resolve(null);
+              }
+            };
+            fullTabImg.onerror = () => resolve(null);
+            fullTabImg.src = resp.dataUrl;
+          });
+        } catch (_) {
+          resolve(null);
+        }
       }
     } else {
       resolve(null);
+    }
     }
   });
 }
