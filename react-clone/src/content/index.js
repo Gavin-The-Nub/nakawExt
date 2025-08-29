@@ -1808,48 +1808,13 @@ function createDeviceSelector() {
   });
 
   // Derive a Tablets category without changing underlying platform semantics
-  const isTablet = (d) => {
-    const n = (d.name || "").toLowerCase();
-    const s = (d.slug || "").toLowerCase();
-    const p = (d.platform || "").toLowerCase();
-    // iPad variants and common Android tablet naming (e.g., Galaxy Tab S7)
-    return (
-      p === "tablet" ||
-      n.includes("ipad") ||
-      s.startsWith("ipad") ||
-      n.includes("galaxy tab") ||
-      n.includes("tab s") ||
-      s.includes("tabs") ||
-      n === "ipad" ||
-      s === "ipad"
-    );
-  };
 
-  const isLaptop = (d) => {
-    const n = (d.name || "").toLowerCase();
-    const s = (d.slug || "").toLowerCase();
-    const p = (d.platform || "").toLowerCase();
-    // Identify common laptop devices (MacBook, Dell Latitude, etc.), avoid Surface Duo
-    if (n.includes("duo") || s.includes("duo")) return false;
-    return (
-      p === "laptop" ||
-      n.includes("macbook") ||
-      s.includes("macbook") ||
-      n.includes("laptop") ||
-      s.includes("laptop") ||
-      n.includes("latitude") ||
-      s.includes("dell")
-    );
-  };
-
-  const tablets = devices.filter(isTablet);
-  const laptops = devices.filter(isLaptop);
   const categories = {
-    iOS: devices.filter((d) => d.platform === "iOS" && !isTablet(d)),
-    Android: devices.filter((d) => d.platform === "Android" && !isTablet(d)),
-    Laptops: laptops,
-    Tablets: tablets,
-    SPECIALS: devices.filter((d) => d.platform === "macOS" && !isLaptop(d)),
+    iOS: devices.filter((d) => d.platform === "iOS" ),
+    Android: devices.filter((d) => d.platform === "Android" ),
+    Laptops: devices.filter((d) => d.platform === "Laptop"),
+    Tablets: devices.filter((d) => d.platform === "Tablet"),
+    SPECIALS: devices.filter((d) => d.platform === "macOS"),
   };
 
   let html =
