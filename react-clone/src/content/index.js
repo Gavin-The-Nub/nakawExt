@@ -15,6 +15,7 @@ let deviceSelector = null;
 let devicePanel = null;
 let currentOrientation = "portrait"; // Track current orientation
 let statusBarTimer = null; // interval for updating status bar time
+let is3DMode = false; // Track if we're in 3D mode
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -1206,201 +1207,278 @@ function captureIframeContent() {
     proceedWithIframeCapture();
 
     function proceedWithIframeCapture() {
-    const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
-    if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
-      try {
-        const iframeWindow = iframe.contentWindow;
-        const iframeDocument = iframe.contentDocument;
-        const scrollX = iframeWindow.scrollX || 0;
-        const scrollY = iframeWindow.scrollY || 0;
-        const viewportWidth = iframe.clientWidth;
-        const viewportHeight = iframe.clientHeight;
-        html2canvas(iframeDocument.body, {
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#fff",
-          scale: 1,
-          x: scrollX,
-          y: scrollY,
-          width: viewportWidth,
-          height: viewportHeight,
-          windowWidth: iframeDocument.documentElement.clientWidth,
-          windowHeight: iframeDocument.documentElement.clientHeight,
-        })
-          .then((canvas) => {
-            try {
-              const dataUrl = canvas.toDataURL();
-              // Heuristic: if the result looks suspiciously tiny or blank, fall back to tab capture crop
-              const isProbablyBlank =
-                !dataUrl || dataUrl.length < 2000; // very small dataURL often indicates blank
-              if (!isProbablyBlank) {
-                resolve(dataUrl);
-                return;
-              }
-            } catch (_) {}
-            // Fallback: crop from background tab capture over the simulator screen area
-            try {
-              const screenEl = document.getElementById("__mf_simulator_screen__");
-              if (!screenEl) {
-                resolve(null);
-                return;
-              }
-              const screenRect = screenEl.getBoundingClientRect();
-              const dpr = window.devicePixelRatio || 1;
-              chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
-                if (!resp || !resp.ok || !resp.dataUrl) {
-                  resolve(null);
-                  return;
-                }
-                const fullTabImg = new Image();
-                fullTabImg.onload = () => {
-                  try {
-                    const sx = Math.max(0, Math.round(screenRect.left * dpr));
-                    const sy = Math.max(0, Math.round(screenRect.top * dpr));
-                    const sw = Math.max(1, Math.round(screenRect.width * dpr));
-                    const sh = Math.max(1, Math.round(screenRect.height * dpr));
-                    const canvas = document.createElement("canvas");
-                    canvas.width = sw;
-                    canvas.height = sh;
-                    const ctx = canvas.getContext("2d");
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = "high";
-                    ctx.clearRect(0, 0, sw, sh);
-                    ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
-                    resolve(canvas.toDataURL());
-                  } catch (e) {
-                    console.error("Tab capture crop failed", e);
-                    resolve(null);
-                  }
-                };
-                fullTabImg.onerror = () => resolve(null);
-                fullTabImg.src = resp.dataUrl;
-              });
-            } catch (err) {
-              console.log("Tab capture fallback failed:", err);
-              resolve(null);
-            }
-          })
-          .catch((err) => {
-            console.log("Failed to capture iframe:", err);
-            // On failure, attempt the same tab capture crop fallback
-            try {
-              const screenEl = document.getElementById("__mf_simulator_screen__");
-              if (!screenEl) {
-                resolve(null);
-                return;
-              }
-              const screenRect = screenEl.getBoundingClientRect();
-              const dpr = window.devicePixelRatio || 1;
-              chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
-                if (!resp || !resp.ok || !resp.dataUrl) {
-                  resolve(null);
-                  return;
-                }
-                const fullTabImg = new Image();
-                fullTabImg.onload = () => {
-                  try {
-                    const sx = Math.max(0, Math.round(screenRect.left * dpr));
-                    const sy = Math.max(0, Math.round(screenRect.top * dpr));
-                    const sw = Math.max(1, Math.round(screenRect.width * dpr));
-                    const sh = Math.max(1, Math.round(screenRect.height * dpr));
-                    const canvas = document.createElement("canvas");
-                    canvas.width = sw;
-                    canvas.height = sh;
-                    const ctx = canvas.getContext("2d");
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = "high";
-                    ctx.clearRect(0, 0, sw, sh);
-                    ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
-                    resolve(canvas.toDataURL());
-                  } catch (e) {
-                    console.error("Tab capture crop failed", e);
-                    resolve(null);
-                  }
-                };
-                fullTabImg.onerror = () => resolve(null);
-                fullTabImg.src = resp.dataUrl;
-              });
-            } catch (fallbackErr) {
-              resolve(null);
-            }
-          });
-      } catch (err) {
-        console.log("Cannot access iframe content (cross-origin):", err);
-        // Cross-origin or restricted: fall back to tab capture crop as best-effort
+      const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
+      if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
         try {
-          const screenEl = document.getElementById("__mf_simulator_screen__");
-          if (!screenEl) {
-            resolve(null);
-            return;
-          }
-          const screenRect = screenEl.getBoundingClientRect();
-          const dpr = window.devicePixelRatio || 1;
-          chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
-            if (!resp || !resp.ok || !resp.dataUrl) {
+          const iframeWindow = iframe.contentWindow;
+          const iframeDocument = iframe.contentDocument;
+          const scrollX = iframeWindow.scrollX || 0;
+          const scrollY = iframeWindow.scrollY || 0;
+          const viewportWidth = iframe.clientWidth;
+          const viewportHeight = iframe.clientHeight;
+          html2canvas(iframeDocument.body, {
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#fff",
+            scale: 1,
+            x: scrollX,
+            y: scrollY,
+            width: viewportWidth,
+            height: viewportHeight,
+            windowWidth: iframeDocument.documentElement.clientWidth,
+            windowHeight: iframeDocument.documentElement.clientHeight,
+          })
+            .then((canvas) => {
+              try {
+                const dataUrl = canvas.toDataURL();
+                // Heuristic: if the result looks suspiciously tiny or blank, fall back to tab capture crop
+                const isProbablyBlank = !dataUrl || dataUrl.length < 2000; // very small dataURL often indicates blank
+                if (!isProbablyBlank) {
+                  resolve(dataUrl);
+                  return;
+                }
+              } catch (_) {}
+              // Fallback: crop from background tab capture over the simulator screen area
+              try {
+                const screenEl = document.getElementById(
+                  "__mf_simulator_screen__"
+                );
+                if (!screenEl) {
+                  resolve(null);
+                  return;
+                }
+                const screenRect = screenEl.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+                  if (!resp || !resp.ok || !resp.dataUrl) {
+                    resolve(null);
+                    return;
+                  }
+                  const fullTabImg = new Image();
+                  fullTabImg.onload = () => {
+                    try {
+                      const sx = Math.max(0, Math.round(screenRect.left * dpr));
+                      const sy = Math.max(0, Math.round(screenRect.top * dpr));
+                      const sw = Math.max(
+                        1,
+                        Math.round(screenRect.width * dpr)
+                      );
+                      const sh = Math.max(
+                        1,
+                        Math.round(screenRect.height * dpr)
+                      );
+                      const canvas = document.createElement("canvas");
+                      canvas.width = sw;
+                      canvas.height = sh;
+                      const ctx = canvas.getContext("2d");
+                      ctx.imageSmoothingEnabled = true;
+                      ctx.imageSmoothingQuality = "high";
+                      ctx.clearRect(0, 0, sw, sh);
+                      ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
+                      resolve(canvas.toDataURL());
+                    } catch (e) {
+                      console.error("Tab capture crop failed", e);
+                      resolve(null);
+                    }
+                  };
+                  fullTabImg.onerror = () => resolve(null);
+                  fullTabImg.src = resp.dataUrl;
+                });
+              } catch (err) {
+                console.log("Tab capture fallback failed:", err);
+                resolve(null);
+              }
+            })
+            .catch((err) => {
+              console.log("Failed to capture iframe:", err);
+              // On failure, attempt the same tab capture crop fallback
+              try {
+                const screenEl = document.getElementById(
+                  "__mf_simulator_screen__"
+                );
+                if (!screenEl) {
+                  resolve(null);
+                  return;
+                }
+                const screenRect = screenEl.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+                  if (!resp || !resp.ok || !resp.dataUrl) {
+                    resolve(null);
+                    return;
+                  }
+                  const fullTabImg = new Image();
+                  fullTabImg.onload = () => {
+                    try {
+                      const sx = Math.max(0, Math.round(screenRect.left * dpr));
+                      const sy = Math.max(0, Math.round(screenRect.top * dpr));
+                      const sw = Math.max(
+                        1,
+                        Math.round(screenRect.width * dpr)
+                      );
+                      const sh = Math.max(
+                        1,
+                        Math.round(screenRect.height * dpr)
+                      );
+                      const canvas = document.createElement("canvas");
+                      canvas.width = sw;
+                      canvas.height = sh;
+                      const ctx = canvas.getContext("2d");
+                      ctx.imageSmoothingEnabled = true;
+                      ctx.imageSmoothingQuality = "high";
+                      ctx.clearRect(0, 0, sw, sh);
+                      ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
+                      resolve(canvas.toDataURL());
+                    } catch (e) {
+                      console.error("Tab capture crop failed", e);
+                      resolve(null);
+                    }
+                  };
+                  fullTabImg.onerror = () => resolve(null);
+                  fullTabImg.src = resp.dataUrl;
+                });
+              } catch (fallbackErr) {
+                resolve(null);
+              }
+            });
+        } catch (err) {
+          console.log("Cannot access iframe content (cross-origin):", err);
+          // Cross-origin or restricted: fall back to tab capture crop as best-effort
+          try {
+            const screenEl = document.getElementById("__mf_simulator_screen__");
+            if (!screenEl) {
               resolve(null);
               return;
             }
-            const fullTabImg = new Image();
-            fullTabImg.onload = () => {
-              try {
-                const sx = Math.max(0, Math.round(screenRect.left * dpr));
-                const sy = Math.max(0, Math.round(screenRect.top * dpr));
-                const sw = Math.max(1, Math.round(screenRect.width * dpr));
-                const sh = Math.max(1, Math.round(screenRect.height * dpr));
-                const canvas = document.createElement("canvas");
-                canvas.width = sw;
-                canvas.height = sh;
-                const ctx = canvas.getContext("2d");
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = "high";
-                ctx.clearRect(0, 0, sw, sh);
-                ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
-                resolve(canvas.toDataURL());
-              } catch (e) {
-                console.error("Tab capture crop failed", e);
+            const screenRect = screenEl.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+              if (!resp || !resp.ok || !resp.dataUrl) {
                 resolve(null);
+                return;
               }
-            };
-            fullTabImg.onerror = () => resolve(null);
-            fullTabImg.src = resp.dataUrl;
-          });
-        } catch (_) {
-          resolve(null);
+              const fullTabImg = new Image();
+              fullTabImg.onload = () => {
+                try {
+                  const sx = Math.max(0, Math.round(screenRect.left * dpr));
+                  const sy = Math.max(0, Math.round(screenRect.top * dpr));
+                  const sw = Math.max(1, Math.round(screenRect.width * dpr));
+                  const sh = Math.max(1, Math.round(screenRect.height * dpr));
+                  const canvas = document.createElement("canvas");
+                  canvas.width = sw;
+                  canvas.height = sh;
+                  const ctx = canvas.getContext("2d");
+                  ctx.imageSmoothingEnabled = true;
+                  ctx.imageSmoothingQuality = "high";
+                  ctx.clearRect(0, 0, sw, sh);
+                  ctx.drawImage(fullTabImg, sx, sy, sw, sh, 0, 0, sw, sh);
+                  resolve(canvas.toDataURL());
+                } catch (e) {
+                  console.error("Tab capture crop failed", e);
+                  resolve(null);
+                }
+              };
+              fullTabImg.onerror = () => resolve(null);
+              fullTabImg.src = resp.dataUrl;
+            });
+          } catch (_) {
+            resolve(null);
+          }
         }
+      } else {
+        resolve(null);
       }
-    } else {
-      resolve(null);
-    }
     }
   });
 }
 
 function toggle3DPanel() {
-  const existing = document.getElementById("mf-3d-panel");
-
-  if (existing) {
-    // Restore device mode when closing 3D panel
-    const overlay = document.getElementById("__mf_simulator_overlay__");
-    if (overlay) overlay.style.display = "";
-    try {
-      panelRoot && panelRoot.unmount && panelRoot.unmount();
-    } catch (_) {}
-    existing.remove();
+  // If we're already in 3D mode, switch back to 2D
+  if (is3DMode) {
+    switchTo2DMode();
     return;
   }
 
-  // Capture iframe content before hiding device mode
-  captureIframeContent().then((imageData) => {
-    capturedIframeImage = imageData;
-    show3DPanel();
-  });
+  // If current device is mobile (iOS or Android), automatically use iPhone 14 model
+  if (isCurrentDeviceMobile()) {
+    // Capture iframe content before switching to 3D
+    captureIframeContent().then((imageData) => {
+      capturedIframeImage = imageData;
+      switchTo3DMode("iphone"); // Use iPhone 14 model for mobile devices
+    });
+  } else {
+    // For desktop devices, show the device panel to choose model
+    const existing = document.getElementById("mf-3d-panel");
+    if (existing) {
+      existing.remove();
+    }
+
+    captureIframeContent().then((imageData) => {
+      capturedIframeImage = imageData;
+      show3DPanel();
+    });
+  }
+}
+
+function switchTo3DMode(modelKey = "iphone") {
+  is3DMode = true;
+
+  // Update 3D button visual state
+  const devicePanelBtn = document.getElementById("mf-btn-device-panel");
+  if (devicePanelBtn) {
+    devicePanelBtn.classList.add("selected");
+  }
+
+  // Render 3D model directly in the mockup area
+  render3DModelInMockup(modelKey);
+}
+
+function switchTo2DMode() {
+  is3DMode = false;
+
+  // Update 3D button visual state
+  const devicePanelBtn = document.getElementById("mf-btn-device-panel");
+  if (devicePanelBtn) {
+    devicePanelBtn.classList.remove("selected");
+  }
+
+  // Restore 2D mode
+  const overlay = document.getElementById("__mf_simulator_overlay__");
+  if (overlay) overlay.style.display = "";
+
+  // Remove 3D canvas if it exists
+  const mount = document.getElementById("__mf_simulator_3d__");
+  if (mount) {
+    mount.remove();
+  }
+
+  // Unmount 3D root
+  if (threeRoot) {
+    try {
+      threeRoot.unmount();
+    } catch (_) {}
+    threeRoot = null;
+  }
+
+  // Show 2D mockup image and screen iframe
+  const mockupImg = document.getElementById("__mf_simulator_mockup__");
+  if (mockupImg) mockupImg.style.display = "";
+
+  const screen = document.getElementById("__mf_simulator_screen__");
+  if (screen) screen.style.display = "";
+
+  // Restore original scale
+  const frame = document.getElementById("__mf_simulator_frame__");
+  if (frame && frame.getAttribute("data-original-scale")) {
+    frame.style.scale = frame.getAttribute("data-original-scale");
+  }
 }
 
 function show3DPanel() {
   // Ensure device overlay remains visible behind the 3D panel
   const overlay = document.getElementById("__mf_simulator_overlay__");
-  if (overlay && overlay.style.display === "none") overlay.style.display = "flex";
+  if (overlay && overlay.style.display === "none")
+    overlay.style.display = "flex";
 
   // Create a temporary white backdrop under the 3D panel
   let threeBackdrop = document.getElementById("mf-3d-backdrop");
@@ -1472,7 +1550,9 @@ function show3DPanel() {
             gl={{ alpha: true, preserveDrawingBuffer: true }}
             style={{ background: "transparent" }}
             onCreated={({ gl }) => {
-              try { gl.setClearColor(0x000000, 0); } catch (_) {}
+              try {
+                gl.setClearColor(0x000000, 0);
+              } catch (_) {}
             }}
           >
             <ambientLight intensity={0.6} />
@@ -1500,16 +1580,39 @@ function show3DPanel() {
     const bd = document.getElementById("mf-3d-backdrop");
     if (bd) bd.remove();
     panel.remove();
+    // Reset 3D mode state
+    is3DMode = false;
+    const devicePanelBtn = document.getElementById("mf-btn-device-panel");
+    if (devicePanelBtn) {
+      devicePanelBtn.classList.remove("selected");
+    }
   };
   const container = panel.querySelector("#mf-3d-root");
   panelRoot = createRoot(container);
   panelRoot.render(
-    <DevicePanelApp onSelectModel={(key) => render3DModelInMockup(key)} />
+    <DevicePanelApp
+      onSelectModel={(key) => {
+        render3DModelInMockup(key);
+        // Close the panel after selecting a model
+        const bd = document.getElementById("mf-3d-backdrop");
+        if (bd) bd.remove();
+        panel.remove();
+      }}
+    />
   );
 }
 
 let threeRoot = null;
 function render3DModelInMockup(key) {
+  // Set 3D mode state
+  is3DMode = true;
+
+  // Update 3D button visual state
+  const devicePanelBtn = document.getElementById("mf-btn-device-panel");
+  if (devicePanelBtn) {
+    devicePanelBtn.classList.add("selected");
+  }
+
   // Show the overlay again for 3D rendering
   const overlay = document.getElementById("__mf_simulator_overlay__");
   if (!overlay) return;
@@ -1573,7 +1676,9 @@ function render3DModelInMockup(key) {
       gl={{ alpha: true, preserveDrawingBuffer: true }}
       style={{ background: "transparent" }}
       onCreated={({ gl }) => {
-        try { gl.setClearColor(0x000000, 0); } catch (_) {}
+        try {
+          gl.setClearColor(0x000000, 0);
+        } catch (_) {}
       }}
     >
       <ambientLight intensity={0.6} />
@@ -1768,6 +1873,20 @@ function isRotationSupported() {
 
   // Only mobile devices (iOS and Android) support rotation
   // Desktop devices (macOS) do not support rotation
+  return platform === "iOS" || platform === "Android";
+}
+
+// Function to get current device platform
+function getCurrentDevicePlatform() {
+  const frame = document.getElementById("__mf_simulator_frame__");
+  if (!frame) return "iOS"; // Default fallback
+
+  return frame.getAttribute("data-platform") || "iOS";
+}
+
+// Function to check if current device is mobile (iOS or Android)
+function isCurrentDeviceMobile() {
+  const platform = getCurrentDevicePlatform();
   return platform === "iOS" || platform === "Android";
 }
 
@@ -2952,32 +3071,38 @@ function injectBrowserNavigationBar() {
     return;
   }
 
+  // Enhanced Safari-style browser navigation bar with improved glassmorphism
   browserNavBar.style.position = "absolute";
   browserNavBar.style.left = "0";
   browserNavBar.style.right = "0";
   browserNavBar.style.zIndex = "10";
   browserNavBar.style.pointerEvents = "none";
-  // Enable smooth slide animations for auto-hide/show
-  browserNavBar.style.transition = "transform 200ms ease, opacity 200ms ease";
+  // Enhanced smooth animations
+  browserNavBar.style.transition =
+    "transform 300ms cubic-bezier(0.4, 0.0, 0.2, 1), opacity 300ms cubic-bezier(0.4, 0.0, 0.2, 1)";
   browserNavBar.setAttribute("data-auto-hidden", "false");
 
   if (platform === "iOS") {
     // Position at bottom for iOS Safari UI
     browserNavBar.style.top = "auto";
     browserNavBar.style.bottom = "0";
-    browserNavBar.style.background = "rgba(15,16,20,0.5)";
-    browserNavBar.style.backdropFilter = "blur(25px) saturate(150%)";
-    browserNavBar.style.WebkitBackdropFilter = "blur(25px) saturate(150%)";
-    browserNavBar.style.borderTop = "none";
+    // Enhanced glassmorphism background
+    browserNavBar.style.background = "rgba(28, 28, 30, 0.68)";
+    browserNavBar.style.backdropFilter =
+      "blur(40px) saturate(180%) brightness(1.1)";
+    browserNavBar.style.WebkitBackdropFilter =
+      "blur(40px) saturate(180%) brightness(1.1)";
+    browserNavBar.style.borderTop = "0.5px solid rgba(255, 255, 255, 0.1)";
     browserNavBar.style.display = "block";
-    // Tighten outer padding to reduce overall height and sit closer to bottom
-    browserNavBar.style.padding = "7px 10px 6px";
+    // Refined padding for better proportions
+    browserNavBar.style.padding = "8px 12px 8px";
     browserNavBar.style.fontFamily =
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-    browserNavBar.style.color = "#000";
+      "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif";
+    browserNavBar.style.color = "#ffffff";
     browserNavBar.style.pointerEvents = "none";
+
     browserNavBar.innerHTML = `
-      <div style=\"display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.45);border-radius:10px;padding:6px 10px;margin: 0px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.08);;backdrop-filter:blur(10px) saturate(160%);-webkit-backdrop-filter:blur(10px) saturate(160%);pointer-events:auto;font-family:'SF Pro Text','SF Pro Display','SF UI','San Francisco',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;\">
+    <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255, 255, 255, 0.15);border:0.5px solid rgba(255,255,255,0.2);border-radius:12px;padding:8px 12px;margin:0px 8px;box-shadow:0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.23);backdrop-filter:blur(20px) saturate(160%) brightness(1.05);-webkit-backdrop-filter:blur(20px) saturate(160%) brightness(1.05);pointer-events:auto;font-family:'SF Pro Text','SF Pro Display',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;transition:all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);">
         <span style=\"display:inline-flex;margin-right:10px;color:#ffffff;\"> 
           <span style=\"display:inline-flex;align-items:flex-end;justify-content:center;width:22px;height:20px;border-radius:4px;background:transparent;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1;gap:1px;\"> 
            <span style=\"font-size:15px;font-weight:400;line-height:1;\">A</span>
@@ -2989,7 +3114,7 @@ function injectBrowserNavigationBar() {
           <span style=\"display:inline-flex;margin-right:8px;color:#6b7280;\">
             <svg data-v-50b8ed5c=\"\" width=\"19.6\" height=\"10.6\" viewBox=\"0 0 16 23\" fill=\"#ffffff\" xmlns=\"http://www.w3.org/2000/svg\" class=\"cadena\"><path data-v-50b8ed5c=\"\" fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M2 6C2 2.68629 4.68629 0 8 0C11.3137 0 14 2.68629 14 6V10C15.1046 10 16 10.8954 16 12V21C16 22.1046 15.1046 23 14 23H2C0.895431 23 0 22.1046 0 21V12C0 10.8954 0.895431 10 2 10V6ZM11.5 6C11.5 4.067 9.933 2.5 8 2.5C6.067 2.5 4.5 4.067 4.5 6V10H11.5V6Z\" fill=\"#eeeeef\"></path></svg>
           </span>
-          <span style=\"flex:1;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:.02em;border:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\">${
+          <span style=\"flex:1;color:#ffffff;font-size:13px;font-weight:600;letter-spacing:.02em;border:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\ backgroundColor:#D3D3D3">${
             window.location.hostname || "website.com"
           }</span>
         </span>
