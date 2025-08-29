@@ -1,6 +1,6 @@
 // Content script for device simulation
 // This script injects a floating toolbar when the simulator is active
-import React, {useEffect} from "react";
+import React, { useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { DEVICES } from "../shared/devices";
 import DevicePanelApp from "../devicePanel/DevicePanelApp";
@@ -8,6 +8,7 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment } from "@react-three/drei";
 import Iphone from "../models/Iphone";
 import { Macbook } from "../models/Macbook";
+import html2canvas from "html2canvas";
 
 let toolbar = null;
 let deviceSelector = null;
@@ -1055,13 +1056,84 @@ function injectToolbar() {
 }
 
 let panelRoot = null;
+let capturedIframeImage = null;
+
+// Function to capture iframe content
+function captureIframeContent() {
+  return new Promise((resolve) => {
+    const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
+    if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
+      try {
+        // Get the iframe's content window and document
+        const iframeWindow = iframe.contentWindow;
+        const iframeDocument = iframe.contentDocument;
+
+        // Get current scroll position
+        const scrollX = iframeWindow.scrollX || iframeWindow.pageXOffset || 0;
+        const scrollY = iframeWindow.scrollY || iframeWindow.pageYOffset || 0;
+
+        // Get visible viewport dimensions
+        const viewportWidth = iframe.clientWidth;
+        const viewportHeight = iframe.clientHeight;
+
+        html2canvas(iframeDocument.body, {
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          scale: 1,
+          width: viewportWidth,
+          height: viewportHeight,
+          scrollX: scrollX,
+          scrollY: scrollY,
+          windowWidth: viewportWidth,
+          windowHeight: viewportHeight,
+        })
+          .then((canvas) => {
+            resolve(canvas.toDataURL());
+          })
+          .catch((err) => {
+            console.log("Failed to capture iframe:", err);
+            resolve(null);
+          });
+      } catch (err) {
+        console.log("Cannot access iframe content (cross-origin):", err);
+        resolve(null);
+      }
+    } else {
+      resolve(null);
+    }
+  });
+}
+
 function toggle3DPanel() {
   const existing = document.getElementById("mf-3d-panel");
+  const frame = document.getElementById("__mf_simulator_frame__");
+  const screen = document.getElementById("__mf_simulator_screen__");
+
   if (existing) {
-    try { panelRoot && panelRoot.unmount && panelRoot.unmount(); } catch (_) {}
+    // Restore device mode when closing 3D panel
+    if (frame) frame.style.display = "";
+    if (screen) screen.style.display = "";
+    try {
+      panelRoot && panelRoot.unmount && panelRoot.unmount();
+    } catch (_) {}
     existing.remove();
     return;
   }
+
+  // Capture iframe content before hiding device mode
+  captureIframeContent().then((imageData) => {
+    capturedIframeImage = imageData;
+    show3DPanel();
+  });
+}
+
+function show3DPanel() {
+  // Hide device mode when opening 3D panel
+  const frame = document.getElementById("__mf_simulator_frame__");
+  const screen = document.getElementById("__mf_simulator_screen__");
+  if (frame) frame.style.display = "none";
+  if (screen) screen.style.display = "none";
 
   const panel = document.createElement("div");
   panel.id = "mf-3d-panel";
@@ -1091,16 +1163,58 @@ function toggle3DPanel() {
     </style>
     <div class="header">
       <div>3D Device Panel</div>
-      <button id="mf-3d-close">✕</button>
+      <div style="display: flex; gap: 8px;">
+        <button id="mf-3d-refresh" style="background: transparent; color: #9ca3af; border: none; cursor: pointer; padding: 4px;" title="Refresh Screen">🔄</button>
+        <button id="mf-3d-close" style="background: transparent; color: #9ca3af; border: none; cursor: pointer; padding: 4px;">✕</button>
+      </div>
     </div>
     <div class="body"><div id="mf-3d-root" style="width:100%;height:100%"></div></div>
   `;
 
   document.body.appendChild(panel);
-  panel.querySelector('#mf-3d-close').onclick = () => panel.remove();
-  const container = panel.querySelector('#mf-3d-root');
+
+  // Add refresh button functionality
+  panel.querySelector("#mf-3d-refresh").onclick = () => {
+    captureIframeContent().then((imageData) => {
+      capturedIframeImage = imageData;
+      // Re-render the 3D model with new image
+      if (threeRoot) {
+        const Model =
+          document.querySelector("#mf-3d-root")?.dataset?.currentModel ===
+          "macbook"
+            ? Macbook
+            : Iphone;
+        threeRoot.render(
+          <Canvas shadows camera={{ position: [2.5, 1.5, 3.5], fov: 45 }}>
+            <ambientLight intensity={0.6} />
+            <directionalLight position={[5, 0, 5]} intensity={1.2} castShadow />
+            <Environment preset="city" />
+            <OrbitControls enableDamping enableZoom={false} />
+            {document.querySelector("#mf-3d-root")?.dataset?.currentModel ===
+            "macbook" ? (
+              <Model screenUrl={capturedIframeImage} />
+            ) : (
+              <group rotation={[0, Math.PI, 0]}>
+                <Model screenUrl={capturedIframeImage} />
+              </group>
+            )}
+          </Canvas>
+        );
+      }
+    });
+  };
+
+  panel.querySelector("#mf-3d-close").onclick = () => {
+    // Restore device mode when closing
+    if (frame) frame.style.display = "";
+    if (screen) screen.style.display = "";
+    panel.remove();
+  };
+  const container = panel.querySelector("#mf-3d-root");
   panelRoot = createRoot(container);
-  panelRoot.render(<DevicePanelApp onSelectModel={(key) => render3DModelInMockup(key)} />);
+  panelRoot.render(
+    <DevicePanelApp onSelectModel={(key) => render3DModelInMockup(key)} />
+  );
 }
 
 let threeRoot = null;
@@ -1111,11 +1225,14 @@ function render3DModelInMockup(key) {
 
   // Enlarge overall simulator container scale for better 3D viewing
   try {
-    if (!frame.getAttribute('data-original-scale')) {
-      const original = frame.style.scale && frame.style.scale.trim() !== '' ? frame.style.scale : '0.7';
-      frame.setAttribute('data-original-scale', original);
+    if (!frame.getAttribute("data-original-scale")) {
+      const original =
+        frame.style.scale && frame.style.scale.trim() !== ""
+          ? frame.style.scale
+          : "0.7";
+      frame.setAttribute("data-original-scale", original);
     }
-    frame.style.scale = '0.9';
+    frame.style.scale = "0.9";
   } catch (_) {}
 
   // Hide 2D mockup image and screen iframe
@@ -1136,24 +1253,33 @@ function render3DModelInMockup(key) {
 
   // Mount R3F Canvas
   if (threeRoot) {
-    try { threeRoot.unmount(); } catch (_) {}
+    try {
+      threeRoot.unmount();
+    } catch (_) {}
     threeRoot = null;
   }
   threeRoot = createRoot(mount);
 
-  const Model = key === 'iphone' ? Iphone : Macbook;
+  const Model = key === "iphone" ? Iphone : Macbook;
+
+  // Store current model type for refresh functionality
+  const container = document.querySelector("#mf-3d-root");
+  if (container) {
+    container.dataset.currentModel = key;
+  }
+
   threeRoot.render(
     <Canvas shadows camera={{ position: [2.5, 1.5, 3.5], fov: 45 }}>
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 0, 5]} intensity={1.2} castShadow />
       <Environment preset="city" />
       <OrbitControls enableDamping enableZoom={false} />
-      {key === 'iphone' ? (
+      {key === "iphone" ? (
         <group rotation={[0, Math.PI, 0]}>
-          <Model />
+          <Model screenUrl={capturedIframeImage} />
         </group>
       ) : (
-        <Model />
+        <Model screenUrl={capturedIframeImage} />
       )}
     </Canvas>
   );

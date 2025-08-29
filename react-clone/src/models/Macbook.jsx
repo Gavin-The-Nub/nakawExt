@@ -1,11 +1,18 @@
-"use client"
+"use client";
 import React, { useRef, useEffect, useState } from "react";
 import { useGLTF, useTexture } from "@react-three/drei";
 
 const assetUrl = (path) => {
   try {
-    const normalized = path.startsWith("assets/") ? path : `assets/${path.replace(/^\//, "")}`;
-    const rt = (typeof globalThis !== "undefined" && globalThis.chrome && globalThis.chrome.runtime) ? globalThis.chrome.runtime : null;
+    const normalized = path.startsWith("assets/")
+      ? path
+      : `assets/${path.replace(/^\//, "")}`;
+    const rt =
+      typeof globalThis !== "undefined" &&
+      globalThis.chrome &&
+      globalThis.chrome.runtime
+        ? globalThis.chrome.runtime
+        : null;
     return rt && typeof rt.getURL === "function"
       ? rt.getURL(normalized)
       : `/${normalized}`;
@@ -14,21 +21,9 @@ const assetUrl = (path) => {
   }
 };
 
-export function Macbook(props) {
+export function Macbook({ screenUrl, ...props }) {
   const { nodes, materials } = useGLTF(assetUrl("scenes/macbook_pro.glb"));
-  const [screenshotUrl, setScreenshotUrl] = useState(null);
-  const texture = useTexture(screenshotUrl || assetUrl("textures/yellow.png"));
-
-  
-  useEffect(() => {
-    try {
-      chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
-        if (resp && resp.ok && resp.dataUrl) {
-          setScreenshotUrl(resp.dataUrl);
-        }
-      });
-    } catch (_) {}
-  }, []);
+  const texture = useTexture(screenUrl || assetUrl("textures/yellow.png"));
   const modelRef = useRef(null);
 
   return (

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useGLTF, useTexture } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import React, { useRef, useEffect, useState } from "react";
@@ -6,8 +6,15 @@ import React, { useRef, useEffect, useState } from "react";
 const assetUrl = (path) => {
   try {
     // Ensure relative to extension root where assets are copied
-    const normalized = path.startsWith("assets/") ? path : `assets/${path.replace(/^\//, "")}`;
-    const rt = (typeof globalThis !== "undefined" && globalThis.chrome && globalThis.chrome.runtime) ? globalThis.chrome.runtime : null;
+    const normalized = path.startsWith("assets/")
+      ? path
+      : `assets/${path.replace(/^\//, "")}`;
+    const rt =
+      typeof globalThis !== "undefined" &&
+      globalThis.chrome &&
+      globalThis.chrome.runtime
+        ? globalThis.chrome.runtime
+        : null;
     return rt && typeof rt.getURL === "function"
       ? rt.getURL(normalized)
       : `/${normalized}`;
@@ -16,23 +23,10 @@ const assetUrl = (path) => {
   }
 };
 
-export default function Model(props) {
+export default function Model({ screenUrl, ...props }) {
   const modelRef = useRef(null);
   const { nodes, materials } = useGLTF(assetUrl("scenes/iphone.glb"));
-  const [screenshotUrl, setScreenshotUrl] = useState(null);
-  const texture = useTexture(screenshotUrl || assetUrl("textures/yellow.png"));
-
-  useEffect(() => {
-    try {
-      chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
-        if (resp && resp.ok && resp.dataUrl) {
-          setScreenshotUrl(resp.dataUrl);
-        }
-      });
-    } catch (_) {}
-  }, []);
-
-
+  const texture = useTexture(screenUrl || assetUrl("textures/yellow.png"));
 
   return (
     <group ref={modelRef} {...props} dispose={null}>
