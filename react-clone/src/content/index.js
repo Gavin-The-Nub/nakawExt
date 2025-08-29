@@ -1064,29 +1064,23 @@ function captureIframeContent() {
     const iframe = document.querySelector("#__mf_simulator_screen__ iframe");
     if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
       try {
-        // Get the iframe's content window and document
         const iframeWindow = iframe.contentWindow;
         const iframeDocument = iframe.contentDocument;
-
-        // Get current scroll position
-        const scrollX = iframeWindow.scrollX || iframeWindow.pageXOffset || 0;
-        const scrollY = iframeWindow.scrollY || iframeWindow.pageYOffset || 0;
-
-        // Get visible viewport dimensions
+        const scrollX = iframeWindow.scrollX || 0;
+        const scrollY = iframeWindow.scrollY || 0;
         const viewportWidth = iframe.clientWidth;
         const viewportHeight = iframe.clientHeight;
-
         html2canvas(iframeDocument.body, {
           useCORS: true,
           allowTaint: true,
-          backgroundColor: null,
+          backgroundColor: "#fff", // Always use white background
           scale: 1,
+          x: scrollX,
+          y: scrollY,
           width: viewportWidth,
           height: viewportHeight,
-          scrollX: scrollX,
-          scrollY: scrollY,
-          windowWidth: viewportWidth,
-          windowHeight: viewportHeight,
+          windowWidth: iframeDocument.documentElement.clientWidth,
+          windowHeight: iframeDocument.documentElement.clientHeight,
         })
           .then((canvas) => {
             resolve(canvas.toDataURL());
@@ -1107,13 +1101,11 @@ function captureIframeContent() {
 
 function toggle3DPanel() {
   const existing = document.getElementById("mf-3d-panel");
-  const frame = document.getElementById("__mf_simulator_frame__");
-  const screen = document.getElementById("__mf_simulator_screen__");
 
   if (existing) {
     // Restore device mode when closing 3D panel
-    if (frame) frame.style.display = "";
-    if (screen) screen.style.display = "";
+    const overlay = document.getElementById("__mf_simulator_overlay__");
+    if (overlay) overlay.style.display = "";
     try {
       panelRoot && panelRoot.unmount && panelRoot.unmount();
     } catch (_) {}
@@ -1130,10 +1122,8 @@ function toggle3DPanel() {
 
 function show3DPanel() {
   // Hide device mode when opening 3D panel
-  const frame = document.getElementById("__mf_simulator_frame__");
-  const screen = document.getElementById("__mf_simulator_screen__");
-  if (frame) frame.style.display = "none";
-  if (screen) screen.style.display = "none";
+  const overlay = document.getElementById("__mf_simulator_overlay__");
+  if (overlay) overlay.style.display = "none";
 
   const panel = document.createElement("div");
   panel.id = "mf-3d-panel";
@@ -1206,8 +1196,8 @@ function show3DPanel() {
 
   panel.querySelector("#mf-3d-close").onclick = () => {
     // Restore device mode when closing
-    if (frame) frame.style.display = "";
-    if (screen) screen.style.display = "";
+    const overlay = document.getElementById("__mf_simulator_overlay__");
+    if (overlay) overlay.style.display = "";
     panel.remove();
   };
   const container = panel.querySelector("#mf-3d-root");
@@ -1219,9 +1209,14 @@ function show3DPanel() {
 
 let threeRoot = null;
 function render3DModelInMockup(key) {
+  // Show the overlay again for 3D rendering
+  const overlay = document.getElementById("__mf_simulator_overlay__");
+  if (!overlay) return;
+
+  overlay.style.display = "flex";
+
   const frame = document.getElementById("__mf_simulator_frame__");
-  const screen = document.getElementById("__mf_simulator_screen__");
-  if (!frame || !screen) return;
+  if (!frame) return;
 
   // Enlarge overall simulator container scale for better 3D viewing
   try {
@@ -1238,7 +1233,9 @@ function render3DModelInMockup(key) {
   // Hide 2D mockup image and screen iframe
   const mockupImg = document.getElementById("__mf_simulator_mockup__");
   if (mockupImg) mockupImg.style.display = "none";
-  screen.style.display = "none";
+
+  const screen = document.getElementById("__mf_simulator_screen__");
+  if (screen) screen.style.display = "none";
 
   // Create or reuse a mount for 3D canvas
   let mount = document.getElementById("__mf_simulator_3d__");
