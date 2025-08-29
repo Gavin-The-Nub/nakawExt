@@ -584,54 +584,47 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-screenshot").onclick = () => {
-    // If 3D panel is open, capture its content directly from a tab capture and crop
+    // If 3D panel is open, capture the WebGL canvas directly for transparency
     const threePanel = document.getElementById("mf-3d-panel");
-    const threeRoot = document.getElementById("mf-3d-root");
-    if (threePanel && threeRoot) {
-      const rect = threeRoot.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
-        if (!resp || !resp.ok || !resp.dataUrl) {
-          alert("Screenshot failed: unable to capture tab");
+    if (threePanel) {
+      const webglCanvas = threePanel.querySelector("canvas");
+      if (webglCanvas) {
+        try {
+          webglCanvas.toBlob((blob) => {
+            if (!blob) {
+              alert("Failed to create screenshot blob.");
+              return;
+            }
+            showScreenshotDownloadModal(blob);
+          }, "image/png");
           return;
+        } catch (e) {
+          console.error("Direct WebGL canvas capture failed", e);
+          // fall through to other paths
         }
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const sw = Math.max(1, Math.round(rect.width * dpr));
-            const sh = Math.max(1, Math.round(rect.height * dpr));
-            const sx = Math.max(0, Math.round(rect.left * dpr));
-            const sy = Math.max(0, Math.round(rect.top * dpr));
-            const canvas = document.createElement("canvas");
-            canvas.width = sw;
-            canvas.height = sh;
-            const ctx = canvas.getContext("2d");
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = "high";
-            ctx.clearRect(0, 0, sw, sh);
-            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-            canvas.toBlob((blob) => {
-              if (!blob) {
-                alert("Failed to create screenshot blob.");
-                return;
-              }
-              showScreenshotDownloadModal(blob);
-            }, "image/png");
-          } catch (e) {
-            console.error("3D screenshot crop failed", e);
-            alert("Screenshot failed: " + e.message);
-          }
-        };
-        img.onerror = () => alert("Screenshot failed: image load error");
-        img.src = resp.dataUrl;
-      });
-      return;
+      }
     }
 
     // If 3D is rendered inside the overlay (mockup), capture the 3D mount or frame area
     const frameEl = document.getElementById("__mf_simulator_frame__");
     const threeMount = document.getElementById("__mf_simulator_3d__");
     if (threeMount && frameEl) {
+      const webglCanvas = threeMount.querySelector("canvas");
+      if (webglCanvas) {
+        try {
+          webglCanvas.toBlob((blob) => {
+            if (!blob) {
+              alert("Failed to create screenshot blob.");
+              return;
+            }
+            showScreenshotDownloadModal(blob);
+          }, "image/png");
+          return;
+        } catch (e) {
+          console.error("Direct WebGL canvas capture (overlay) failed", e);
+        }
+      }
+      // Fallback to crop if no WebGL canvas found
       const cropRect = frameEl.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
@@ -1473,7 +1466,15 @@ function show3DPanel() {
             ? Macbook
             : Iphone;
         threeRoot.render(
-          <Canvas shadows camera={{ position: [2.5, 1.5, 3.5], fov: 45 }}>
+          <Canvas
+            shadows
+            camera={{ position: [2.5, 1.5, 3.5], fov: 45 }}
+            gl={{ alpha: true, preserveDrawingBuffer: true }}
+            style={{ background: "transparent" }}
+            onCreated={({ gl }) => {
+              try { gl.setClearColor(0x000000, 0); } catch (_) {}
+            }}
+          >
             <ambientLight intensity={0.6} />
             <directionalLight position={[5, 0, 5]} intensity={1.2} castShadow />
             <Environment preset="city" />
@@ -1566,7 +1567,15 @@ function render3DModelInMockup(key) {
   }
 
   threeRoot.render(
-    <Canvas shadows camera={{ position: [2.5, 1.5, 3.5], fov: 45 }}>
+    <Canvas
+      shadows
+      camera={{ position: [2.5, 1.5, 3.5], fov: 45 }}
+      gl={{ alpha: true, preserveDrawingBuffer: true }}
+      style={{ background: "transparent" }}
+      onCreated={({ gl }) => {
+        try { gl.setClearColor(0x000000, 0); } catch (_) {}
+      }}
+    >
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 0, 5]} intensity={1.2} castShadow />
       <Environment preset="city" />
