@@ -1154,6 +1154,10 @@ function captureIframeContent() {
         if (wasHidden) {
           overlay.style.display = "";
         }
+        // Hide the 2D bezel while capturing so it doesn't bleed into the crop
+        const bezelImg = document.getElementById("__mf_simulator_mockup__");
+        const prevBezelVis = bezelImg ? bezelImg.style.visibility : null;
+        if (bezelImg) bezelImg.style.visibility = "hidden";
         // Allow paint to flush before capture
         requestAnimationFrame(() => {
           setTimeout(() => {
@@ -1161,9 +1165,12 @@ function captureIframeContent() {
               chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
                 try {
                   if (wasHidden) overlay.style.display = prevDisplay || "";
+                  if (bezelImg) bezelImg.style.visibility = prevBezelVis || "";
                 } catch (_) {}
                 if (!resp || !resp.ok || !resp.dataUrl) {
                   // Fall through to iframe/html2canvas path
+                  // Restore bezel visibility before proceeding
+                  try { if (bezelImg) bezelImg.style.visibility = prevBezelVis || ""; } catch (_) {}
                   proceedWithIframeCapture();
                   return;
                 }
@@ -1185,15 +1192,20 @@ function captureIframeContent() {
                     resolve(canvas.toDataURL());
                   } catch (e) {
                     console.error("Overlay capture crop failed", e);
+                    try { if (bezelImg) bezelImg.style.visibility = prevBezelVis || ""; } catch (_) {}
                     proceedWithIframeCapture();
                   }
                 };
-                fullTabImg.onerror = () => proceedWithIframeCapture();
+                fullTabImg.onerror = () => {
+                  try { if (bezelImg) bezelImg.style.visibility = prevBezelVis || ""; } catch (_) {}
+                  proceedWithIframeCapture();
+                };
                 fullTabImg.src = resp.dataUrl;
               });
             } catch (e) {
               try {
                 if (wasHidden) overlay.style.display = prevDisplay || "";
+                if (bezelImg) bezelImg.style.visibility = prevBezelVis || "";
               } catch (_) {}
               proceedWithIframeCapture();
             }
@@ -1534,7 +1546,12 @@ function show3DPanel() {
 
   // Add refresh button functionality
   panel.querySelector("#mf-3d-refresh").onclick = () => {
+    // Temporarily hide bezel during capture
+    const bezelImg = document.getElementById("__mf_simulator_mockup__");
+    const prevBezelVis = bezelImg ? bezelImg.style.visibility : null;
+    if (bezelImg) bezelImg.style.visibility = "hidden";
     captureIframeContent().then((imageData) => {
+      if (bezelImg) bezelImg.style.visibility = prevBezelVis || "";
       capturedIframeImage = imageData;
       // Re-render the 3D model with new image
       if (threeRoot) {
