@@ -527,7 +527,7 @@ export const DEVICES = [
     name: "Microsoft Surface Duo",
     viewport: { width: 1114, height: 705 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-    platform: "macOS",
+    platform: "Tablet",
     mockup: "assets/devices/microsoftsurfaceduo.png",
     mockup2: "assets/device-thumbnails/microsoftsurfaceduo.png",
     screenPct: { top: 9, right: 5, bottom: 9, left: 5, radius: 3 },
@@ -589,7 +589,7 @@ export const DEVICES = [
     name: "Samsung Galaxy Fold",
     viewport: { width: 844, height: 1104 },
     ua: "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
-    platform: "Android",
+    platform: "Tablet",
     mockup: "assets/devices/sgalaxyfold.png",
     mockup2: "assets/device-thumbnails/sgalaxyfold.png",
     screenPct: {
