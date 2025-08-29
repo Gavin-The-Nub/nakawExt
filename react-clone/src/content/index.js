@@ -584,8 +584,95 @@ function injectToolbar() {
   };
 
   document.getElementById("mf-btn-screenshot").onclick = () => {
-    // Screenshot action - implement actual functionality
+    // If 3D panel is open, capture its content directly from a tab capture and crop
+    const threePanel = document.getElementById("mf-3d-panel");
+    const threeRoot = document.getElementById("mf-3d-root");
+    if (threePanel && threeRoot) {
+      const rect = threeRoot.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+        if (!resp || !resp.ok || !resp.dataUrl) {
+          alert("Screenshot failed: unable to capture tab");
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const sw = Math.max(1, Math.round(rect.width * dpr));
+            const sh = Math.max(1, Math.round(rect.height * dpr));
+            const sx = Math.max(0, Math.round(rect.left * dpr));
+            const sy = Math.max(0, Math.round(rect.top * dpr));
+            const canvas = document.createElement("canvas");
+            canvas.width = sw;
+            canvas.height = sh;
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.clearRect(0, 0, sw, sh);
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+            canvas.toBlob((blob) => {
+              if (!blob) {
+                alert("Failed to create screenshot blob.");
+                return;
+              }
+              showScreenshotDownloadModal(blob);
+            }, "image/png");
+          } catch (e) {
+            console.error("3D screenshot crop failed", e);
+            alert("Screenshot failed: " + e.message);
+          }
+        };
+        img.onerror = () => alert("Screenshot failed: image load error");
+        img.src = resp.dataUrl;
+      });
+      return;
+    }
+
+    // If 3D is rendered inside the overlay (mockup), capture the 3D mount or frame area
     const frameEl = document.getElementById("__mf_simulator_frame__");
+    const threeMount = document.getElementById("__mf_simulator_3d__");
+    if (threeMount && frameEl) {
+      const cropRect = frameEl.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      chrome.runtime.sendMessage({ type: "CAPTURE_TAB" }, (resp) => {
+        if (!resp || !resp.ok || !resp.dataUrl) {
+          alert("Screenshot failed: unable to capture tab");
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const sw = Math.max(1, Math.round(cropRect.width * dpr));
+            const sh = Math.max(1, Math.round(cropRect.height * dpr));
+            const sx = Math.max(0, Math.round(cropRect.left * dpr));
+            const sy = Math.max(0, Math.round(cropRect.top * dpr));
+            const canvas = document.createElement("canvas");
+            canvas.width = sw;
+            canvas.height = sh;
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.clearRect(0, 0, sw, sh);
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+            canvas.toBlob((blob) => {
+              if (!blob) {
+                alert("Failed to create screenshot blob.");
+                return;
+              }
+              showScreenshotDownloadModal(blob);
+            }, "image/png");
+          } catch (e) {
+            console.error("3D overlay screenshot crop failed", e);
+            alert("Screenshot failed: " + e.message);
+          }
+        };
+        img.onerror = () => alert("Screenshot failed: image load error");
+        img.src = resp.dataUrl;
+      });
+      return;
+    }
+
+    // Otherwise, capture the 2D simulator with composited device frame
     const screenEl = document.getElementById("__mf_simulator_screen__");
     const mockupImgEl = document.getElementById("__mf_simulator_mockup__");
 
@@ -1318,9 +1405,23 @@ function toggle3DPanel() {
 }
 
 function show3DPanel() {
-  // Hide device mode when opening 3D panel
+  // Ensure device overlay remains visible behind the 3D panel
   const overlay = document.getElementById("__mf_simulator_overlay__");
-  if (overlay) overlay.style.display = "none";
+  if (overlay && overlay.style.display === "none") overlay.style.display = "flex";
+
+  // Create a temporary white backdrop under the 3D panel
+  let threeBackdrop = document.getElementById("mf-3d-backdrop");
+  if (!threeBackdrop) {
+    threeBackdrop = document.createElement("div");
+    threeBackdrop.id = "mf-3d-backdrop";
+    threeBackdrop.style.position = "fixed";
+    threeBackdrop.style.inset = "0";
+    // Place the backdrop beneath the simulator overlay (2147483647) and toolbar (2147483648)
+    threeBackdrop.style.zIndex = "2147483646";
+    threeBackdrop.style.background = "#ffffff";
+    threeBackdrop.style.pointerEvents = "none";
+    document.body.appendChild(threeBackdrop);
+  }
 
   const panel = document.createElement("div");
   panel.id = "mf-3d-panel";
@@ -1395,6 +1496,8 @@ function show3DPanel() {
     // Restore device mode when closing
     const overlay = document.getElementById("__mf_simulator_overlay__");
     if (overlay) overlay.style.display = "";
+    const bd = document.getElementById("mf-3d-backdrop");
+    if (bd) bd.remove();
     panel.remove();
   };
   const container = panel.querySelector("#mf-3d-root");
