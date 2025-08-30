@@ -405,3 +405,4 @@ export default function Model({ screenUrl, ...props }) {
 }
 
 useGLTF.preload(assetUrl("scenes/macbook.glb"));
+
