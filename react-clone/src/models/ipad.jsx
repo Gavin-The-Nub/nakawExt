@@ -192,4 +192,4 @@ export function Model(props) {
   );
 }
 
-useGLTF.preload("/ipad_pro_12__russian_free.glb");
+useGLTF.preload("/scenes/ipad_pro_12__russian_free.glb");

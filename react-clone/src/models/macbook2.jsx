@@ -385,7 +385,7 @@ export function Model(props) {
   );
 }
 
-useGLTF.preload("/macbook_pro_m3_16_inch_2024.glb");
+useGLTF.preload("/scenes/macbook_pro_m3_16_inch_2024.glb");
 
 rembrandt;
 
