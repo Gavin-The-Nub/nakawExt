@@ -10,7 +10,7 @@ import React, { useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 
 export function Model(props) {
-  const { nodes, materials } = useGLTF("/scene.gltf");
+  const { nodes, materials } = useGLTF("/ipad_pro_12__russian_free.glb");
   return (
     <group {...props} dispose={null}>
       <group scale={0.01}>
@@ -192,4 +192,4 @@ export function Model(props) {
   );
 }
 
-useGLTF.preload("/scene.gltf");
+useGLTF.preload("/ipad_pro_12__russian_free.glb");
