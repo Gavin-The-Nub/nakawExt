@@ -975,6 +975,8 @@ function injectToolbar() {
   if (settingsBtn)
     settingsBtn.onclick = () => {
       if (!settingsPanel) return;
+      // Prevent settings from opening when in 3D mode
+      if (is3DMode) return;
       if (settingsPanel.style.display === "block") hideSettings();
       else showSettings();
     };
@@ -1463,10 +1465,21 @@ function switchTo3DMode(modelKey = "iphone") {
   if (devicePanelBtn) {
     devicePanelBtn.classList.add("selected");
     // Show close button (×) and hide 3D text
-    const btnText = devicePanelBtn.querySelector('.btn-text');
-    const btnClose = devicePanelBtn.querySelector('.btn-close');
-    if (btnText) btnText.style.display = 'none';
-    if (btnClose) btnClose.style.display = 'inline';
+    const btnText = devicePanelBtn.querySelector(".btn-text");
+    const btnClose = devicePanelBtn.querySelector(".btn-close");
+    if (btnText) btnText.style.display = "none";
+    if (btnClose) btnClose.style.display = "inline";
+  }
+
+  // Disable settings button and panel when in 3D mode
+  const settingsBtn = document.getElementById("mf-btn-settings");
+  const settingsPanel = document.getElementById("mf-settings-panel");
+  if (settingsBtn) {
+    settingsBtn.classList.add("disabled");
+    settingsBtn.title = "Settings (disabled in 3D mode)";
+  }
+  if (settingsPanel) {
+    settingsPanel.style.display = "none";
   }
 
   // Render 3D model directly in the mockup area
@@ -1481,10 +1494,17 @@ function switchTo2DMode() {
   if (devicePanelBtn) {
     devicePanelBtn.classList.remove("selected");
     // Show 3D text and hide close button (×)
-    const btnText = devicePanelBtn.querySelector('.btn-text');
-    const btnClose = devicePanelBtn.querySelector('.btn-close');
-    if (btnText) btnText.style.display = 'inline';
-    if (btnClose) btnClose.style.display = 'none';
+    const btnText = devicePanelBtn.querySelector(".btn-text");
+    const btnClose = devicePanelBtn.querySelector(".btn-close");
+    if (btnText) btnText.style.display = "inline";
+    if (btnClose) btnClose.style.display = "none";
+  }
+
+  // Re-enable settings button and panel when returning to 2D mode
+  const settingsBtn = document.getElementById("mf-btn-settings");
+  if (settingsBtn) {
+    settingsBtn.classList.remove("disabled");
+    settingsBtn.title = "Settings";
   }
 
   // Restore 2D mode
@@ -1529,10 +1549,21 @@ function render3DModelInMockup(key) {
   if (devicePanelBtn) {
     devicePanelBtn.classList.add("selected");
     // Show close button (×) and hide 3D text
-    const btnText = devicePanelBtn.querySelector('.btn-text');
-    const btnClose = devicePanelBtn.querySelector('.btn-close');
-    if (btnText) btnText.style.display = 'none';
-    if (btnClose) btnClose.style.display = 'inline';
+    const btnText = devicePanelBtn.querySelector(".btn-text");
+    const btnClose = devicePanelBtn.querySelector(".btn-close");
+    if (btnText) btnText.style.display = "none";
+    if (btnClose) btnClose.style.display = "inline";
+  }
+
+  // Disable settings button and panel when in 3D mode
+  const settingsBtn = document.getElementById("mf-btn-settings");
+  const settingsPanel = document.getElementById("mf-settings-panel");
+  if (settingsBtn) {
+    settingsBtn.classList.add("disabled");
+    settingsBtn.title = "Settings (disabled in 3D mode)";
+  }
+  if (settingsPanel) {
+    settingsPanel.style.display = "none";
   }
 
   // Show the overlay again for 3D rendering
