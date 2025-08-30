@@ -25,11 +25,11 @@ const assetUrl = (path) => {
 
 export default function Model({ screenUrl, ...props }) {
   const modelRef = useRef(null);
-  const { nodes, materials } = useGLTF(assetUrl("scenes/mackbook_air_15_m2.glb"));
+  const { nodes, materials } = useGLTF(
+    assetUrl("scenes/mackbook_air_15_m2.glb")
+  );
   const texture = useTexture(screenUrl || assetUrl("textures/yellow.png"));
 
-export function Mackbook2(props) {
-  const { nodes, materials } = useGLTF("/mackbook_air_15_m2.glb");
   return (
     <group ref={modelRef} {...props} dispose={null}>
       <group rotation={[-Math.PI / 2, 0, 0]}>
