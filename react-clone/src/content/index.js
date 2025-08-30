@@ -1584,7 +1584,10 @@ function render3DModelInMockup(key) {
       <Environment preset="city" />
       <OrbitControls enableDamping enableZoom={false} />
       {key === "macbook" ? (
+        <>
+        <OrbitControls enableDamping enableZoom={false} enablePan={false} />
         <Model screenUrl={capturedIframeImage} />
+        </>
       ) : (
         <group rotation={[0, Math.PI, 0]}>
           <Model screenUrl={capturedIframeImage} />
