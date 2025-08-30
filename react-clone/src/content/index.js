@@ -47,6 +47,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             statusBarBtn.classList.remove("selected");
           }
         }
+        
+        // Update 3D button state based on initial device
+        update3DButtonState();
       }, 100); // Small delay to ensure elements are created
       break;
 
@@ -106,6 +109,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           // Update rotate button state based on new device
           updateToolbarOrientation();
+          
+          // Update 3D button state based on new device
+          update3DButtonState();
         }, 150); // Additional delay to ensure browser nav bar is created
       }, 100); // Small delay to ensure overlay recreation is complete
       break;
@@ -113,6 +119,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "ORIENTATION_CHANGED":
       currentOrientation = orientation || "portrait";
       updateToolbarOrientation();
+      
+      // Update 3D button state in case orientation change affects device state
+      update3DButtonState();
+      
       // Update browser navigation toggle button state based on orientation
       setTimeout(() => {
         const browserNavBar = document.getElementById("__mf_browser_nav_bar__");
@@ -438,6 +448,28 @@ function injectToolbar() {
       #mf-settings-panel .mf-sp-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #374151; border-radius: 9999px; outline: none; }
       #mf-settings-panel .mf-sp-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #60a5fa; cursor: pointer; box-shadow: 0 0 0 4px rgba(37,99,235,0.2); border: 2px solid #1d4ed8; }
       #mf-settings-panel .mf-sp-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #60a5fa; border: 2px solid #1d4ed8; }
+      
+      /* 3D button disabled state */
+      .mf-toolbar-btn.disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+        pointer-events: auto;
+      }
+      
+      .mf-toolbar-btn.disabled:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+      
+      /* Feature indicator for unavailable features */
+      .feature-indicator {
+        animation: pulse 2s infinite;
+      }
+      
+      @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+      }
     </style>
     <button class="mf-toolbar-btn" id="mf-btn-close" title="Close Simulator">
       <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
@@ -549,6 +581,11 @@ function injectToolbar() {
   const devicePanelBtn = document.getElementById("mf-btn-device-panel");
   if (devicePanelBtn) {
     devicePanelBtn.onclick = () => {
+      // Prevent 3D mode if button is disabled (special devices)
+      if (devicePanelBtn.classList.contains("disabled")) {
+        showSpecialDeviceModal();
+        return;
+      }
       toggle3DPanel();
     };
   }
@@ -983,6 +1020,9 @@ function injectToolbar() {
       else showSettings();
     };
   if (settingsClose) settingsClose.onclick = () => hideSettings();
+
+  // Update 3D button state based on current device
+  update3DButtonState();
 
   // Toggle handlers
   if (statusToggle)
@@ -1440,13 +1480,19 @@ function toggle3DPanel() {
     return;
   }
 
-  // Determine the appropriate 3D model based on current device platform
+  // Check if current device is special (macOS platform)
   const platform = getCurrentDevicePlatform();
+  if (platform === "macOS") {
+    showSpecialDeviceModal();
+    return;
+  }
+
+  // Determine the appropriate 3D model based on current device platform
   let modelKey = "iphone"; // Default fallback
 
   if (platform === "Tablet") {
     modelKey = "ipad";
-  } else if (platform === "Laptop" || platform === "macOS") {
+  } else if (platform === "Laptop") {
     modelKey = "macbook";
   } else if (platform === "iOS" || platform === "Android") {
     modelKey = "iphone";
@@ -1541,8 +1587,200 @@ function switchTo2DMode() {
   }
 }
 
+function showSpecialDeviceModal() {
+  console.log("Showing special device modal - 3D mode not available for macOS devices");
+  
+  // Remove existing modal if present
+  const existingModal = document.getElementById("mf-special-device-modal");
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  // Create modal container
+  const modal = document.createElement("div");
+  modal.id = "mf-special-device-modal";
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  `;
+
+  // Create modal content
+  const modalContent = document.createElement("div");
+  modalContent.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: modalSlideIn 0.3s ease-out;
+  `;
+
+  // Add CSS animation
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Create icon
+  const icon = document.createElement("div");
+  icon.innerHTML = `
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 6v6l4 2"/>
+    </svg>
+  `;
+  icon.style.cssText = `
+    color: #f59e0b;
+    margin-bottom: 16px;
+  `;
+
+  // Create title
+  const title = document.createElement("h3");
+  title.textContent = "3D Mode Not Available";
+  title.style.cssText = `
+    margin: 0 0 16px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+  `;
+
+  // Create message
+  const message = document.createElement("p");
+  message.textContent = "Special devices (macOS devices) don't support 3D mode yet. This feature is coming soon!";
+  message.style.cssText = `
+    margin: 0 0 24px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #6b7280;
+  `;
+
+  // Create close button
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Got it!";
+  closeBtn.style.cssText = `
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  `;
+
+  // Add hover effect
+  closeBtn.addEventListener("mouseenter", () => {
+    closeBtn.style.background = "#2563eb";
+  });
+  closeBtn.addEventListener("mouseleave", () => {
+    closeBtn.style.background = "#3b82f6";
+  });
+
+  // Add click handler to close modal
+  closeBtn.addEventListener("click", () => {
+    modal.remove();
+    style.remove();
+  });
+
+  // Add click handler to close modal when clicking outside
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.remove();
+      style.remove();
+    }
+  });
+
+  // Assemble modal
+  modalContent.appendChild(icon);
+  modalContent.appendChild(title);
+  modalContent.appendChild(message);
+  modalContent.appendChild(closeBtn);
+  modal.appendChild(modalContent);
+
+  // Add to document
+  document.body.appendChild(modal);
+}
+
+function update3DButtonState() {
+  const devicePanelBtn = document.getElementById("mf-btn-device-panel");
+  if (!devicePanelBtn) return;
+
+  const platform = getCurrentDevicePlatform();
+  const isSpecial = platform === "macOS";
+  
+  console.log(`Updating 3D button state - Platform: ${platform}, IsSpecial: ${isSpecial}`);
+
+  if (isSpecial) {
+    // Disable 3D button for special devices
+    devicePanelBtn.classList.add("disabled");
+    devicePanelBtn.style.opacity = "0.5";
+    devicePanelBtn.style.cursor = "not-allowed";
+    devicePanelBtn.title = "3D Mode Not Available (Special devices don't support 3D yet)";
+    
+    // Add a small indicator that this feature is not available
+    const existingIndicator = devicePanelBtn.querySelector(".feature-indicator");
+    if (!existingIndicator) {
+      const indicator = document.createElement("div");
+      indicator.className = "feature-indicator";
+      indicator.style.cssText = `
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 8px;
+        height: 8px;
+        background: #ef4444;
+        border-radius: 50%;
+        border: 1px solid white;
+      `;
+      devicePanelBtn.style.position = "relative";
+      devicePanelBtn.appendChild(indicator);
+    }
+  } else {
+    // Enable 3D button for regular devices
+    devicePanelBtn.classList.remove("disabled");
+    devicePanelBtn.style.opacity = "1";
+    devicePanelBtn.style.cursor = "pointer";
+    devicePanelBtn.title = "3D Device Panel";
+    
+    // Remove indicator if present
+    const existingIndicator = devicePanelBtn.querySelector(".feature-indicator");
+    if (existingIndicator) {
+      existingIndicator.remove();
+    }
+  }
+}
+
 let threeRoot = null;
 function render3DModelInMockup(key) {
+  // Safety check: prevent 3D mode for special devices
+  const platform = getCurrentDevicePlatform();
+  if (platform === "macOS") {
+    console.warn("3D mode attempted on special device, showing modal instead");
+    showSpecialDeviceModal();
+    return;
+  }
+
   // Set 3D mode state
   is3DMode = true;
 
