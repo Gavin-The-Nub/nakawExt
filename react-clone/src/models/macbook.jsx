@@ -31,9 +31,15 @@ export default function Model({ screenUrl, ...props }) {
   const texture = useTexture(screenUrl || assetUrl("textures/yellow.png"));
   React.useEffect(() => {
     texture.center.set(0.5, 0.5);
-    texture.rotation = -Math.PI / 2;
-    texture.flipY = false;
-    texture.repeat.set(0.625, 1);
+    // Rotate 90 degrees counterclockwise to fix the sideways orientation
+    texture.rotation = Math.PI / 2;
+    // Flip Y to correct the upside-down orientation
+    texture.flipY = true;
+    // Center the texture properly on the wide MacBook screen
+    texture.offset.set(0.1, 0.5);
+    // Adjust for MacBook's wide screen: X should be much larger than Y
+    // X (width) needs more repetition, Y (height) needs less
+    texture.repeat.set(1, 2);
     texture.needsUpdate = true;
   }, [texture]);
 
