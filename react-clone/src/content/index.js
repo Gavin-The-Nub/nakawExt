@@ -1581,7 +1581,7 @@ function render3DModelInMockup(key) {
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 0, 5]} intensity={1.2} castShadow />
       <Environment preset="city" />
-      <OrbitControls enableDamping enableZoom={false} />
+      <OrbitControls enableDamping enableZoom={false} enablePan={false} />
       {key === "macbook2" ? (
         <Model screenUrl={capturedIframeImage} />
       ) : (

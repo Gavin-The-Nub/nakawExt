@@ -9,7 +9,7 @@ Title: Mackbook Air 15'' M2
 import React, { useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 
-export function Model(props) {
+export function Mackbook2(props) {
   const { nodes, materials } = useGLTF("/mackbook_air_15_m2.glb");
   return (
     <group {...props} dispose={null}>
