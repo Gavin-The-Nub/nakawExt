@@ -29,10 +29,17 @@ export default function Model({ screenUrl, ...props }) {
     assetUrl("scenes/mackbook_air_15_m2.glb")
   );
   const texture = useTexture(screenUrl || assetUrl("textures/yellow.png"));
+  React.useEffect(() => {
+    texture.center.set(0.5, 0.5);
+    texture.rotation = -Math.PI / 2;
+    texture.flipY = false;
+    texture.repeat.set(0.625, 1);
+    texture.needsUpdate = true;
+  }, [texture]);
 
   return (
     <group ref={modelRef} {...props} dispose={null}>
-      <group rotation={[-Math.PI / 2, 0, 0]}>
+      <group rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.8, 0]}>
         <mesh
           castShadow
           receiveShadow

@@ -30,7 +30,11 @@ export default function Model({ screenUrl, ...props }) {
   }, [texture]);
   return (
     <group {...props} dispose={null}>
-      <group rotation={[-Math.PI / 2, 0, 0]} scale={[-3, 3, 3]} position={[0, -1.5, 0]}>
+      <group
+        rotation={[-Math.PI / 2, 0, 0]}
+        scale={[-3, 3, 3]}
+        position={[0, -1.5, 0]}
+      >
         <mesh
           castShadow
           receiveShadow
@@ -189,7 +193,7 @@ export default function Model({ screenUrl, ...props }) {
           geometry={nodes.Volume_button_Body_0.geometry}
           material={materials.Body}
         />
-       
+
         <mesh
           castShadow
           receiveShadow
