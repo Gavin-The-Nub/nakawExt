@@ -1170,7 +1170,10 @@ function captureIframeContent() {
                 if (!resp || !resp.ok || !resp.dataUrl) {
                   // Fall through to iframe/html2canvas path
                   // Restore bezel visibility before proceeding
-                  try { if (bezelImg) bezelImg.style.visibility = prevBezelVis || ""; } catch (_) {}
+                  try {
+                    if (bezelImg)
+                      bezelImg.style.visibility = prevBezelVis || "";
+                  } catch (_) {}
                   proceedWithIframeCapture();
                   return;
                 }
@@ -1192,12 +1195,18 @@ function captureIframeContent() {
                     resolve(canvas.toDataURL());
                   } catch (e) {
                     console.error("Overlay capture crop failed", e);
-                    try { if (bezelImg) bezelImg.style.visibility = prevBezelVis || ""; } catch (_) {}
+                    try {
+                      if (bezelImg)
+                        bezelImg.style.visibility = prevBezelVis || "";
+                    } catch (_) {}
                     proceedWithIframeCapture();
                   }
                 };
                 fullTabImg.onerror = () => {
-                  try { if (bezelImg) bezelImg.style.visibility = prevBezelVis || ""; } catch (_) {}
+                  try {
+                    if (bezelImg)
+                      bezelImg.style.visibility = prevBezelVis || "";
+                  } catch (_) {}
                   proceedWithIframeCapture();
                 };
                 fullTabImg.src = resp.dataUrl;
@@ -1810,8 +1819,8 @@ function createDeviceSelector() {
   // Derive a Tablets category without changing underlying platform semantics
 
   const categories = {
-    iOS: devices.filter((d) => d.platform === "iOS" ),
-    Android: devices.filter((d) => d.platform === "Android" ),
+    iOS: devices.filter((d) => d.platform === "iOS"),
+    Android: devices.filter((d) => d.platform === "Android"),
     Laptops: devices.filter((d) => d.platform === "Laptop"),
     Tablets: devices.filter((d) => d.platform === "Tablet"),
     SPECIALS: devices.filter((d) => d.platform === "macOS"),
