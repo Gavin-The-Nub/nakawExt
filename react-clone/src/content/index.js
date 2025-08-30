@@ -38,7 +38,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             button.classList.add("selected");
           }
         }
-        // Status bar is visible by default unless platform is macOS
+        // Status bar is visible by default unless platform is macOS, Laptop, or special
         const statusBar = document.getElementById("__mf_status_bar__");
         if (statusBarBtn) {
           if (statusBar && statusBar.style.display !== "none") {
@@ -917,7 +917,9 @@ function injectToolbar() {
     const statusVisible = !!(
       sb &&
       sb.style.display !== "none" &&
-      platform !== "macOS"
+      platform !== "macOS" &&
+      platform !== "Laptop" &&
+      platform !== "special"
     );
     if (statusVisible) statusToggle.classList.add("active");
     else statusToggle.classList.remove("active");
@@ -927,8 +929,8 @@ function injectToolbar() {
     } else {
       statusSlider.value = "100";
     }
-    // Disable status controls on macOS
-    const statusDisabled = platform === "macOS";
+    // Disable status controls on macOS, Laptop, and special devices
+    const statusDisabled = platform === "macOS" || platform === "Laptop" || platform === "special";
     statusToggle.style.opacity = statusDisabled ? "0.5" : "1";
     statusToggle.style.pointerEvents = statusDisabled ? "none" : "auto";
     statusSlider.disabled = statusDisabled;
@@ -944,8 +946,8 @@ function injectToolbar() {
       browserSlider.value = "100";
     }
 
-    // Disable browser navigation controls on macOS
-    const browserDisabled = platform === "macOS";
+    // Disable browser navigation controls on macOS, Laptop, and special devices
+    const browserDisabled = platform === "macOS" || platform === "Laptop" || platform === "special";
     if (browserToggle) {
       browserToggle.style.opacity = browserDisabled ? "0.5" : "1";
       browserToggle.style.pointerEvents = browserDisabled ? "none" : "auto";
@@ -987,7 +989,7 @@ function injectToolbar() {
     statusToggle.onclick = () => {
       const frame = document.getElementById("__mf_simulator_frame__");
       const platform = frame?.getAttribute("data-platform") || "iOS";
-      if (platform === "macOS") return; // no-op
+      if (platform === "macOS" || platform === "Laptop" || platform === "special") return; // no-op
       let sb = document.getElementById("__mf_status_bar__");
       if (!sb) ensureStatusBar();
       sb = document.getElementById("__mf_status_bar__");
@@ -1954,8 +1956,8 @@ function ensureStatusBar() {
 
     const platform = frame.getAttribute("data-platform") || "iOS";
 
-    // Do not show status bar on macOS devices; remove if present
-    if (platform === "macOS") {
+    // Do not show status bar on macOS, Laptop, or special devices; remove if present
+    if (platform === "macOS" || platform === "Laptop" || platform === "special") {
       const existing = document.getElementById("__mf_status_bar__");
       if (existing) existing.remove();
       if (statusBarTimer) {
@@ -3026,8 +3028,8 @@ function injectBrowserNavigationBar() {
   browserNavBar.id = "__mf_browser_nav_bar__";
   const platform = frame.getAttribute("data-platform") || "iOS";
 
-  // Do not render browser navigation on macOS devices
-  if (platform === "macOS") {
+  // Do not render browser navigation on macOS, Laptop, or special devices
+  if (platform === "macOS" || platform === "Laptop" || platform === "special") {
     // Ensure layout updates if an existing bar was removed
     try {
       adjustIframeForBars();
