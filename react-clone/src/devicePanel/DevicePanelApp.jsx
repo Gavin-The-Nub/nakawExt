@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import Iphone from "../models/Iphone";
-import Macbook2 from "../models/macbook2";
-import Ipad from "../models/ipad";
+import Macbook from "../models/Macbook";
+// Temporarily using iPhone for iPad until iPad model is available
+const Ipad = Iphone;
 // Options-only panel; rendering is handled by the content script in the mockup area
 
 const DevicePanelApp = ({ onSelectModel }) => {
   const models = [
     { key: "iphone", name: "iPhone 14", component: Iphone },
     { key: "ipad", name: "iPad Pro", component: Ipad },
-    { key: "macbook2", name: "MacBook Pro M3", component: Macbook2 },
+    { key: "macbook", name: "MacBook Pro M3", component: Macbook },
   ];
   const [selectedModelKey, setSelectedModelKey] = useState(models[0].key);
 

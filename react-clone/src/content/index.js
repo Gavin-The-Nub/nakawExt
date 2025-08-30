@@ -6,8 +6,9 @@ import { DEVICES } from "../shared/devices";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment } from "@react-three/drei";
 import Iphone from "../models/Iphone";
-import Macbook2 from "../models/macbook2";
-import Ipad from "../models/ipad";
+import Macbook from "../models/Macbook";
+// Temporarily using iPhone for iPad until iPad model is available
+const Ipad = Iphone;
 import html2canvas from "html2canvas";
 
 let toolbar = null;
@@ -1427,7 +1428,7 @@ function toggle3DPanel() {
   if (platform === "Tablet") {
     modelKey = "ipad";
   } else if (platform === "Laptop" || platform === "macOS") {
-    modelKey = "macbook2";
+            modelKey = "macbook";
   } else if (platform === "iOS" || platform === "Android") {
     modelKey = "iphone";
   }
@@ -1555,8 +1556,8 @@ function render3DModelInMockup(key) {
   threeRoot = createRoot(mount);
 
   let Model = Iphone;
-  if (key === "macbook2") {
-    Model = Macbook2;
+  if (key === "macbook") {
+    Model = Macbook;
   } else if (key === "ipad") {
     Model = Ipad;
   }
@@ -1582,7 +1583,7 @@ function render3DModelInMockup(key) {
       <directionalLight position={[5, 0, 5]} intensity={1.2} castShadow />
       <Environment preset="city" />
       <OrbitControls enableDamping enableZoom={false} />
-      {key === "macbook2" ? (
+      {key === "macbook" ? (
         <Model screenUrl={capturedIframeImage} />
       ) : (
         <group rotation={[0, Math.PI, 0]}>
