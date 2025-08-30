@@ -13,8 +13,6 @@ const DevicePanelApp = ({ onSelectModel }) => {
   ];
   const [selectedModelKey, setSelectedModelKey] = useState(models[0].key);
 
-  
-
   return (
     <div className="device-panel-app">
       <header className="panel-header">
@@ -27,7 +25,9 @@ const DevicePanelApp = ({ onSelectModel }) => {
           {models.map((m) => (
             <button
               key={m.key}
-              className={`device-btn ${selectedModelKey === m.key ? "selected" : ""}`}
+              className={`device-btn ${
+                selectedModelKey === m.key ? "selected" : ""
+              }`}
               onClick={() => {
                 setSelectedModelKey(m.key);
                 if (onSelectModel) onSelectModel(m.key);
@@ -40,7 +40,7 @@ const DevicePanelApp = ({ onSelectModel }) => {
           ))}
         </div>
 
-        <div className="device-preview-area" style={{display:"none"}} />
+        <div className="device-preview-area" style={{ display: "none" }} />
       </div>
 
       <style jsx>{`
@@ -160,7 +160,8 @@ const DevicePanelApp = ({ onSelectModel }) => {
           padding: 20px;
         }
 
-        .device-preview-2d, .device-preview-3d {
+        .device-preview-2d,
+        .device-preview-3d {
           flex: 1;
           display: flex;
           align-items: center;

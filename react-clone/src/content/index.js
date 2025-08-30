@@ -242,6 +242,21 @@ function injectToolbar() {
         stroke-linejoin: round;
       }
       
+      .mf-toolbar-btn .btn-text,
+      .mf-toolbar-btn .btn-close {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1;
+        user-select: none;
+      }
+      
+      .mf-toolbar-btn .btn-close {
+        font-size: 20px;
+        font-weight: bold;
+      }
+      
       .orientation-indicator {
         position: absolute;
         top: -6px;
@@ -431,7 +446,8 @@ function injectToolbar() {
       <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="18" r="1.5"/></svg>
     </button>
     <button class="mf-toolbar-btn" id="mf-btn-device-panel" title="3D Device Panel">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="btn-text">3D</span>
+      <span class="btn-close" style="display: none;">×</span>
     </button>
   
     <button class="mf-toolbar-btn" id="mf-btn-rotate" title="Rotate to Landscape" style="position: relative;">
@@ -1427,7 +1443,7 @@ function toggle3DPanel() {
   if (platform === "Tablet") {
     modelKey = "ipad";
   } else if (platform === "Laptop" || platform === "macOS") {
-            modelKey = "macbook";
+    modelKey = "macbook";
   } else if (platform === "iOS" || platform === "Android") {
     modelKey = "iphone";
   }
@@ -1446,6 +1462,11 @@ function switchTo3DMode(modelKey = "iphone") {
   const devicePanelBtn = document.getElementById("mf-btn-device-panel");
   if (devicePanelBtn) {
     devicePanelBtn.classList.add("selected");
+    // Show close button (×) and hide 3D text
+    const btnText = devicePanelBtn.querySelector('.btn-text');
+    const btnClose = devicePanelBtn.querySelector('.btn-close');
+    if (btnText) btnText.style.display = 'none';
+    if (btnClose) btnClose.style.display = 'inline';
   }
 
   // Render 3D model directly in the mockup area
@@ -1459,6 +1480,11 @@ function switchTo2DMode() {
   const devicePanelBtn = document.getElementById("mf-btn-device-panel");
   if (devicePanelBtn) {
     devicePanelBtn.classList.remove("selected");
+    // Show 3D text and hide close button (×)
+    const btnText = devicePanelBtn.querySelector('.btn-text');
+    const btnClose = devicePanelBtn.querySelector('.btn-close');
+    if (btnText) btnText.style.display = 'inline';
+    if (btnClose) btnClose.style.display = 'none';
   }
 
   // Restore 2D mode
@@ -1493,8 +1519,6 @@ function switchTo2DMode() {
   }
 }
 
-
-
 let threeRoot = null;
 function render3DModelInMockup(key) {
   // Set 3D mode state
@@ -1504,6 +1528,11 @@ function render3DModelInMockup(key) {
   const devicePanelBtn = document.getElementById("mf-btn-device-panel");
   if (devicePanelBtn) {
     devicePanelBtn.classList.add("selected");
+    // Show close button (×) and hide 3D text
+    const btnText = devicePanelBtn.querySelector('.btn-text');
+    const btnClose = devicePanelBtn.querySelector('.btn-close');
+    if (btnText) btnText.style.display = 'none';
+    if (btnClose) btnClose.style.display = 'inline';
   }
 
   // Show the overlay again for 3D rendering
@@ -1584,8 +1613,8 @@ function render3DModelInMockup(key) {
       <OrbitControls enableDamping enableZoom={false} />
       {key === "macbook" ? (
         <>
-        <OrbitControls enableDamping enableZoom={false} enablePan={false} />
-        <Model screenUrl={capturedIframeImage} />
+          <OrbitControls enableDamping enableZoom={false} enablePan={false} />
+          <Model screenUrl={capturedIframeImage} />
         </>
       ) : (
         <group rotation={[0, Math.PI, 0]}>
