@@ -3,11 +3,11 @@
 import React, { useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { DEVICES } from "../shared/devices";
-import DevicePanelApp from "../devicePanel/DevicePanelApp";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment } from "@react-three/drei";
 import Iphone from "../models/Iphone";
-import { Macbook } from "../models/Macbook";
+import Macbook2 from "../models/macbook2";
+import Ipad from "../models/ipad";
 import html2canvas from "html2canvas";
 
 let toolbar = null;
@@ -1420,25 +1420,23 @@ function toggle3DPanel() {
     return;
   }
 
-  // If current device is mobile (iOS or Android), automatically use iPhone 14 model
-  if (isCurrentDeviceMobile()) {
-    // Capture iframe content before switching to 3D
-    captureIframeContent().then((imageData) => {
-      capturedIframeImage = imageData;
-      switchTo3DMode("iphone"); // Use iPhone 14 model for mobile devices
-    });
-  } else {
-    // For desktop devices, show the device panel to choose model
-    const existing = document.getElementById("mf-3d-panel");
-    if (existing) {
-      existing.remove();
-    }
+  // Determine the appropriate 3D model based on current device platform
+  const platform = getCurrentDevicePlatform();
+  let modelKey = "iphone"; // Default fallback
 
-    captureIframeContent().then((imageData) => {
-      capturedIframeImage = imageData;
-      show3DPanel();
-    });
+  if (platform === "Tablet") {
+    modelKey = "ipad";
+  } else if (platform === "Laptop" || platform === "macOS") {
+    modelKey = "macbook2";
+  } else if (platform === "iOS" || platform === "Android") {
+    modelKey = "iphone";
   }
+
+  // Capture iframe content before switching to 3D
+  captureIframeContent().then((imageData) => {
+    capturedIframeImage = imageData;
+    switchTo3DMode(modelKey); // Use appropriate model based on device platform
+  });
 }
 
 function switchTo3DMode(modelKey = "iphone") {
@@ -1495,138 +1493,7 @@ function switchTo2DMode() {
   }
 }
 
-function show3DPanel() {
-  // Ensure device overlay remains visible behind the 3D panel
-  const overlay = document.getElementById("__mf_simulator_overlay__");
-  if (overlay && overlay.style.display === "none")
-    overlay.style.display = "flex";
 
-  // Create a temporary white backdrop under the 3D panel
-  let threeBackdrop = document.getElementById("mf-3d-backdrop");
-  if (!threeBackdrop) {
-    threeBackdrop = document.createElement("div");
-    threeBackdrop.id = "mf-3d-backdrop";
-    threeBackdrop.style.position = "fixed";
-    threeBackdrop.style.inset = "0";
-    // Place the backdrop beneath the simulator overlay (2147483647) and toolbar (2147483648)
-    threeBackdrop.style.zIndex = "2147483646";
-    threeBackdrop.style.background = "#ffffff";
-    threeBackdrop.style.pointerEvents = "none";
-    document.body.appendChild(threeBackdrop);
-  }
-
-  const panel = document.createElement("div");
-  panel.id = "mf-3d-panel";
-  panel.innerHTML = `
-    <style>
-      #mf-3d-panel {
-        position: fixed;
-        top: 60px;
-        right: 100px;
-        z-index: 2147483648;
-        width: 720px;
-        height: 520px;
-        background: #111827;
-        color: #e5e7eb;
-        border-radius: 12px;
-        box-shadow: 0 12px 32px rgba(0,0,0,0.35);
-        border: 1px solid rgba(255,255,255,0.08);
-        overflow: hidden;
-      }
-      #mf-3d-panel .header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 10px 12px; background: rgba(17,24,39,0.9); border-bottom: 1px solid rgba(255,255,255,0.08);
-      }
-      #mf-3d-panel .body { height: calc(100% - 44px); }
-      #mf-3d-close { background: transparent; color: #9ca3af; border: none; cursor: pointer; }
-      #mf-3d-close:hover { color: #e5e7eb; }
-    </style>
-    <div class="header">
-      <div>3D Device Panel</div>
-      <div style="display: flex; gap: 8px;">
-        <button id="mf-3d-refresh" style="background: transparent; color: #9ca3af; border: none; cursor: pointer; padding: 4px;" title="Refresh Screen">🔄</button>
-        <button id="mf-3d-close" style="background: transparent; color: #9ca3af; border: none; cursor: pointer; padding: 4px;">✕</button>
-      </div>
-    </div>
-    <div class="body"><div id="mf-3d-root" style="width:100%;height:100%"></div></div>
-  `;
-
-  document.body.appendChild(panel);
-
-  // Add refresh button functionality
-  panel.querySelector("#mf-3d-refresh").onclick = () => {
-    // Temporarily hide bezel during capture
-    const bezelImg = document.getElementById("__mf_simulator_mockup__");
-    const prevBezelVis = bezelImg ? bezelImg.style.visibility : null;
-    if (bezelImg) bezelImg.style.visibility = "hidden";
-    captureIframeContent().then((imageData) => {
-      if (bezelImg) bezelImg.style.visibility = prevBezelVis || "";
-      capturedIframeImage = imageData;
-      // Re-render the 3D model with new image
-      if (threeRoot) {
-        const Model =
-          document.querySelector("#mf-3d-root")?.dataset?.currentModel ===
-          "macbook"
-            ? Macbook
-            : Iphone;
-        threeRoot.render(
-          <Canvas
-            shadows
-            camera={{ position: [2.5, 1.5, 3.5], fov: 45 }}
-            gl={{ alpha: true, preserveDrawingBuffer: true }}
-            style={{ background: "transparent" }}
-            onCreated={({ gl }) => {
-              try {
-                gl.setClearColor(0x000000, 0);
-              } catch (_) {}
-            }}
-          >
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[5, 0, 5]} intensity={1.2} castShadow />
-            <Environment preset="city" />
-            <OrbitControls enableDamping enableZoom={false} />
-            {document.querySelector("#mf-3d-root")?.dataset?.currentModel ===
-            "macbook" ? (
-              <Model screenUrl={capturedIframeImage} />
-            ) : (
-              <group rotation={[0, Math.PI, 0]}>
-                <Model screenUrl={capturedIframeImage} />
-              </group>
-            )}
-          </Canvas>
-        );
-      }
-    });
-  };
-
-  panel.querySelector("#mf-3d-close").onclick = () => {
-    // Restore device mode when closing
-    const overlay = document.getElementById("__mf_simulator_overlay__");
-    if (overlay) overlay.style.display = "";
-    const bd = document.getElementById("mf-3d-backdrop");
-    if (bd) bd.remove();
-    panel.remove();
-    // Reset 3D mode state
-    is3DMode = false;
-    const devicePanelBtn = document.getElementById("mf-btn-device-panel");
-    if (devicePanelBtn) {
-      devicePanelBtn.classList.remove("selected");
-    }
-  };
-  const container = panel.querySelector("#mf-3d-root");
-  panelRoot = createRoot(container);
-  panelRoot.render(
-    <DevicePanelApp
-      onSelectModel={(key) => {
-        render3DModelInMockup(key);
-        // Close the panel after selecting a model
-        const bd = document.getElementById("mf-3d-backdrop");
-        if (bd) bd.remove();
-        panel.remove();
-      }}
-    />
-  );
-}
 
 let threeRoot = null;
 function render3DModelInMockup(key) {
@@ -1687,12 +1554,16 @@ function render3DModelInMockup(key) {
   }
   threeRoot = createRoot(mount);
 
-  const Model = key === "iphone" ? Iphone : Macbook;
+  let Model = Iphone;
+  if (key === "macbook2") {
+    Model = Macbook2;
+  } else if (key === "ipad") {
+    Model = Ipad;
+  }
 
   // Store current model type for refresh functionality
-  const container = document.querySelector("#mf-3d-root");
-  if (container) {
-    container.dataset.currentModel = key;
+  if (mount) {
+    mount.dataset.currentModel = key;
   }
 
   threeRoot.render(
@@ -1711,12 +1582,12 @@ function render3DModelInMockup(key) {
       <directionalLight position={[5, 0, 5]} intensity={1.2} castShadow />
       <Environment preset="city" />
       <OrbitControls enableDamping enableZoom={false} />
-      {key === "iphone" ? (
+      {key === "macbook2" ? (
+        <Model screenUrl={capturedIframeImage} />
+      ) : (
         <group rotation={[0, Math.PI, 0]}>
           <Model screenUrl={capturedIframeImage} />
         </group>
-      ) : (
-        <Model screenUrl={capturedIframeImage} />
       )}
     </Canvas>
   );
